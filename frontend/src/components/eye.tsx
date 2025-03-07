@@ -78,7 +78,7 @@ const Eye = () => {
   }, [mousePosition, leftEyeRect, rightEyeRect]);
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center ml-5">
       <div className="relative w-full max-w-lg h-64">
         <div className="relative w-full h-full flex justify-center -space-x-17">
           <div className="relative w-70 h-full overflow-hidden">
