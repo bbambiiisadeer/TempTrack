@@ -8,6 +8,7 @@ import Recent from "./pages/recent.tsx";
 import FirstPage from "./pages/firstpage.tsx";
 import SignIn from "./pages/signin.tsx";
 import SignUp from "./pages/signup.tsx";
+import History from "./pages/history.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/recent" element={<Recent />} />
+        <Route path="/history" element={<History />} />
       </Routes>
     </Router>
   </StrictMode>
