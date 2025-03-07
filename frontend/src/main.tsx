@@ -6,12 +6,14 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 import Recent from "./pages/recent.tsx";
 import FirstPage from "./pages/firstpage.tsx";
+import SignIn from "./pages/signin.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Router>
       <Routes>
         <Route path="/" element={<FirstPage />} />
+        <Route path="/signin" element={<SignIn />} />
         <Route path="/recent" element={<Recent />} />
       </Routes>
     </Router>
