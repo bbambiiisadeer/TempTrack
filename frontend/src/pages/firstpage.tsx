@@ -43,7 +43,7 @@ export default function FirstPage() {
           <span className="text-black">|</span>
           <Link
             to="/signin"
-            className="font-bold px-6 py-2 bg-[#BBFC4C] text-black font-md rounded-lg shadow-lg hover:bg-[#F1FD46]"
+            className="font-bold px-6 py-2 bg-[#BBFC4C] text-black font-md rounded-lg shadow-lg hover:bg-[#F1FD46] transition duration-30"
           >
             Sign in
           </Link>
