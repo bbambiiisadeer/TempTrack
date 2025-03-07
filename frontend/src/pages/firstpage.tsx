@@ -19,14 +19,15 @@ export default function FirstPage() {
       {/* กล่องเนื้อหา */}
       <div className="relative z-10 text-center text-white flex flex-col items-center justify-center ml-55">
         {/* ไอคอนแว่นตา */}
-        <div className="relative z-1 flex flex-col items-center justify-start -mt-40 ">
+        <div className="relative z-1 flex flex-col items-center justify-start mt-20">
           <Eye />
         </div>
 
         {/* หัวข้อ */}
-        <h1 className="text-6xl font-extrabold text-black mb-4 -mt-60">
-          Real-time <br /> temperature monitoring
-        </h1>
+        <div className="flex items-center justify-center mt-10 mb-6">
+  <h1 className="text-6xl font-extrabold text-black text-center">
+    Real-time <br /> temperature monitoring
+  </h1></div>
 
         {/* คำอธิบาย */}
         <p className="text-md text-black max-w-6xl mx-auto mb-6">
@@ -43,7 +44,7 @@ export default function FirstPage() {
           <span className="text-black">|</span>
           <Link
             to="/signin"
-            className="font-bold px-6 py-2 bg-[#BBFC4C] text-black font-md rounded-lg shadow-lg hover:bg-[#F1FD46] transition duration-30"
+            className="font-bold px-6 py-2 bg-[#BBFC4C] text-black font-md rounded-lg shadow-lg hover:bg-[#F1FD46]"
           >
             Sign in
           </Link>
