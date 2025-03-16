@@ -5,7 +5,9 @@ import CardTemp from "../components/cardtemp";
 
 const Recent: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [temperatureData, setTemperatureData] = useState<{ time: string; avgTemp: number }[]>([]);
+  const [temperatureData, setTemperatureData] = useState<
+    { time: string; outsideTemp: number; insideTemp: number }[]
+  >([]);
 
   const headerData = {
     regNum: "จจ 323",
@@ -25,15 +27,16 @@ const Recent: React.FC = () => {
       // 🔹 **ตัวอย่างข้อมูลที่ได้รับจากเซ็นเซอร์**
       const newTemp = {
         time: new Date().toLocaleTimeString(),
-        avgTemp: Math.random() * (30 - 5) + 5, // จำลองอุณหภูมิระหว่าง 5 - 30 องศา
+        outsideTemp: Math.random() * (35 - 5) + 5, // จำลองอุณหภูมินอกกล่องระหว่าง 5 - 35 องศา
+        insideTemp: Math.random() * (30 - 5) + 5, // จำลองอุณหภูมิในกล่องระหว่าง 5 - 30 องศา
       };
 
-      // อัปเดตข้อมูล (เก็บ 10 ค่าเท่านั้น)
+      // อัปเดตข้อมูล 
       setTemperatureData((prev) => [newTemp, ...prev]);
     };
 
-    // ตั้งให้ฟังก์ชัน `fetchTemperature` ทำงานทุก 5 วินาที
-    const interval = setInterval(fetchTemperature, 5000);
+    // ตั้งให้ฟังก์ชัน `fetchTemperature` ทำงานทุก 1 วินาที
+    const interval = setInterval(fetchTemperature, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -56,7 +59,14 @@ const Recent: React.FC = () => {
         <div className="mt-[-4] flex-1 overflow-y-auto p-4 bg-white shadow-md rounded-lg transition-all duration-300">
           {temperatureData.length > 0 ? (
             temperatureData.map((data, index) => (
-              <CardTemp key={index} time={data.time} avgTemp={data.avgTemp} minTemp={minTemp} maxTemp={maxTemp} />
+              <CardTemp
+                key={index}
+                time={data.time}
+                outsideTemp={data.outsideTemp}
+                insideTemp={data.insideTemp}
+                minTemp={minTemp}
+                maxTemp={maxTemp}
+              />
             ))
           ) : (
             <p className="text-center text-gray-500">รอข้อมูลจากเซ็นเซอร์...</p>
