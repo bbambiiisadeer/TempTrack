@@ -20,7 +20,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
   isSidebarCollapsed
 }) => {
   return (
-    <div className={`bg-white rounded-lg p-6 ${isSidebarCollapsed ? "w-106 h-65" : "w-145 h-65"} transition-all duration-300`}>
+    <div className={`bg-white rounded-lg p-6 ${isSidebarCollapsed ? "w-106 h-65" : "w-145 h-65"} hover:bg-[#f6f6f6] transition-all duration-300`}>
       {/* Tracking No & Date */}
       <div className="flex justify-between items-center mb-2">
         <span className="text-[#a5a5a5] text-sm">Tracking No.</span>
@@ -49,7 +49,7 @@ const HistoryCard: React.FC<HistoryCardProps> = ({
 
       {/* ปุ่ม "จัดส่งสำเร็จ" */}
       <div className="flex justify-end -mt-9">
-        <button className="bg-[#FA6255] text-white px-6 py-2 rounded-full text-sm hover:bg-[#DC4437] transition-all">
+        <button className="bg-[#FA6255] text-white px-6 py-2 rounded-full text-sm">
           จัดส่งสำเร็จ
         </button>
       </div>
