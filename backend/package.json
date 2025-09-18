@@ -29,7 +29,9 @@
     "db:migrate": "cross-env NODE_OPTIONS='--import tsx' drizzle-kit migrate",
     "db:prototype": "tsx ./db/prototype.ts",
     "eol": "eolConverter _entrypoint/*.sh",
-    "dev": "",
+    "dev": "nodemon",
+    "build": "tsc && tsc-alias",
+    "start": "node ./dist/src/index.js",
     "test": ""
   },
   "dependencies": {

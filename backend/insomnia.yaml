@@ -1,0 +1,177 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-09-18T15:00:00.000Z",
+  "__export_source": "pf-backend:insomnia",
+  "resources": [
+    {
+      "_id": "wrk_backend_api",
+      "parentId": null,
+      "modified": 1660000000000,
+      "created": 1660000000000,
+      "name": "TempTrack API",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_users",
+      "parentId": "wrk_backend_api",
+      "modified": 1660000000000,
+      "created": 1660000000000,
+      "name": "Users",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_address",
+      "parentId": "wrk_backend_api",
+      "modified": 1660000000000,
+      "created": 1660000000000,
+      "name": "Address",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_parcel",
+      "parentId": "wrk_backend_api",
+      "modified": 1660000000000,
+      "created": 1660000000000,
+      "name": "Parcel",
+      "_type": "request_group"
+    },
+
+    {
+      "_id": "req_get_users",
+      "parentId": "fld_users",
+      "modified": 1660000000000,
+      "created": 1660000000000,
+      "url": "http://localhost:3000/users",
+      "name": "Get Users",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_put_users",
+      "parentId": "fld_users",
+      "url": "http://localhost:3000/users",
+      "name": "Create User",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Alice\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"secret123\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_patch_users",
+      "parentId": "fld_users",
+      "url": "http://localhost:3000/users",
+      "name": "Update User",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": \"user-uuid-here\",\n  \"name\": \"Alice Updated\",\n  \"email\": \"alice.new@example.com\",\n  \"password\": \"newpass456\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_delete_users",
+      "parentId": "fld_users",
+      "url": "http://localhost:3000/users",
+      "name": "Delete User",
+      "method": "DELETE",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": \"user-uuid-here\"\n}"
+      },
+      "_type": "request"
+    },
+
+    {
+      "_id": "req_get_address",
+      "parentId": "fld_address",
+      "url": "http://localhost:3000/address",
+      "name": "Get Address",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_put_address",
+      "parentId": "fld_address",
+      "url": "http://localhost:3000/address",
+      "name": "Create Address",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"user-uuid-here\",\n  \"name\": \"Bob Sender\",\n  \"company\": \"Bob Logistics\",\n  \"email\": \"bob@example.com\",\n  \"phoneNumber\": \"0812345678\",\n  \"type\": \"sender\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"Bangkok\",\n  \"state\": \"Bangkok\",\n  \"postalCode\": \"10200\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_patch_address",
+      "parentId": "fld_address",
+      "url": "http://localhost:3000/address",
+      "name": "Update Address",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": \"address-uuid-here\",\n  \"phoneNumber\": \"0899999999\",\n  \"company\": \"Updated Company\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_delete_address",
+      "parentId": "fld_address",
+      "url": "http://localhost:3000/address",
+      "name": "Delete Address",
+      "method": "DELETE",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": \"address-uuid-here\"\n}"
+      },
+      "_type": "request"
+    },
+
+    {
+      "_id": "req_get_parcel",
+      "parentId": "fld_parcel",
+      "url": "http://localhost:3000/parcel",
+      "name": "Get Parcel",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_put_parcel",
+      "parentId": "fld_parcel",
+      "url": "http://localhost:3000/parcel",
+      "name": "Create Parcel",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"senderAddressId\": \"address-uuid-sender\",\n  \"recipientAddressId\": \"address-uuid-recipient\",\n  \"parcelName\": \"COVID Vaccine\",\n  \"quantity\": 10,\n  \"weight\": 5.5,\n  \"dimensionLength\": 30,\n  \"dimensionWidth\": 20,\n  \"dimensionHeight\": 15,\n  \"temperatureRangeMin\": -20,\n  \"temperatureRangeMax\": -10,\n  \"allowedDeviation\": 2,\n  \"specialNotes\": \"Handle with care\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_patch_parcel",
+      "parentId": "fld_parcel",
+      "url": "http://localhost:3000/parcel",
+      "name": "Update Parcel",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": \"parcel-uuid-here\",\n  \"quantity\": 20,\n  \"specialNotes\": \"Urgent Delivery\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_delete_parcel",
+      "parentId": "fld_parcel",
+      "url": "http://localhost:3000/parcel",
+      "name": "Delete Parcel",
+      "method": "DELETE",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": \"parcel-uuid-here\"\n}"
+      },
+      "_type": "request"
+    }
+  ]
+}
