@@ -1,1 +1,19 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Poppins';
+}
+
+.avenir {
+  font-family: 'Avenir', 'Helvetica', 'Arial', sans-serif;
+}
+
+.inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.shadow-drop {
+  box-shadow: 15px 9px 20px 0px rgba(0, 0, 0, 0.1);
+}
