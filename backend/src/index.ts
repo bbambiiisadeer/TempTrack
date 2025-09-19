@@ -20,7 +20,7 @@ app.use(express.json());
 // GET users
 app.get("/users", async (req, res, next) => {
   try {
-    const results = await dbClient.query.users.findMany();
+    const results = await dbClient.select().from(users);
     res.json(results);
   } catch (err) {
     next(err);

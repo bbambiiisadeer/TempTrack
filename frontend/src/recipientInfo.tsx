@@ -29,7 +29,8 @@ function RecipientInfo() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...recipient,
-          userId: "00000000-0000-0000-0000-000000000000", 
+          userId: "f8961d2c-135a-4a0d-811a-1bbe1889e3e5", 
+          type: "recipient",
         }),
       });
 
