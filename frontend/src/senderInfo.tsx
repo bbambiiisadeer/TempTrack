@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { type Recipient } from "./types";
 import "./index.css";
 
-function RecipientInfo() {
-  const navigate = useNavigate();
-  const [recipient, setRecipient] = useState<Recipient>({
+function SenderInfo() {
+    const navigate = useNavigate();
+  const [sender, setSender] = useState<Recipient>({
     name: "",
     company: "",
     address: "",
@@ -22,7 +22,7 @@ function RecipientInfo() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
-    setRecipient((prev) => ({ ...prev, [name]: value }));
+    setSender((prev) => ({ ...prev, [name]: value }));
   }
 
   const autoResize = () => {
@@ -35,7 +35,7 @@ function RecipientInfo() {
 
   useEffect(() => {
     autoResize();
-  }, [recipient.address]);
+  }, [sender.address]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,22 +45,22 @@ function RecipientInfo() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...recipient,
+          ...sender,
           userId: "f8961d2c-135a-4a0d-811a-1bbe1889e3e5",
-          type: "recipient",
+          type: "sender",
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to submit recipient");
+      if (!res.ok) throw new Error("Failed to submit sender");
 
       const data = await res.json();
-      console.log("Inserted recipient:", data);
-
-      navigate("/parceldetail");
-
+      console.log("Inserted sender:", data);
+      
+      navigate("/recipientinfo");
+      
     } catch (err) {
       console.error(err);
-      alert("Error submitting recipient info");
+      alert("Error submitting sender info");
     }
   };
 
@@ -84,7 +84,7 @@ function RecipientInfo() {
       >
        <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black bg-black text-white font-medium">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black text-black font-medium">
               1
             </div>
             <span className="mt-2 text-black font-normal text-xs text-center">
@@ -92,13 +92,13 @@ function RecipientInfo() {
             </span>
           </div>
 
-          <div className="flex-1 h-[1.5px] bg-black -mt-10 -mr-4 -ml-4"></div>
+          <div className="flex-1 h-[1.5px] bg-gray-400 -mt-10 -mr-4 -ml-4"></div>
 
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black text-black font-medium">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-gray-400 text-gray-400 font-medium">
               2
             </div>
-            <span className="mt-2 text-black font-normal text-xs text-center">
+            <span className="mt-2 text-gray-400 font-normal text-xs text-center">
               Recipient <br /> Information
             </span>
           </div>
@@ -120,7 +120,7 @@ function RecipientInfo() {
           <input
             type="text"
             name="name"
-            value={recipient.name}
+            value={sender.name}
             onChange={handleChange}
             className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
             required
@@ -132,7 +132,7 @@ function RecipientInfo() {
           <input
             type="text"
             name="company"
-            value={recipient.company}
+            value={sender.company}
             onChange={handleChange}
             className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
           />
@@ -143,7 +143,7 @@ function RecipientInfo() {
           <textarea
             ref={textareaRef}
             name="address"
-            value={recipient.address}
+            value={sender.address}
             onChange={handleChange}
             onInput={autoResize}
             rows={3}
@@ -158,7 +158,7 @@ function RecipientInfo() {
             <input
               type="text"
               name="city"
-              value={recipient.city}
+              value={sender.city}
               onChange={handleChange}
               className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
@@ -170,7 +170,7 @@ function RecipientInfo() {
             <input
               type="text"
               name="state"
-              value={recipient.state}
+              value={sender.state}
               onChange={handleChange}
               className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
@@ -184,7 +184,7 @@ function RecipientInfo() {
             <input
               type="text"
               name="postalCode"
-              value={recipient.postalCode}
+              value={sender.postalCode}
               onChange={handleChange}
               className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
@@ -198,7 +198,7 @@ function RecipientInfo() {
             <input
               type="email"
               name="email"
-              value={recipient.email}
+              value={sender.email}
               onChange={handleChange}
               className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
@@ -212,7 +212,7 @@ function RecipientInfo() {
             <input
               type="tel"
               name="phoneNumber"
-              value={recipient.phoneNumber}
+              value={sender.phoneNumber}
               onChange={handleChange}
               className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
@@ -238,4 +238,4 @@ function RecipientInfo() {
   );
 }
 
-export default RecipientInfo;
+export default SenderInfo;

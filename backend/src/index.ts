@@ -28,7 +28,7 @@ app.get("/users", async (req, res, next) => {
 });
 
 // CREATE users
-app.put("/users", async (req, res, next) => {
+app.post("/users", async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) throw new Error("Missing fields");
@@ -87,7 +87,7 @@ app.get("/address", async (req, res, next) => {
 });
 
 // CREATE address
-app.put("/address", async (req, res, next) => {
+app.post("/address", async (req, res, next) => {
   try {
     const { userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode } = req.body;
     if (!userId || !name || !type || !addr) throw new Error("Missing fields");

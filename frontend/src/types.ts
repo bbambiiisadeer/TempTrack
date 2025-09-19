@@ -8,3 +8,16 @@ export interface Recipient {
   email: string;
   phoneNumber: string;
 }
+
+export interface Parcel {
+  parcelName: string;
+  quantity?: number;
+  weight?: number;
+  dimensionLength?: number;
+  dimensionWidth?: number;
+  dimensionHeight?: number;
+  temperatureRangeMin?: number;
+  temperatureRangeMax?: number;
+  allowedDeviation?: number;
+  specialNotes?: string;
+}
