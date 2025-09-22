@@ -112,3 +112,28 @@
 [2025-09-19 08:58:29]   line: '207',
 [2025-09-19 08:58:29]   routine: 'transformCreateStmt'
 [2025-09-19 08:58:29] }
+[2025-09-22 07:31:58] 
+[2025-09-22 07:31:58] > db:migrate
+[2025-09-22 07:31:58] > cross-env NODE_OPTIONS='--import tsx' drizzle-kit migrate
+[2025-09-22 07:31:58] 
+[2025-09-22 07:31:59] No config path provided, using default 'drizzle.config.ts'
+[2025-09-22 07:31:59] Reading config file '/app/drizzle.config.ts'
+[2025-09-22 07:31:59] Using 'postgres' driver for database querying
+[2025-09-22 07:31:59] [⣷] applying migrations...{
+[2025-09-22 07:31:59]   severity_local: 'NOTICE',
+[2025-09-22 07:31:59]   severity: 'NOTICE',
+[2025-09-22 07:31:59]   code: '42P06',
+[2025-09-22 07:31:59]   message: 'schema "drizzle" already exists, skipping',
+[2025-09-22 07:31:59]   file: 'schemacmds.c',
+[2025-09-22 07:31:59]   line: '132',
+[2025-09-22 07:31:59]   routine: 'CreateSchemaCommand'
+[2025-09-22 07:31:59] }
+[2025-09-22 07:31:59] {
+[2025-09-22 07:31:59]   severity_local: 'NOTICE',
+[2025-09-22 07:31:59]   severity: 'NOTICE',
+[2025-09-22 07:31:59]   code: '42P07',
+[2025-09-22 07:31:59]   message: 'relation "__drizzle_migrations" already exists, skipping',
+[2025-09-22 07:31:59]   file: 'parse_utilcmd.c',
+[2025-09-22 07:31:59]   line: '207',
+[2025-09-22 07:31:59]   routine: 'transformCreateStmt'
+[2025-09-22 07:31:59] }

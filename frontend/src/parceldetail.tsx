@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useShipping } from "./shippingContext";
 import { type Parcel } from "./types";
 import "./index.css";
 
 function ParcelDetail() {
+  const { senderAddressId, recipientAddressId, resetShippingData } = useShipping();
+  
   const [parcel, setParcel] = useState<Parcel>({
+    senderAddressId: "",
+    recipientAddressId: "",
     parcelName: "",
     quantity: undefined,
     weight: undefined,
@@ -46,13 +51,31 @@ function ParcelDetail() {
     autoResize();
   }, [parcel.specialNotes]);
 
+  useEffect(() => {
+    if (!senderAddressId || !recipientAddressId) {
+      alert("Please complete sender and recipient information first");
+    }
+  }, [senderAddressId, recipientAddressId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!senderAddressId || !recipientAddressId) {
+      alert("Missing sender or recipient address information");
+      return;
+    }
+
     try {
+      const parcelData = {
+        ...parcel,
+        senderAddressId, 
+        recipientAddressId, 
+      };
+
       const res = await fetch("http://localhost:3000/parcel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parcel),
+        body: JSON.stringify(parcelData),
       });
 
       if (!res.ok) throw new Error("Failed to submit parcel");
@@ -62,6 +85,8 @@ function ParcelDetail() {
       alert("Parcel info submitted successfully!");
 
       setParcel({
+        senderAddressId: "",
+        recipientAddressId: "",
         parcelName: "",
         quantity: undefined,
         weight: undefined,
@@ -73,6 +98,9 @@ function ParcelDetail() {
         allowedDeviation: undefined,
         specialNotes: "",
       });
+
+      resetShippingData();
+
     } catch (err) {
       console.error(err);
       alert("Error submitting parcel info");
@@ -97,7 +125,7 @@ function ParcelDetail() {
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] space-y-4"
       >
-         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
+        <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div className="flex flex-col items-center">
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black bg-black text-white font-medium">
               1

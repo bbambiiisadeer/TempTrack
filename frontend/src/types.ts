@@ -10,6 +10,8 @@ export interface Recipient {
 }
 
 export interface Parcel {
+  senderAddressId: string;
+  recipientAddressId: string;
   parcelName: string;
   quantity?: number;
   weight?: number;

@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { type Recipient } from "./types";
+import { useShipping } from "./shippingContext";
 import "./index.css";
 
 function RecipientInfo() {
   const navigate = useNavigate();
+  const { setRecipientAddressId } = useShipping(); 
   const [recipient, setRecipient] = useState<Recipient>({
     name: "",
     company: "",
@@ -42,7 +44,7 @@ function RecipientInfo() {
 
     try {
       const res = await fetch("http://localhost:3000/address", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...recipient,
@@ -55,9 +57,8 @@ function RecipientInfo() {
 
       const data = await res.json();
       console.log("Inserted recipient:", data);
-
+      setRecipientAddressId(data.data.id);
       navigate("/parceldetail");
-
     } catch (err) {
       console.error(err);
       alert("Error submitting recipient info");
@@ -82,7 +83,7 @@ function RecipientInfo() {
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl  shadow-md w-full max-w-[860px] space-y-4"
       >
-       <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
+        <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div className="flex flex-col items-center">
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black bg-black text-white font-medium">
               1
@@ -114,7 +115,7 @@ function RecipientInfo() {
             </span>
           </div>
         </div>
-        
+
         <div className="flex flex-col mb-7">
           <label className="mb-2 font-normal text-sm inter">Full Name</label>
           <input

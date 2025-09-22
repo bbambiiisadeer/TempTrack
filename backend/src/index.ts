@@ -28,7 +28,7 @@ app.get("/users", async (req, res, next) => {
 });
 
 // CREATE users
-app.post("/users", async (req, res, next) => {
+app.put("/users", async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) throw new Error("Missing fields");
@@ -95,7 +95,7 @@ app.post("/address", async (req, res, next) => {
     const result = await dbClient
       .insert(address)
       .values({ userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode })
-      .returning();
+      .returning({ id: address.id }); 
     res.json({ msg: "Address created", data: result[0] });
   } catch (err) {
     next(err);
@@ -145,7 +145,7 @@ app.get("/parcel", async (req, res, next) => {
 });
 
 // CREATE pracel
-app.put("/parcel", async (req, res, next) => {
+app.post("/parcel", async (req, res, next) => {
   try {
     const { senderAddressId, recipientAddressId, parcelName, quantity, weight, dimensionLength, dimensionWidth, dimensionHeight, temperatureRangeMin, temperatureRangeMax, allowedDeviation, specialNotes } = req.body;
 
