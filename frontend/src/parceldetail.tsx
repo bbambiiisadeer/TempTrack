@@ -127,32 +127,32 @@ function ParcelDetail() {
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black bg-black text-white font-medium">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               1
             </div>
-            <span className="mt-2 text-black font-normal text-xs text-center">
+            <span className="mt-2 text-black font-medium text-xs text-center">
               Sender <br /> Information
             </span>
           </div>
 
-          <div className="flex-1 h-[1.5px] bg-black -mt-10 -mr-4 -ml-4"></div>
+          <div className="flex-1 h-0.5 bg-black -mt-10 -mr-4 -ml-4"></div>
 
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black bg-black text-white font-medium">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               2
             </div>
-            <span className="mt-2 text-black font-normal text-xs text-center">
+            <span className="mt-2 text-black font-medium text-xs text-center">
               Recipient <br /> Information
             </span>
           </div>
 
-          <div className="flex-1 h-[1.5px] bg-black -mt-10  -ml-4"></div>
+          <div className="flex-1 h-0.5 bg-black -mt-10  -ml-4"></div>
 
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black text-black font-medium">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black text-black font-medium">
               3
             </div>
-            <span className="mt-2 text-black font-normal text-xs text-center">
+            <span className="mt-2 text-black font-medium text-xs text-center">
               Parcel <br /> Details
             </span>
           </div>

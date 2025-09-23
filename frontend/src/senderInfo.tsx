@@ -50,6 +50,7 @@ function SenderInfo() {
           ...sender,
           userId: "f8961d2c-135a-4a0d-811a-1bbe1889e3e5",
           type: "sender",
+          isSaved: false,
         }),
       });
 
@@ -85,10 +86,10 @@ function SenderInfo() {
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div className="flex flex-col items-center">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full border-[1.5px] border-black text-black font-medium">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black text-black font-medium">
               1
             </div>
-            <span className="mt-2 text-black font-normal text-xs text-center">
+            <span className="mt-2 text-black font-medium text-xs text-center">
               Sender <br /> Information
             </span>
           </div>
