@@ -8,6 +8,13 @@
       "when": 1758179180574,
       "tag": "0000_plain_dagger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758601870967,
+      "tag": "0001_silky_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

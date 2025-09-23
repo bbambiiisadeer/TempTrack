@@ -6,6 +6,7 @@ import {
   text,
   real,
   timestamp,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -35,6 +36,7 @@ export const address = pgTable("address", {
   city: varchar("city", { length: 100 }),
   state: varchar("state", { length: 100 }),
   postalCode: varchar("postal_code", { length: 20 }),
+  isSaved: boolean("is_saved").default(false)
 });
 
 export const parcel = pgTable("parcel", {

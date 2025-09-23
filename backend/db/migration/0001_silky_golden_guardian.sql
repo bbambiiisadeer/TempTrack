@@ -1,0 +1,1 @@
+ALTER TABLE "address" ADD COLUMN "is_saved" boolean DEFAULT false;
