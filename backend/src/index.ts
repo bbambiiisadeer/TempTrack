@@ -76,10 +76,25 @@ app.delete("/users", async (req, res, next) => {
   }
 });
 
-// GET address
+// GET saved address
 app.get("/address", async (req, res, next) => {
   try {
-    const results = await dbClient.query.address.findMany();
+    const { userId, saved } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const isSaved = saved === "true";
+
+    const results = await dbClient.query.address.findMany({
+      where: (address, { eq, and }) =>
+        and(
+          eq(address.userId, userId as string),
+          eq(address.isSaved, isSaved)
+        ),
+    });
+
     res.json(results);
   } catch (err) {
     next(err);

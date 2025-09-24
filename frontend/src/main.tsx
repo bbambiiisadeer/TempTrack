@@ -6,6 +6,7 @@ import { ShippingProvider } from "./shippingContext";
 import SenderInfo from "./senderInfo";
 import RecipientInfo from "./recipientInfo";
 import ParcelDetail from "./parceldetail";
+import SaveAddress from "./saveAddress";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -15,6 +16,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/senderinfo" element={<SenderInfo />} />
           <Route path="/recipientinfo" element={<RecipientInfo />} />
           <Route path="/parceldetail" element={<ParcelDetail />} />
+          <Route path="/saveaddress" element={<SaveAddress />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>

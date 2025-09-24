@@ -112,7 +112,7 @@ function ParcelDetail() {
       className="min-h-screen flex flex-col items-center justify-center"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      <div className="flex flex-row items-center gap-x-4 mt-6 mb-6">
+      <div className="flex flex-row items-center gap-x-4 mt-8 mb-4">
         <img src="/images/box1.png" alt="Box1" className="w-12" />
         <img src="/images/box2.png" alt="Box2" className="w-20" />
         <img src="/images/box3.png" alt="Box3" className="w-20" />

@@ -23,3 +23,18 @@ export interface Parcel {
   allowedDeviation?: number;
   specialNotes?: string;
 }
+
+export interface Address  {
+  id: string;
+  userId: string;
+  name: string;
+  company?: string;
+  email?: string;
+  phoneNumber?: string;
+  type: string;
+  address: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  isSaved: boolean;
+}

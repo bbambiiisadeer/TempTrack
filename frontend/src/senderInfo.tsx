@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { type Recipient } from "./types";
 import { useShipping } from "./shippingContext";
 import "./index.css";
 
 function SenderInfo() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const handleSelectSavedAddress = () => {
+    navigate("/saveaddress", { state: { from: "sender" } });
+  };
   const { setSenderAddressId } = useShipping();
   const [sender, setSender] = useState<Recipient>({
     name: "",
@@ -19,6 +23,26 @@ function SenderInfo() {
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check if there's selected address data from SaveAddress component
+  useEffect(() => {
+    const selectedAddress = location.state?.selectedAddress;
+    if (selectedAddress) {
+      setSender({
+        name: selectedAddress.name || "",
+        company: selectedAddress.company || "",
+        address: selectedAddress.address || "",
+        city: selectedAddress.city || "",
+        state: selectedAddress.state || "",
+        postalCode: selectedAddress.postalCode || "",
+        email: selectedAddress.email || "",
+        phoneNumber: selectedAddress.phoneNumber || "",
+      });
+      
+      // Clear the state to prevent re-filling on subsequent navigations
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -71,7 +95,7 @@ function SenderInfo() {
       className="min-h-screen flex flex-col items-center justify-center"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      <div className="flex flex-row items-center gap-x-4 mt-6 mb-6">
+      <div className="flex flex-row items-center gap-x-4 mt-8 mb-4">
         <img src="/images/box1.png" alt="Box1" className="w-12" />
         <img src="/images/box2.png" alt="Box2" className="w-20" />
         <img src="/images/box3.png" alt="Box3" className="w-20" />
@@ -222,12 +246,13 @@ function SenderInfo() {
           </div>
         </div>
         <div className="flex items-center justify-end mt-4">
-          <a
-            href="/saved-addresses"
-            className="text-black font-normal inter text-sm mr-8"
+          <button
+            type="button"
+            onClick={handleSelectSavedAddress}
+            className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
           >
             Select Saved Address?
-          </a>
+          </button>
           <button
             type="submit"
             className="bg-black text-sm text-white py-2 px-6 rounded-full w-32 h-12"
