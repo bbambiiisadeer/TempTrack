@@ -8,6 +8,7 @@ import RecipientInfo from "./recipientInfo";
 import ParcelDetail from "./parceldetail";
 import SaveAddress from "./saveAddress";
 import EditAddress from "./editAddress";
+import CreateAddress from "./createAddress";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -19,6 +20,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/parceldetail" element={<ParcelDetail />} />
           <Route path="/saveaddress" element={<SaveAddress />} />
           <Route path="/editaddress/:id" element={<EditAddress />} />
+          <Route path="/createaddress" element={<CreateAddress />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>

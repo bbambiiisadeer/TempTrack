@@ -31,7 +31,7 @@ export const address = pgTable("address", {
   company: varchar("company", { length: 150 }),
   email: varchar("email", { length: 150 }),
   phoneNumber: varchar("phone_number", { length: 20 }),
-  type: varchar("type", { length: 20 }).notNull(), // sender หรือ recipient
+  type: varchar("type", { length: 20 }), // sender หรือ recipient
   address: text("address").notNull(),
   city: varchar("city", { length: 100 }),
   state: varchar("state", { length: 100 }),

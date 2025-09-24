@@ -104,12 +104,12 @@ app.get("/address", async (req, res, next) => {
 // CREATE address
 app.post("/address", async (req, res, next) => {
   try {
-    const { userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode } = req.body;
-    if (!userId || !name || !type || !addr) throw new Error("Missing fields");
+    const { userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode, isSaved } = req.body;
+    if (!userId || !name || !addr) throw new Error("Missing fields");
 
     const result = await dbClient
       .insert(address)
-      .values({ userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode })
+      .values({ userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode, isSaved })
       .returning({ id: address.id }); 
     res.json({ msg: "Address created", data: result[0] });
   } catch (err) {

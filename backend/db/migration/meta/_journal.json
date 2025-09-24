@@ -15,6 +15,13 @@
       "when": 1758601870967,
       "tag": "0001_silky_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758703143404,
+      "tag": "0002_cooing_leech",
+      "breakpoints": true
     }
   ]
 }

@@ -1,14 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
-function EditAddress() {
-  const { id } = useParams();
-  const location = useLocation();
+function CreateAddress() {
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
 
   const [sender, setSender] = useState({
-    id: "",
     name: "",
     company: "",
     address: "",
@@ -19,46 +17,45 @@ function EditAddress() {
     phoneNumber: "",
   });
 
-  useEffect(() => {
-    if (location.state?.address) {
-      setSender(location.state.address);
-    } else if (id) {
-      fetch(`http://localhost:3000/address/${id}`)
-        .then((res) => res.json())
-        .then((data) => setSender(data));
-    }
-  }, [id, location.state]);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setSender((prev) => ({ ...prev, [name]: value }));
+    setSender((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const autoResize = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height =
-        textareaRef.current.scrollHeight + "px";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   };
 
   const handleSave = async () => {
     try {
       const res = await fetch("http://localhost:3000/address", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sender, ),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...sender,
+          userId,
+          isSaved: true
+        })
       });
 
-      if (!res.ok) throw new Error("Failed to update address");
-
-      await res.json();;
+      if (!res.ok) throw new Error("Failed to create address");
+      
+      const result = await res.json();
+      console.log("Address created:", result);
       navigate("/saveaddress");
     } catch (err) {
       console.error(err);
-      alert("Failed to update address");
+      alert("Failed to create address");
     }
   };
 
@@ -73,11 +70,10 @@ function EditAddress() {
         <img src="/images/box3.png" alt="Box3" className="w-20" />
       </div>
 
-      <h1 className="text-[64px] font-semibold">edit</h1>
-      <h2 className="text-[64px] font-semibold italic -mt-7 mb-6">Address</h2>
+      <h1 className="text-[64px] font-semibold">create</h1>
+      <h2 className="text-[64px] font-semibold italic -mt-7 mb-6">New Address</h2>
 
       <div className="bg-white p-8 rounded-t-2xl shadow-md w-full max-w-[860px] space-y-4">
-
         <div className="flex flex-col mb-7 mt-2">
           <label className="mb-2 font-normal text-sm inter">Full Name</label>
           <input
@@ -186,16 +182,16 @@ function EditAddress() {
         <div className="flex items-center justify-end mt-4">
           <button
             type="button"
-           onClick={() => navigate("/saveaddress")} 
+            onClick={() => navigate("/saveaddress")}
             className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
           >
-            Cancle
+            Cancel
           </button>
           <button
             onClick={handleSave}
             className="bg-black text-sm text-white py-2 px-6 rounded-full w-32 h-12"
           >
-            Save
+            Create
           </button>
         </div>
       </div>
@@ -203,4 +199,4 @@ function EditAddress() {
   );
 }
 
-export default EditAddress;
+export default CreateAddress;

@@ -46,7 +46,6 @@ function SaveAddress() {
   };
 
   const handleSelectAddress = (address: Address) => {
-    // Navigate back to the appropriate page with selected address data
     if (fromPage === "sender") {
       navigate("/senderInfo", {
         state: {
@@ -193,7 +192,7 @@ function SaveAddress() {
             ))}
 
           <button
-            onClick={() => alert("Go to Add New Address")}
+            onClick={()  => navigate("/createaddress") }
             className="w-full bg-gray-100 rounded-lg py-3 flex items-center justify-center text-sm hover:bg-gray-200 mt-4"
           >
             <span className="text-lg mr-2">
