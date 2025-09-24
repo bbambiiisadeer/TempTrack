@@ -7,6 +7,7 @@ import "./index.css";
 function SenderInfo() {
   const navigate = useNavigate();
   const location = useLocation();
+  const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
   const handleSelectSavedAddress = () => {
     navigate("/saveaddress", { state: { from: "sender" } });
   };
@@ -21,10 +22,11 @@ function SenderInfo() {
     email: "",
     phoneNumber: "",
   });
-
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Check if there's selected address data from SaveAddress component
   useEffect(() => {
     const selectedAddress = location.state?.selectedAddress;
     if (selectedAddress) {
@@ -39,7 +41,8 @@ function SenderInfo() {
         phoneNumber: selectedAddress.phoneNumber || "",
       });
 
-      // Clear the state to prevent re-filling on subsequent navigations
+      setSelectedAddressId(selectedAddress.id || null);
+
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -49,6 +52,10 @@ function SenderInfo() {
   ) {
     const { name, value } = e.target;
     setSender((prev) => ({ ...prev, [name]: value }));
+
+    if (selectedAddressId) {
+      setSelectedAddressId(null);
+    }
   }
 
   const autoResize = () => {
@@ -67,12 +74,19 @@ function SenderInfo() {
     e.preventDefault();
 
     try {
+      if (selectedAddressId) {
+        console.log("Using saved address ID:", selectedAddressId);
+        setSenderAddressId(selectedAddressId);
+        navigate("/recipientinfo");
+        return;
+      }
+
       const res = await fetch("http://localhost:3000/address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...sender,
-          userId: "f8961d2c-135a-4a0d-811a-1bbe1889e3e5",
+          userId,
           type: "sender",
           isSaved: false,
         }),
@@ -81,7 +95,7 @@ function SenderInfo() {
       if (!res.ok) throw new Error("Failed to submit sender");
 
       const data = await res.json();
-      console.log("Inserted sender:", data);
+      console.log("Inserted new sender:", data);
       setSenderAddressId(data.data.id);
       navigate("/recipientinfo");
     } catch (err) {
@@ -89,7 +103,6 @@ function SenderInfo() {
       alert("Error submitting sender info");
     }
   };
-
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center"

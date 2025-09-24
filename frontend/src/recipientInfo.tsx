@@ -8,7 +8,7 @@ function RecipientInfo() {
   const navigate = useNavigate();
   const location = useLocation();
   const handleSelectSavedAddress = () => {
-    navigate("/saveaddress", { state: { from: "recipient" } }); 
+    navigate("/saveaddress", { state: { from: "recipient" } });
   };
   const { setRecipientAddressId } = useShipping();
   const [recipient, setRecipient] = useState<Recipient>({
@@ -21,10 +21,11 @@ function RecipientInfo() {
     email: "",
     phoneNumber: "",
   });
-
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Check if there's selected address data from SaveAddress component
   useEffect(() => {
     const selectedAddress = location.state?.selectedAddress;
     if (selectedAddress) {
@@ -38,7 +39,10 @@ function RecipientInfo() {
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
       });
-      
+
+      // เก็บ address id ของ saved address
+      setSelectedAddressId(selectedAddress.id || null);
+
       // Clear the state to prevent re-filling on subsequent navigations
       window.history.replaceState({}, document.title);
     }
@@ -49,6 +53,10 @@ function RecipientInfo() {
   ) {
     const { name, value } = e.target;
     setRecipient((prev) => ({ ...prev, [name]: value }));
+
+    if (selectedAddressId) {
+      setSelectedAddressId(null);
+    }
   }
 
   const autoResize = () => {
@@ -67,6 +75,13 @@ function RecipientInfo() {
     e.preventDefault();
 
     try {
+      if (selectedAddressId) {
+        console.log("Using saved recipient address ID:", selectedAddressId);
+        setRecipientAddressId(selectedAddressId);
+        navigate("/parceldetail");
+        return;
+      }
+
       const res = await fetch("http://localhost:3000/address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +96,7 @@ function RecipientInfo() {
       if (!res.ok) throw new Error("Failed to submit recipient");
 
       const data = await res.json();
-      console.log("Inserted recipient:", data);
+      console.log("Inserted new recipient:", data);
       setRecipientAddressId(data.data.id);
       navigate("/parceldetail");
     } catch (err) {
