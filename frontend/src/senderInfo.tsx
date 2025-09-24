@@ -38,7 +38,7 @@ function SenderInfo() {
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
       });
-      
+
       // Clear the state to prevent re-filling on subsequent navigations
       window.history.replaceState({}, document.title);
     }
@@ -106,7 +106,7 @@ function SenderInfo() {
       </h2>
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl  shadow-md w-full max-w-[860px] space-y-4"
+        className="bg-white p-8 rounded-t-2xl  shadow-md w-full max-w-[860px] space-y-4"
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div className="flex flex-col items-center">
@@ -148,7 +148,7 @@ function SenderInfo() {
             name="name"
             value={sender.name}
             onChange={handleChange}
-            className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+            className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
             required
           />
         </div>
@@ -160,7 +160,7 @@ function SenderInfo() {
             name="company"
             value={sender.company}
             onChange={handleChange}
-            className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+            className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
           />
         </div>
 
@@ -173,7 +173,7 @@ function SenderInfo() {
             onChange={handleChange}
             onInput={autoResize}
             rows={3}
-            className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+            className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
             required
           />
         </div>
@@ -186,7 +186,7 @@ function SenderInfo() {
               name="city"
               value={sender.city}
               onChange={handleChange}
-              className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
             />
           </div>
@@ -198,7 +198,7 @@ function SenderInfo() {
               name="state"
               value={sender.state}
               onChange={handleChange}
-              className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
             />
           </div>
@@ -212,7 +212,7 @@ function SenderInfo() {
               name="postalCode"
               value={sender.postalCode}
               onChange={handleChange}
-              className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
             />
           </div>
@@ -226,7 +226,7 @@ function SenderInfo() {
               name="email"
               value={sender.email}
               onChange={handleChange}
-              className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
             />
           </div>
@@ -240,7 +240,7 @@ function SenderInfo() {
               name="phoneNumber"
               value={sender.phoneNumber}
               onChange={handleChange}
-              className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
+              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
               required
             />
           </div>

@@ -48,16 +48,16 @@ function SaveAddress() {
   const handleSelectAddress = (address: Address) => {
     // Navigate back to the appropriate page with selected address data
     if (fromPage === "sender") {
-      navigate("/senderInfo", { 
-        state: { 
-          selectedAddress: address 
-        } 
+      navigate("/senderInfo", {
+        state: {
+          selectedAddress: address,
+        },
       });
     } else {
-      navigate("/recipientInfo", { 
-        state: { 
-          selectedAddress: address 
-        } 
+      navigate("/recipientInfo", {
+        state: {
+          selectedAddress: address,
+        },
       });
     }
   };
@@ -153,7 +153,7 @@ function SaveAddress() {
             addresses.map((addr) => (
               <div
                 key={addr.id}
-                className="border-b space-y-0.5 border-black p-4 transition cursor-pointer hover:bg-gray-50"
+                className="border-b space-y-0.5 border-black p-4 transition cursor-pointer "
                 onClick={() => handleSelectAddress(addr)}
               >
                 <div className="flex justify-between items-center">
@@ -167,8 +167,10 @@ function SaveAddress() {
 
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering the select address handler
-                      navigate(`/edit-address/${addr.id}`);
+                      e.stopPropagation();
+                      navigate(`/editaddress/${addr.id}`, {
+                        state: { address: addr },
+                      });
                     }}
                     className="text-black mt-2"
                   >
