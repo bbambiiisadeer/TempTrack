@@ -10,26 +10,35 @@ function RecipientInfo() {
   const handleSelectSavedAddress = () => {
     navigate("/saveaddress?from=recipient");
   };
-  const { setRecipientAddressId } = useShipping();
-  const [recipient, setRecipient] = useState<Recipient>({
-    name: "",
-    company: "",
-    address: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    email: "",
-    phoneNumber: "",
+  
+  const { setRecipientAddressId, recipientFormData, setRecipientFormData } = useShipping();
+  
+  const [recipient, setRecipient] = useState<Recipient>(() => {
+
+    return recipientFormData || {
+      name: "",
+      company: "",
+      address: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      email: "",
+      phoneNumber: "",
+    };
   });
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-    null
-  );
+  
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // บันทึกข้อมูลลง context ทุกครั้งที่ recipient เปลี่ยน
+  useEffect(() => {
+    setRecipientFormData(recipient);
+  }, [recipient, setRecipientFormData]);
 
   useEffect(() => {
     const selectedAddress = location.state?.selectedAddress;
     if (selectedAddress) {
-      setRecipient({
+      const newRecipient = {
         name: selectedAddress.name || "",
         company: selectedAddress.company || "",
         address: selectedAddress.address || "",
@@ -38,12 +47,10 @@ function RecipientInfo() {
         postalCode: selectedAddress.postalCode || "",
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
-      });
-
-      // เก็บ address id ของ saved address
+      };
+      
+      setRecipient(newRecipient);
       setSelectedAddressId(selectedAddress.id || null);
-
-      // Clear the state to prevent re-filling on subsequent navigations
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -124,7 +131,7 @@ function RecipientInfo() {
         className="bg-white p-8 rounded-t-2xl shadow-md w-full max-w-[860px] space-y-4"
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center cursor-pointer" onClick={() => navigate('/senderinfo')}>
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               1
             </div>

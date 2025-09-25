@@ -1,27 +1,41 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useShipping } from "./shippingContext";
 import { type Parcel } from "./types";
 import "./index.css";
 
 function ParcelDetail() {
-  const { senderAddressId, recipientAddressId, resetShippingData } = useShipping();
+  const navigate = useNavigate();
+  const { 
+    senderAddressId, 
+    recipientAddressId, 
+    resetShippingData,
+    parcelFormData,
+    setParcelFormData 
+  } = useShipping();
   
-  const [parcel, setParcel] = useState<Parcel>({
-    senderAddressId: "",
-    recipientAddressId: "",
-    parcelName: "",
-    quantity: undefined,
-    weight: undefined,
-    dimensionLength: undefined,
-    dimensionWidth: undefined,
-    dimensionHeight: undefined,
-    temperatureRangeMin: undefined,
-    temperatureRangeMax: undefined,
-    allowedDeviation: undefined,
-    specialNotes: "",
+  const [parcel, setParcel] = useState<Parcel>(() => {
+    return parcelFormData || {
+      senderAddressId: "",
+      recipientAddressId: "",
+      parcelName: "",
+      quantity: undefined,
+      weight: undefined,
+      dimensionLength: undefined,
+      dimensionWidth: undefined,
+      dimensionHeight: undefined,
+      temperatureRangeMin: undefined,
+      temperatureRangeMax: undefined,
+      allowedDeviation: undefined,
+      specialNotes: "",
+    };
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setParcelFormData(parcel);
+  }, [parcel, setParcelFormData]);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -84,7 +98,8 @@ function ParcelDetail() {
       console.log("Inserted parcel:", data);
       alert("Parcel info submitted successfully!");
 
-      setParcel({
+      // รีเซ็ต parcel form
+      const resetParcel = {
         senderAddressId: "",
         recipientAddressId: "",
         parcelName: "",
@@ -97,8 +112,9 @@ function ParcelDetail() {
         temperatureRangeMax: undefined,
         allowedDeviation: undefined,
         specialNotes: "",
-      });
-
+      };
+      
+      setParcel(resetParcel);
       resetShippingData();
 
     } catch (err) {
@@ -126,7 +142,7 @@ function ParcelDetail() {
         className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] space-y-4"
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center cursor-pointer" onClick={() => navigate('/senderinfo')}>
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               1
             </div>
@@ -137,7 +153,7 @@ function ParcelDetail() {
 
           <div className="flex-1 h-0.5 bg-black -mt-10 -mr-4 -ml-4"></div>
 
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center cursor-pointer" onClick={() => navigate('/recipientinfo')}>
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               2
             </div>

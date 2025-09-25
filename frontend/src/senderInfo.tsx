@@ -11,26 +11,33 @@ function SenderInfo() {
   const handleSelectSavedAddress = () => {
     navigate("/saveaddress?from=sender");
   };
-  const { setSenderAddressId } = useShipping();
-  const [sender, setSender] = useState<Recipient>({
-    name: "",
-    company: "",
-    address: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    email: "",
-    phoneNumber: "",
+  
+  const { setSenderAddressId, senderFormData, setSenderFormData } = useShipping();
+  
+  const [sender, setSender] = useState<Recipient>(() => {
+    return senderFormData || {
+      name: "",
+      company: "",
+      address: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      email: "",
+      phoneNumber: "",
+    };
   });
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-    null
-  );
+  
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setSenderFormData(sender);
+  }, [sender, setSenderFormData]);
 
   useEffect(() => {
     const selectedAddress = location.state?.selectedAddress;
     if (selectedAddress) {
-      setSender({
+      const newSender = {
         name: selectedAddress.name || "",
         company: selectedAddress.company || "",
         address: selectedAddress.address || "",
@@ -39,10 +46,10 @@ function SenderInfo() {
         postalCode: selectedAddress.postalCode || "",
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
-      });
-
+      };
+      
+      setSender(newSender);
       setSelectedAddressId(selectedAddress.id || null);
-
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -103,6 +110,7 @@ function SenderInfo() {
       alert("Error submitting sender info");
     }
   };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center"
