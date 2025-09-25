@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 function CreateAddress() {
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
+  const [searchParams] = useSearchParams();
+  const fromPage = searchParams.get("from");
 
   const [sender, setSender] = useState({
     name: "",
@@ -23,14 +25,15 @@ function CreateAddress() {
     const { name, value } = e.target;
     setSender((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const autoResize = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
     }
   };
 
@@ -39,20 +42,20 @@ function CreateAddress() {
       const res = await fetch("http://localhost:3000/address", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...sender,
           userId,
-          isSaved: true
-        })
+          isSaved: true,
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to create address");
-      
+
       const result = await res.json();
       console.log("Address created:", result);
-      navigate("/saveaddress");
+      navigate(`/saveaddress?from=${fromPage}`);
     } catch (err) {
       console.error(err);
       alert("Failed to create address");
@@ -71,7 +74,9 @@ function CreateAddress() {
       </div>
 
       <h1 className="text-[64px] font-semibold">create</h1>
-      <h2 className="text-[64px] font-semibold italic -mt-7 mb-6">New Address</h2>
+      <h2 className="text-[64px] font-semibold italic -mt-7 mb-6">
+        New Address
+      </h2>
 
       <div className="bg-white p-8 rounded-t-2xl shadow-md w-full max-w-[860px] space-y-4">
         <div className="flex flex-col mb-7 mt-2">
@@ -182,7 +187,7 @@ function CreateAddress() {
         <div className="flex items-center justify-end mt-4">
           <button
             type="button"
-            onClick={() => navigate("/saveaddress")}
+            onClick={() => navigate(`/saveaddress?from=${fromPage}`)}
             className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
           >
             Cancel

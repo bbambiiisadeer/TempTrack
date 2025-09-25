@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { type Address } from "./types";
 import { RxCross2 } from "react-icons/rx";
 import { IoAddCircleOutline } from "react-icons/io5";
@@ -10,8 +10,13 @@ function SaveAddress() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
+
+  const fromPage = searchParams.get('from') || location.state?.from;
+  const isSenderPage = fromPage === "sender";
+  const isRecipientPage = fromPage === "recipient";
 
   useEffect(() => {
     const fetchSavedAddresses = async () => {
@@ -32,10 +37,6 @@ function SaveAddress() {
       fetchSavedAddresses();
     }
   }, [userId]);
-
-  const fromPage = location.state?.from;
-  const isSenderPage = fromPage === "sender";
-  const isRecipientPage = fromPage === "recipient";
 
   const handleClose = () => {
     if (fromPage === "sender") {
@@ -138,6 +139,7 @@ function SaveAddress() {
             </div>
           </div>
         )}
+        
         <div className="flex items-center gap-2">
           <button
             onClick={handleClose}
@@ -147,6 +149,7 @@ function SaveAddress() {
           </button>
           <span className="text-black font-normal text-sm">My Addresses</span>
         </div>
+        
         <div className="space-y-1 -mt-2">
           {addresses.length > 0 &&
             addresses.map((addr) => (
@@ -167,7 +170,7 @@ function SaveAddress() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/editaddress/${addr.id}`, {
+                      navigate(`/editaddress/${addr.id}?from=${fromPage}`, {
                         state: { address: addr },
                       });
                     }}
@@ -192,7 +195,7 @@ function SaveAddress() {
             ))}
 
           <button
-            onClick={()  => navigate("/createaddress") }
+            onClick={() => navigate(`/createaddress?from=${fromPage}`)}
             className="w-full bg-gray-100 rounded-lg py-3 flex items-center justify-center text-sm hover:bg-gray-200 mt-4"
           >
             <span className="text-lg mr-2">

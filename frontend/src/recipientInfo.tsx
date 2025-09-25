@@ -8,7 +8,7 @@ function RecipientInfo() {
   const navigate = useNavigate();
   const location = useLocation();
   const handleSelectSavedAddress = () => {
-    navigate("/saveaddress", { state: { from: "recipient" } });
+    navigate("/saveaddress?from=recipient");
   };
   const { setRecipientAddressId } = useShipping();
   const [recipient, setRecipient] = useState<Recipient>({

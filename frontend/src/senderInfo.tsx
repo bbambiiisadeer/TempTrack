@@ -9,7 +9,7 @@ function SenderInfo() {
   const location = useLocation();
   const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
   const handleSelectSavedAddress = () => {
-    navigate("/saveaddress", { state: { from: "sender" } });
+    navigate("/saveaddress?from=sender");
   };
   const { setSenderAddressId } = useShipping();
   const [sender, setSender] = useState<Recipient>({

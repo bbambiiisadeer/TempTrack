@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 
 function EditAddress() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+const [searchParams] = useSearchParams();
+const fromPage = searchParams.get('from');
 
   const [sender, setSender] = useState({
     id: "",
@@ -55,7 +57,7 @@ function EditAddress() {
       if (!res.ok) throw new Error("Failed to update address");
 
       await res.json();;
-      navigate("/saveaddress");
+      navigate(`/saveaddress?from=${fromPage}`);
     } catch (err) {
       console.error(err);
       alert("Failed to update address");
@@ -186,10 +188,10 @@ function EditAddress() {
         <div className="flex items-center justify-end mt-4">
           <button
             type="button"
-           onClick={() => navigate("/saveaddress")} 
+           onClick={() => navigate(`/saveaddress?from=${fromPage}`)}
             className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
           >
-            Cancle
+            Cancel
           </button>
           <button
             onClick={handleSave}
