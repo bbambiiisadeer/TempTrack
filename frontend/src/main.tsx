@@ -9,6 +9,8 @@ import ParcelDetail from "./parceldetail";
 import SaveAddress from "./saveAddress";
 import EditAddress from "./editAddress";
 import CreateAddress from "./createAddress";
+import Homepage from "./homepage";
+import ActionBox from "./component/actionBox";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -21,6 +23,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/saveaddress" element={<SaveAddress />} />
           <Route path="/editaddress/:id" element={<EditAddress />} />
           <Route path="/createaddress" element={<CreateAddress />} />
+          <Route path="/" element={<Homepage />} />
+          <Route path="/actionbox" element={<ActionBox />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>
