@@ -11,6 +11,7 @@ import EditAddress from "./editAddress";
 import CreateAddress from "./createAddress";
 import Homepage from "./homepage";
 import ActionBox from "./component/actionBox";
+import Signin from "./signin";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/createaddress" element={<CreateAddress />} />
           <Route path="/" element={<Homepage />} />
           <Route path="/actionbox" element={<ActionBox />} />
+          <Route path="/signin" element={<Signin />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>
