@@ -38,3 +38,10 @@ export interface Address  {
   postalCode?: string;
   isSaved: boolean;
 }
+
+export interface User {
+  id?: string;
+  name: string;
+  email: string;
+  password: string;
+}

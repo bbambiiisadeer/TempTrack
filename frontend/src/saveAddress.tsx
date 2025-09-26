@@ -4,6 +4,7 @@ import { type Address } from "./types";
 import { RxCross2 } from "react-icons/rx";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { AiFillEdit } from "react-icons/ai";
+import { useAuth } from "./AuthContext"; // ✅ ดึง AuthContext
 import "./index.css";
 
 function SaveAddress() {
@@ -12,9 +13,10 @@ function SaveAddress() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
+  const { user } = useAuth();          // ✅ ดึง user จาก AuthContext
+  const userId = user?.id || null;     // ✅ ไม่ fix ตายตัวแล้ว
 
-  const fromPage = searchParams.get('from') || location.state?.from;
+  const fromPage = searchParams.get("from") || location.state?.from;
   const isSenderPage = fromPage === "sender";
   const isRecipientPage = fromPage === "recipient";
 
@@ -22,14 +24,20 @@ function SaveAddress() {
     const fetchSavedAddresses = async () => {
       try {
         const res = await fetch(
-          `http://localhost:3000/address?saved=true&userId=${userId}`
+          `http://localhost:3000/address?saved=true&userId=${userId}`,
+          {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
         );
         if (!res.ok) throw new Error("Failed to fetch saved addresses");
         const data = await res.json();
         setAddresses(data);
       } catch (err) {
         console.error(err);
-      } finally {
       }
     };
 
@@ -77,7 +85,7 @@ function SaveAddress() {
         Shipping Information
       </h2>
 
-      <div className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] space-y-4">
+      <div className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] min-h-130 space-y-4">
         {isSenderPage && (
           <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
             <div className="flex flex-col items-center">

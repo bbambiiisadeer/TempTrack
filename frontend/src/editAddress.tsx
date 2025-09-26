@@ -51,6 +51,7 @@ const fromPage = searchParams.get('from');
       const res = await fetch("http://localhost:3000/address", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(sender, ),
       });
 

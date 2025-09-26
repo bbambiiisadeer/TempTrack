@@ -2,18 +2,22 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { type Recipient } from "./types";
 import { useShipping } from "./shippingContext";
+import { useAuth } from "./AuthContext";
 import "./index.css";
 
 function SenderInfo() {
   const navigate = useNavigate();
   const location = useLocation();
-  const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
+
+  const { user } = useAuth();
+  const userId = user?.id || null;
+
   const handleSelectSavedAddress = () => {
     navigate("/saveaddress?from=sender");
   };
-  
+
   const { setSenderAddressId, senderFormData, setSenderFormData } = useShipping();
-  
+
   const [sender, setSender] = useState<Recipient>(() => {
     return senderFormData || {
       name: "",
@@ -26,7 +30,7 @@ function SenderInfo() {
       phoneNumber: "",
     };
   });
-  
+
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -47,7 +51,7 @@ function SenderInfo() {
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
       };
-      
+
       setSender(newSender);
       setSelectedAddressId(selectedAddress.id || null);
       window.history.replaceState({}, document.title);
@@ -88,9 +92,15 @@ function SenderInfo() {
         return;
       }
 
+      if (!userId) {
+        alert("User not logged in");
+        return;
+      }
+
       const res = await fetch("http://localhost:3000/address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ...sender,
           userId,

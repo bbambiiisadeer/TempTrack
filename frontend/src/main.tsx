@@ -12,9 +12,12 @@ import CreateAddress from "./createAddress";
 import Homepage from "./homepage";
 import ActionBox from "./component/actionBox";
 import Signin from "./signin";
+import Signup from "./signup";
+import { AuthProvider } from './AuthContext';
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <AuthProvider>
     <ShippingProvider>
       <BrowserRouter>
         <Routes>
@@ -27,8 +30,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/" element={<Homepage />} />
           <Route path="/actionbox" element={<ActionBox />} />
           <Route path="/signin" element={<Signin />} />
+          <Route path="/signup" element={<Signup />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>
+    </AuthProvider>
   </React.StrictMode>
 );

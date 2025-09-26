@@ -2,19 +2,24 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { type Recipient } from "./types";
 import { useShipping } from "./shippingContext";
+import { useAuth } from "./AuthContext"; // ✅ เพิ่มเข้ามา
 import "./index.css";
 
 function RecipientInfo() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { setRecipientAddressId, recipientFormData, setRecipientFormData } = useShipping();
+
+  // ✅ ใช้ user จาก AuthContext
+  const { user } = useAuth();
+  const userId = user?.id || null;
+
   const handleSelectSavedAddress = () => {
     navigate("/saveaddress?from=recipient");
   };
-  
-  const { setRecipientAddressId, recipientFormData, setRecipientFormData } = useShipping();
-  
-  const [recipient, setRecipient] = useState<Recipient>(() => {
 
+  const [recipient, setRecipient] = useState<Recipient>(() => {
     return recipientFormData || {
       name: "",
       company: "",
@@ -26,11 +31,11 @@ function RecipientInfo() {
       phoneNumber: "",
     };
   });
-  
+
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // บันทึกข้อมูลลง context ทุกครั้งที่ recipient เปลี่ยน
+  // ✅ บันทึกข้อมูลลง context ทุกครั้งที่ recipient เปลี่ยน
   useEffect(() => {
     setRecipientFormData(recipient);
   }, [recipient, setRecipientFormData]);
@@ -48,7 +53,7 @@ function RecipientInfo() {
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
       };
-      
+
       setRecipient(newRecipient);
       setSelectedAddressId(selectedAddress.id || null);
       window.history.replaceState({}, document.title);
@@ -89,12 +94,19 @@ function RecipientInfo() {
         return;
       }
 
+      // ✅ ถ้า user ยังไม่ได้ login
+      if (!userId) {
+        alert("User not logged in");
+        return;
+      }
+
       const res = await fetch("http://localhost:3000/address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ...recipient,
-          userId: "f8961d2c-135a-4a0d-811a-1bbe1889e3e5",
+          userId, // ✅ ใช้จาก AuthContext
           type: "recipient",
           isSaved: false,
         }),
@@ -111,7 +123,7 @@ function RecipientInfo() {
       alert("Error submitting recipient info");
     }
   };
-
+  
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center"

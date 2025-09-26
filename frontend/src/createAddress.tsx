@@ -1,14 +1,17 @@
 import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "./AuthContext"; 
 
 function CreateAddress() {
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const userId = "f8961d2c-135a-4a0d-811a-1bbe1889e3e5";
   const [searchParams] = useSearchParams();
   const fromPage = searchParams.get("from");
 
-  const [sender, setSender] = useState({
+  const { user } = useAuth(); // ใช้ user login จริง
+  const userId = user?.id;
+
+  const [addressData, setAddressData] = useState({
     name: "",
     company: "",
     address: "",
@@ -19,16 +22,15 @@ function CreateAddress() {
     phoneNumber: "",
   });
 
+  // Handle input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setSender((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setAddressData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Auto resize textarea
   const autoResize = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -37,15 +39,20 @@ function CreateAddress() {
     }
   };
 
+  // Save new address
   const handleSave = async () => {
+    if (!userId) {
+      alert("You must be logged in to create an address");
+      return;
+    }
+
     try {
       const res = await fetch("http://localhost:3000/address", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          ...sender,
+          ...addressData,
           userId,
           isSaved: true,
         }),
@@ -55,6 +62,7 @@ function CreateAddress() {
 
       const result = await res.json();
       console.log("Address created:", result);
+
       navigate(`/saveaddress?from=${fromPage}`);
     } catch (err) {
       console.error(err);
@@ -67,6 +75,7 @@ function CreateAddress() {
       className="min-h-screen flex flex-col items-center justify-center"
       style={{ backgroundColor: "#F1ECE6" }}
     >
+      {/* Header logo */}
       <div className="flex flex-row items-center gap-x-4 mt-8 mb-4">
         <img src="/images/box1.png" alt="Box1" className="w-12" />
         <img src="/images/box2.png" alt="Box2" className="w-20" />
@@ -79,35 +88,38 @@ function CreateAddress() {
       </h2>
 
       <div className="bg-white p-8 rounded-t-2xl shadow-md w-full max-w-[860px] space-y-4">
+        {/* Full Name */}
         <div className="flex flex-col mb-7 mt-2">
           <label className="mb-2 font-normal text-sm inter">Full Name</label>
           <input
             type="text"
             name="name"
-            value={sender.name}
+            value={addressData.name}
             onChange={handleChange}
             className="border-b border-black px-3 py-3 text-sm focus:outline-none"
             required
           />
         </div>
 
+        {/* Company */}
         <div className="flex flex-col mb-7">
           <label className="mb-2 font-normal text-sm inter">Company</label>
           <input
             type="text"
             name="company"
-            value={sender.company}
+            value={addressData.company}
             onChange={handleChange}
             className="border-b border-black px-3 py-3 text-sm focus:outline-none"
           />
         </div>
 
+        {/* Address */}
         <div className="flex flex-col mb-7">
           <label className="mb-2 font-normal text-sm">Address</label>
           <textarea
             ref={textareaRef}
             name="address"
-            value={sender.address}
+            value={addressData.address}
             onChange={handleChange}
             onInput={autoResize}
             rows={3}
@@ -116,13 +128,14 @@ function CreateAddress() {
           />
         </div>
 
+        {/* City / State / Postal Code */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm inter">City</label>
             <input
               type="text"
               name="city"
-              value={sender.city}
+              value={addressData.city}
               onChange={handleChange}
               className="border-b border-black px-3 py-3 text-sm focus:outline-none"
               required
@@ -134,7 +147,7 @@ function CreateAddress() {
             <input
               type="text"
               name="state"
-              value={sender.state}
+              value={addressData.state}
               onChange={handleChange}
               className="border-b border-black px-3 py-3 text-sm focus:outline-none"
               required
@@ -142,13 +155,11 @@ function CreateAddress() {
           </div>
 
           <div className="flex flex-col mb-7">
-            <label className="mb-2 font-normal text-sm inter">
-              Postal Code
-            </label>
+            <label className="mb-2 font-normal text-sm inter">Postal Code</label>
             <input
               type="text"
               name="postalCode"
-              value={sender.postalCode}
+              value={addressData.postalCode}
               onChange={handleChange}
               className="border-b border-black px-3 py-3 text-sm focus:outline-none"
               required
@@ -156,13 +167,14 @@ function CreateAddress() {
           </div>
         </div>
 
+        {/* Email / Phone */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 mt-4">
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm inter">Email</label>
             <input
               type="email"
               name="email"
-              value={sender.email}
+              value={addressData.email}
               onChange={handleChange}
               className="border-b border-black px-3 py-3 text-sm focus:outline-none"
               required
@@ -170,13 +182,11 @@ function CreateAddress() {
           </div>
 
           <div className="flex flex-col mb-7">
-            <label className="mb-2 font-normal text-sm inter">
-              Phone Number
-            </label>
+            <label className="mb-2 font-normal text-sm inter">Phone Number</label>
             <input
               type="tel"
               name="phoneNumber"
-              value={sender.phoneNumber}
+              value={addressData.phoneNumber}
               onChange={handleChange}
               className="border-b border-black px-3 py-3 text-sm focus:outline-none"
               required
@@ -184,6 +194,7 @@ function CreateAddress() {
           </div>
         </div>
 
+        {/* Buttons */}
         <div className="flex items-center justify-end mt-4">
           <button
             type="button"

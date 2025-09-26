@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShipping } from "./shippingContext";
 import { type Parcel } from "./types";
+import { useAuth } from "./AuthContext";
 import "./index.css";
 
 function ParcelDetail() {
@@ -13,6 +14,10 @@ function ParcelDetail() {
     parcelFormData,
     setParcelFormData 
   } = useShipping();
+
+  // ✅ ใช้ user จาก AuthContext
+  const { user } = useAuth();
+  const userId = user?.id || null;
   
   const [parcel, setParcel] = useState<Parcel>(() => {
     return parcelFormData || {
@@ -79,16 +84,24 @@ function ParcelDetail() {
       return;
     }
 
+    // ✅ ถ้า user ยังไม่ได้ login
+    if (!userId) {
+      alert("User not logged in");
+      return;
+    }
+
     try {
       const parcelData = {
         ...parcel,
         senderAddressId, 
         recipientAddressId, 
+        userId, // ✅ เพิ่ม userId ลงไป
       };
 
       const res = await fetch("http://localhost:3000/parcel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(parcelData),
       });
 

@@ -10,10 +10,10 @@ function Homepage() {
     >
       <div className="absolute top-14 right-12 flex gap-38 text-black font-medium text-base avenir z-20">
         <Link to="/dashboard" className="hover:underline">
-          Dashboard
+          Track status
         </Link>
-        <Link to="/abooutus" className="hover:underline">
-          About us
+        <Link to="/suggestion" className="hover:underline">
+          Suggestion
         </Link>
         <Link to="/signin" className="hover:underline">
           Sign in
