@@ -4,7 +4,7 @@ import { type Address } from "./types";
 import { RxCross2 } from "react-icons/rx";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { AiFillEdit } from "react-icons/ai";
-import { useAuth } from "./AuthContext"; // ✅ ดึง AuthContext
+import { useAuth } from "./AuthContext"; 
 import "./index.css";
 
 function SaveAddress() {
@@ -13,8 +13,8 @@ function SaveAddress() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { user } = useAuth();          // ✅ ดึง user จาก AuthContext
-  const userId = user?.id || null;     // ✅ ไม่ fix ตายตัวแล้ว
+  const { user } = useAuth();        
+  const userId = user?.id || null;    
 
   const fromPage = searchParams.get("from") || location.state?.from;
   const isSenderPage = fromPage === "sender";

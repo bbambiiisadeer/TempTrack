@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { type Recipient } from "./types";
 import { useShipping } from "./shippingContext";
-import { useAuth } from "./AuthContext"; // ✅ เพิ่มเข้ามา
+import { useAuth } from "./AuthContext";
 import "./index.css";
 
 function RecipientInfo() {
@@ -11,7 +11,6 @@ function RecipientInfo() {
 
   const { setRecipientAddressId, recipientFormData, setRecipientFormData } = useShipping();
 
-  // ✅ ใช้ user จาก AuthContext
   const { user } = useAuth();
   const userId = user?.id || null;
 
@@ -35,7 +34,6 @@ function RecipientInfo() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // ✅ บันทึกข้อมูลลง context ทุกครั้งที่ recipient เปลี่ยน
   useEffect(() => {
     setRecipientFormData(recipient);
   }, [recipient, setRecipientFormData]);
@@ -94,7 +92,6 @@ function RecipientInfo() {
         return;
       }
 
-      // ✅ ถ้า user ยังไม่ได้ login
       if (!userId) {
         alert("User not logged in");
         return;
@@ -106,7 +103,7 @@ function RecipientInfo() {
         credentials: "include",
         body: JSON.stringify({
           ...recipient,
-          userId, // ✅ ใช้จาก AuthContext
+          userId, 
           type: "recipient",
           isSaved: false,
         }),

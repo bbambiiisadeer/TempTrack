@@ -7,33 +7,34 @@ import "./index.css";
 
 function ParcelDetail() {
   const navigate = useNavigate();
-  const { 
-    senderAddressId, 
-    recipientAddressId, 
+  const {
+    senderAddressId,
+    recipientAddressId,
     resetShippingData,
     parcelFormData,
-    setParcelFormData 
+    setParcelFormData,
   } = useShipping();
 
-  // ✅ ใช้ user จาก AuthContext
   const { user } = useAuth();
   const userId = user?.id || null;
-  
+
   const [parcel, setParcel] = useState<Parcel>(() => {
-    return parcelFormData || {
-      senderAddressId: "",
-      recipientAddressId: "",
-      parcelName: "",
-      quantity: undefined,
-      weight: undefined,
-      dimensionLength: undefined,
-      dimensionWidth: undefined,
-      dimensionHeight: undefined,
-      temperatureRangeMin: undefined,
-      temperatureRangeMax: undefined,
-      allowedDeviation: undefined,
-      specialNotes: "",
-    };
+    return (
+      parcelFormData || {
+        senderAddressId: "",
+        recipientAddressId: "",
+        parcelName: "",
+        quantity: undefined,
+        weight: undefined,
+        dimensionLength: undefined,
+        dimensionWidth: undefined,
+        dimensionHeight: undefined,
+        temperatureRangeMin: undefined,
+        temperatureRangeMax: undefined,
+        allowedDeviation: undefined,
+        specialNotes: "",
+      }
+    );
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -69,10 +70,13 @@ function ParcelDetail() {
   useEffect(() => {
     autoResize();
   }, [parcel.specialNotes]);
-
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   useEffect(() => {
-    if (!senderAddressId || !recipientAddressId) {
-      alert("Please complete sender and recipient information first");
+    if (!initialCheckDone) {
+      if (!senderAddressId || !recipientAddressId) {
+        alert("Please complete sender and recipient information first");
+      }
+      setInitialCheckDone(true);
     }
   }, [senderAddressId, recipientAddressId]);
 
@@ -84,7 +88,6 @@ function ParcelDetail() {
       return;
     }
 
-    // ✅ ถ้า user ยังไม่ได้ login
     if (!userId) {
       alert("User not logged in");
       return;
@@ -93,9 +96,9 @@ function ParcelDetail() {
     try {
       const parcelData = {
         ...parcel,
-        senderAddressId, 
-        recipientAddressId, 
-        userId, // ✅ เพิ่ม userId ลงไป
+        senderAddressId,
+        recipientAddressId,
+        userId,
       };
 
       const res = await fetch("http://localhost:3000/parcel", {
@@ -109,9 +112,7 @@ function ParcelDetail() {
 
       const data = await res.json();
       console.log("Inserted parcel:", data);
-      alert("Parcel info submitted successfully!");
 
-      // รีเซ็ต parcel form
       const resetParcel = {
         senderAddressId: "",
         recipientAddressId: "",
@@ -126,10 +127,10 @@ function ParcelDetail() {
         allowedDeviation: undefined,
         specialNotes: "",
       };
-      
+
       setParcel(resetParcel);
       resetShippingData();
-
+      navigate("/dashboard");
     } catch (err) {
       console.error(err);
       alert("Error submitting parcel info");
@@ -155,7 +156,10 @@ function ParcelDetail() {
         className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] space-y-4"
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
-          <div className="flex flex-col items-center cursor-pointer" onClick={() => navigate('/senderinfo')}>
+          <div
+            className="flex flex-col items-center cursor-pointer"
+            onClick={() => navigate("/senderinfo")}
+          >
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               1
             </div>
@@ -166,7 +170,10 @@ function ParcelDetail() {
 
           <div className="flex-1 h-0.5 bg-black -mt-10 -mr-4 -ml-4"></div>
 
-          <div className="flex flex-col items-center cursor-pointer" onClick={() => navigate('/recipientinfo')}>
+          <div
+            className="flex flex-col items-center cursor-pointer"
+            onClick={() => navigate("/recipientinfo")}
+          >
             <div className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-black bg-black text-white font-medium">
               2
             </div>
@@ -349,7 +356,7 @@ function ParcelDetail() {
             type="submit"
             className="bg-black text-sm text-white py-2 px-6 rounded-full w-32 h-12"
           >
-            Next
+            Done
           </button>
         </div>
       </form>

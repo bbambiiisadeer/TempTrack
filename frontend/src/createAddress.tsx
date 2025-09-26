@@ -8,7 +8,7 @@ function CreateAddress() {
   const [searchParams] = useSearchParams();
   const fromPage = searchParams.get("from");
 
-  const { user } = useAuth(); // ใช้ user login จริง
+  const { user } = useAuth(); 
   const userId = user?.id;
 
   const [addressData, setAddressData] = useState({
@@ -22,7 +22,6 @@ function CreateAddress() {
     phoneNumber: "",
   });
 
-  // Handle input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -30,7 +29,6 @@ function CreateAddress() {
     setAddressData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Auto resize textarea
   const autoResize = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -39,7 +37,6 @@ function CreateAddress() {
     }
   };
 
-  // Save new address
   const handleSave = async () => {
     if (!userId) {
       alert("You must be logged in to create an address");
@@ -75,7 +72,6 @@ function CreateAddress() {
       className="min-h-screen flex flex-col items-center justify-center"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      {/* Header logo */}
       <div className="flex flex-row items-center gap-x-4 mt-8 mb-4">
         <img src="/images/box1.png" alt="Box1" className="w-12" />
         <img src="/images/box2.png" alt="Box2" className="w-20" />
@@ -88,7 +84,6 @@ function CreateAddress() {
       </h2>
 
       <div className="bg-white p-8 rounded-t-2xl shadow-md w-full max-w-[860px] space-y-4">
-        {/* Full Name */}
         <div className="flex flex-col mb-7 mt-2">
           <label className="mb-2 font-normal text-sm inter">Full Name</label>
           <input
@@ -101,7 +96,6 @@ function CreateAddress() {
           />
         </div>
 
-        {/* Company */}
         <div className="flex flex-col mb-7">
           <label className="mb-2 font-normal text-sm inter">Company</label>
           <input
@@ -113,7 +107,6 @@ function CreateAddress() {
           />
         </div>
 
-        {/* Address */}
         <div className="flex flex-col mb-7">
           <label className="mb-2 font-normal text-sm">Address</label>
           <textarea
@@ -128,7 +121,6 @@ function CreateAddress() {
           />
         </div>
 
-        {/* City / State / Postal Code */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm inter">City</label>
@@ -167,7 +159,6 @@ function CreateAddress() {
           </div>
         </div>
 
-        {/* Email / Phone */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 mt-4">
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm inter">Email</label>
