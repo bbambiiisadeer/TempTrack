@@ -56,7 +56,7 @@ function Signup() {
         <img
           src="/images/logo.png"
           alt="Logo"
-          className="absolute -top-13 left-1/2 transform -translate-x-1/2 h-8 w-auto"
+          className="absolute -top-13 left-1/2 transform -translate-x-1/2 h-7 w-auto"
         />
 
         <div className="flex flex-col mb-10 w-full">

@@ -14,6 +14,7 @@ import ActionBox from "./component/actionBox";
 import Signin from "./signin";
 import Signup from "./signup";
 import { AuthProvider } from './AuthContext';
+import Address from "./address";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/actionbox" element={<ActionBox />} />
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/address" element={<Address />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>

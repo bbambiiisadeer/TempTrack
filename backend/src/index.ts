@@ -307,14 +307,14 @@ app.patch("/address/:id", authenticateToken, async (req: AuthenticatedRequest, r
   }
 });
 
-// DELETE address
-app.delete("/address", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// DELETE address by id
+app.delete("/address/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { id }: { id: string } = req.body;
-    if (!id) throw new Error("Missing id");
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ msg: "Missing id" });
 
     const exists = await dbClient.query.address.findMany({ where: eq(address.id, id) });
-    if (exists.length === 0) throw new Error("Invalid id");
+    if (exists.length === 0) return res.status(404).json({ msg: "Address not found" });
 
     await dbClient.delete(address).where(eq(address.id, id));
     res.json({ msg: "Address deleted", data: { id } });
@@ -322,6 +322,7 @@ app.delete("/address", authenticateToken, async (req: AuthenticatedRequest, res:
     next(err);
   }
 });
+
 
 // GET parcel 
 app.get("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

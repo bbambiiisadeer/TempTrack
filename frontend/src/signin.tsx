@@ -39,7 +39,7 @@ function Signin() {
       if (res.ok) {
         login(data.token, data.user);
         console.log("Login success:", data);
-        navigate("/senderInfo"); 
+        navigate("/address"); 
       } else {
         setError(data.msg || "Login failed");
       }
@@ -68,7 +68,7 @@ function Signin() {
         <img
           src="/images/logo.png"
           alt="Logo"
-          className="absolute -top-13 left-1/2 transform -translate-x-1/2 h-8 w-auto"
+          className="absolute -top-13 left-1/2 transform -translate-x-1/2 h-7 w-auto"
         />
         
         <form className="w-full">

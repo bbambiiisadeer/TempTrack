@@ -1,13 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 
 function EditAddress() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-const [searchParams] = useSearchParams();
-const fromPage = searchParams.get('from');
+  const [searchParams] = useSearchParams();
+  const fromPage = searchParams.get("from");
 
   const [sender, setSender] = useState({
     id: "",
@@ -47,23 +52,28 @@ const fromPage = searchParams.get('from');
   };
 
   const handleSave = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/address", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(sender, ),
-      });
+  try {
+    const res = await fetch(`http://localhost:3000/address/${sender.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(sender),
+    });
 
-      if (!res.ok) throw new Error("Failed to update address");
+    if (!res.ok) throw new Error("Failed to update address");
 
-      await res.json();;
+    await res.json();
+
+    if (fromPage === "address") {
+      navigate("/address");
+    } else {
       navigate(`/saveaddress?from=${fromPage}`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update address");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update address");
+  }
+};
 
   return (
     <div
@@ -80,7 +90,6 @@ const fromPage = searchParams.get('from');
       <h2 className="text-[64px] font-semibold italic -mt-7 mb-6">Address</h2>
 
       <div className="bg-white p-8 rounded-t-2xl shadow-md w-full max-w-[860px] space-y-4">
-
         <div className="flex flex-col mb-7 mt-2">
           <label className="mb-2 font-normal text-sm inter">Full Name</label>
           <input
@@ -189,7 +198,13 @@ const fromPage = searchParams.get('from');
         <div className="flex items-center justify-end mt-4">
           <button
             type="button"
-           onClick={() => navigate(`/saveaddress?from=${fromPage}`)}
+            onClick={() => {
+              if (fromPage === "address") {
+                navigate("/address");
+              } else {
+                navigate(`/saveaddress?from=${fromPage}`);
+              }
+            }}
             className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
           >
             Cancel

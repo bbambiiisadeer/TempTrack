@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "./AuthContext"; 
+import { useAuth } from "./AuthContext";
 
 function CreateAddress() {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ function CreateAddress() {
   const [searchParams] = useSearchParams();
   const fromPage = searchParams.get("from");
 
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const userId = user?.id;
 
   const [addressData, setAddressData] = useState({
@@ -59,8 +59,11 @@ function CreateAddress() {
 
       const result = await res.json();
       console.log("Address created:", result);
-
-      navigate(`/saveaddress?from=${fromPage}`);
+      if (fromPage === "address") {
+        navigate("/address");
+      } else {
+        navigate(`/saveaddress?from=${fromPage}`);
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to create address");
@@ -147,7 +150,9 @@ function CreateAddress() {
           </div>
 
           <div className="flex flex-col mb-7">
-            <label className="mb-2 font-normal text-sm inter">Postal Code</label>
+            <label className="mb-2 font-normal text-sm inter">
+              Postal Code
+            </label>
             <input
               type="text"
               name="postalCode"
@@ -173,7 +178,9 @@ function CreateAddress() {
           </div>
 
           <div className="flex flex-col mb-7">
-            <label className="mb-2 font-normal text-sm inter">Phone Number</label>
+            <label className="mb-2 font-normal text-sm inter">
+              Phone Number
+            </label>
             <input
               type="tel"
               name="phoneNumber"
@@ -189,7 +196,13 @@ function CreateAddress() {
         <div className="flex items-center justify-end mt-4">
           <button
             type="button"
-            onClick={() => navigate(`/saveaddress?from=${fromPage}`)}
+            onClick={() => {
+              if (fromPage === "address") {
+                navigate("/address");
+              } else {
+                navigate(`/saveaddress?from=${fromPage}`);
+              }
+            }}
             className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
           >
             Cancel

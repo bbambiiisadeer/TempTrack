@@ -1,8 +1,9 @@
 import ActionBox from "./component/actionBox";
 import { FaArrowRightLong } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Homepage() {
+  const navigate = useNavigate();
   return (
     <div
       className="relative min-h-screen overflow-x-hidden"
@@ -43,7 +44,8 @@ function Homepage() {
           and receive instant alerts when the temperature <br />
           goes outside the specified range
         </p>
-        <button className="relative bg-black text-sm text-white py-2 px-6 rounded-full w-36 h-12 flex items-center justify-between">
+        <button className="relative bg-black text-sm text-white py-2 px-6 rounded-full w-36 h-12 flex items-center justify-between"
+        onClick={() => navigate("/signin")}>
           <span className="mr-2">Sign in</span>
           <span className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-white rounded-full flex items-center justify-center overflow-visible">
             <FaArrowRightLong className="text-black text-2xl relative -left-2" />
