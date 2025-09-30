@@ -37,6 +37,7 @@ export interface Address  {
   state?: string;
   postalCode?: string;
   isSaved: boolean;
+  createdAt?: string;
 }
 
 export interface User {

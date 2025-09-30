@@ -34,6 +34,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
   isAuthenticated: boolean;
 }
 
@@ -56,7 +57,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ตรวจสอบ token จาก cookies เมื่อ component mount
   useEffect(() => {
     const initializeAuth = async () => {
       const savedToken = getCookie('auth_token');
@@ -100,6 +100,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     deleteCookie('user_data');
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      setCookie('user_data', JSON.stringify(updatedUser), 7);
+    }
+  };
+
   const verifyToken = async (token: string): Promise<boolean> => {
     try {
       const response = await fetch('http://localhost:3000/verify-token', {
@@ -127,6 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!token && !!user,
   };
 

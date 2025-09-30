@@ -188,24 +188,33 @@ app.post("/users", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // UPDATE users 
-app.patch("/users", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// UPDATE user by ID (RESTful style)
+app.patch("/users/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { id, name, email, password }: { 
-      id: string; 
-      name?: string; 
-      email?: string; 
-      password?: string; 
-    } = req.body;
+    const { id } = req.params;
+    const { name, email, password } = req.body;
     
-    if (!id) throw new Error("Missing id");
+    if (!id) {
+      res.status(400).json({ msg: "Missing id" });
+      return;
+    }
 
     const exists = await dbClient.query.users.findMany({ where: eq(users.id, id) });
-    if (exists.length === 0) throw new Error("Invalid id");
+    if (exists.length === 0) {
+      res.status(404).json({ msg: "User not found" });
+      return;
+    }
+
+    // ตรวจสอบว่าเป็นเจ้าของ account หรือไม่
+    if (req.user?.userId !== id) {
+      res.status(403).json({ msg: "Unauthorized" });
+      return;
+    }
 
     const updateData: { name?: string; email?: string; password?: string } = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (password) {
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (password !== undefined) {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
@@ -214,6 +223,20 @@ app.patch("/users", authenticateToken, async (req: AuthenticatedRequest, res: Re
       .set(updateData)
       .where(eq(users.id, id))
       .returning();
+
+    // Update cookie with new user data
+    res.cookie('user_data', JSON.stringify({
+      id: result[0].id,
+      name: result[0].name,
+      email: result[0].email,
+      createdAt: result[0].createdAt
+    }), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
     res.json({ msg: "User updated", data: result[0] });
   } catch (err) {
     next(err);
@@ -295,14 +318,36 @@ app.post("/address", authenticateToken, async (req: AuthenticatedRequest, res: R
 app.patch("/address/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    
+    const allowedFields = [
+      'name', 'company', 'email', 'phoneNumber', 
+      'type', 'address', 'city', 'state', 'postalCode', 'isSaved'
+    ];
+    
+    const updateData: any = {};
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
 
-    const exists = await dbClient.query.address.findMany({ where: eq(address.id, id) });
-    if (!exists.length) return res.status(404).json({ msg: "Address not found" });
+    const exists = await dbClient.query.address.findMany({ 
+      where: eq(address.id, id) 
+    });
+    
+    if (!exists.length) {
+      return res.status(404).json({ msg: "Address not found" });
+    }
 
-    const result = await dbClient.update(address).set(updateData).where(eq(address.id, id)).returning();
+    const result = await dbClient
+      .update(address)
+      .set(updateData)
+      .where(eq(address.id, id))
+      .returning();
+      
     res.json({ msg: "Address updated", data: result[0] });
   } catch (err: any) {
+    console.error("Update error:", err);
     res.status(500).json({ msg: err.message });
   }
 });
