@@ -130,7 +130,7 @@ function ParcelDetail() {
 
       setParcel(resetParcel);
       resetShippingData();
-      navigate("/dashboard");
+      navigate("/sent");
     } catch (err) {
       console.error(err);
       alert("Error submitting parcel info");

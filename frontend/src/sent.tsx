@@ -3,6 +3,22 @@ import { Link, useNavigate } from "react-router-dom";
 import { IoIosAdd } from "react-icons/io";
 import { useAuth } from "./AuthContext";
 import { IoIosArrowDown } from "react-icons/io";
+import { IoSearch } from "react-icons/io5";
+
+interface ParcelData {
+  id: string;
+  trackingNo: string;
+  status: string;
+  createdAt: string;
+  senderAddress?: {
+    company?: string;
+    name: string;
+  };
+  recipientAddress?: {
+    company?: string;
+    name: string;
+  };
+}
 
 function SentPage() {
   const { user, logout, updateUser } = useAuth();
@@ -14,8 +30,54 @@ function SentPage() {
   const [editedName, setEditedName] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [parcels, setParcels] = useState<ParcelData[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchParcels = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const res = await fetch(
+          `http://localhost:3000/parcel?userId=${user.id}`,
+          {
+            credentials: "include",
+          }
+        );
+        
+        if (!res.ok) throw new Error("Failed to fetch parcels");
+        
+        const data = await res.json();
+        setParcels(data);
+      } catch (err) {
+        console.error("Error fetching parcels:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParcels();
+  }, [user?.id]);
+
+  const filteredParcels = parcels.filter((p) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      p.trackingNo.toLowerCase().includes(query) ||
+      p.senderAddress?.company?.toLowerCase().includes(query) ||
+      p.senderAddress?.name.toLowerCase().includes(query) ||
+      p.recipientAddress?.company?.toLowerCase().includes(query) ||
+      p.recipientAddress?.name.toLowerCase().includes(query)
+    );
+  });
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-CA'); 
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -202,13 +264,16 @@ function SentPage() {
                 </div>
               </div>
 
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white border border-black rounded-r-full text-black text-sm px-4 py-2 h-12 w-58 focus:outline-none"
-              />
+              <div className="relative w-58">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white border border-black rounded-r-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
+                />
+                <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              </div>
 
               <button
                 className="ml-4 flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
@@ -220,11 +285,64 @@ function SentPage() {
             </div>
           </div>
 
-          <div className="px-8 space-y-1">
+          <div className="px-8 space-y-1 flex-1 flex flex-col">
             <div
-              className="bg-white rounded-t-2xl shadow-md px-8 py-4"
+              className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1"
               style={{ minHeight: "calc(100vh - 180px)" }}
-            ></div>
+            >
+              <div
+                className="grid border-b border-black font-medium py-6 px-6 text-black"
+                style={{
+                  gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
+                }}
+              >
+                <div>Tracking No.</div>
+                <div>Date</div>
+                <div>From</div>
+                <div>To</div>
+                <div>Duration</div>
+                <div>Average Temp (°C)</div>
+                <div>Status</div>
+              </div>
+
+              <div className="flex-1 overflow-auto mt-2">
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-gray-500">Loading...</p>
+                  </div>
+                ) : filteredParcels.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-gray-500">No parcels found</p>
+                  </div>
+                ) : (
+                  filteredParcels.map((parcel) => (
+                    <div
+                      key={parcel.id}
+                      className="grid border-b border-gray-200 py-4.5 px-6"
+                      style={{
+                        gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
+                      }}
+                    >
+                      <div>{parcel.trackingNo}</div>
+                      <div>{formatDate(parcel.createdAt)}</div>
+                      <div>
+                        {parcel.senderAddress?.company ||
+                          parcel.senderAddress?.name ||
+                          "-"}
+                      </div>
+                      <div>
+                        {parcel.recipientAddress?.company ||
+                          parcel.recipientAddress?.name ||
+                          "-"}
+                      </div>
+                      <div>-</div>
+                      <div>-</div>
+                      <div>{parcel.status}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

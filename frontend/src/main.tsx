@@ -5,7 +5,7 @@ import "./index.css";
 import { ShippingProvider } from "./shippingContext";
 import SenderInfo from "./senderInfo";
 import RecipientInfo from "./recipientInfo";
-import ParcelDetail from "./parceldetail";
+import ParcelDetail from "./parceldetail";  
 import SaveAddress from "./saveAddress";
 import EditAddress from "./editAddress";
 import CreateAddress from "./createAddress";

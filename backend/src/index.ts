@@ -11,6 +11,7 @@ import morgan from "morgan";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import { desc } from "drizzle-orm";
 
 const debug = Debug("pf-backend");
 const app = express();
@@ -60,7 +61,12 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
   });
 };
 
-// SIGNIN API with Cookie Support
+function generateTrackingNumber(): string {
+  const digits = Math.floor(1000000000 + Math.random() * 9000000000);
+  return `#${digits}`;
+}
+
+// SIGNIN 
 app.post("/signin", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password }: { email: string; password: string } = req.body;
@@ -139,7 +145,7 @@ app.post("/signin", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// LOGOUT API
+// LOGOUT 
 app.post("/logout", (req: Request, res: Response) => {
   res.clearCookie('auth_token');
   res.clearCookie('user_data');
@@ -370,17 +376,62 @@ app.delete("/address/:id", authenticateToken, async (req: AuthenticatedRequest, 
 // GET parcel 
 app.get("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const results = await dbClient.query.parcel.findMany();
+    const { userId } = req.query;
+
+    if (!userId) {
+      res.status(400).json({ error: "userId is required" });
+      return;
+    }
+
+    const parcels = await dbClient.query.parcel.findMany({
+      where: eq(parcel.userId, userId as string),
+      orderBy: [desc(parcel.createdAt)],
+    });
+
+    const addressIds = new Set<string>();
+    parcels.forEach(p => {
+      if (p.senderAddressId) addressIds.add(p.senderAddressId);
+      if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
+    });
+
+    const addresses = await dbClient.query.address.findMany({
+      where: (address, { inArray }) => 
+        inArray(address.id, Array.from(addressIds))
+    });
+
+    const addressMap = new Map(addresses.map(a => [a.id, a]));
+
+    const results = parcels.map(p => ({
+      id: p.id,
+      trackingNo: p.trackingNo,
+      status: p.status,
+      createdAt: p.createdAt,
+      parcelName: p.parcelName,
+      quantity: p.quantity,
+      weight: p.weight,
+      senderAddress: p.senderAddressId ? {
+        id: addressMap.get(p.senderAddressId)?.id,
+        name: addressMap.get(p.senderAddressId)?.name,
+        company: addressMap.get(p.senderAddressId)?.company,
+      } : null,
+      recipientAddress: p.recipientAddressId ? {
+        id: addressMap.get(p.recipientAddressId)?.id,
+        name: addressMap.get(p.recipientAddressId)?.name,
+        company: addressMap.get(p.recipientAddressId)?.company,
+      } : null,
+    }));
+
     res.json(results);
   } catch (err) {
     next(err);
   }
 });
 
-// CREATE parcel 
+// CREATE parcel
 app.post("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { 
+      userId,
       senderAddressId, 
       recipientAddressId, 
       parcelName, 
@@ -395,11 +446,28 @@ app.post("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Re
       specialNotes 
     } = req.body;
 
-    if (!parcelName || !quantity || !weight) throw new Error("Missing required parcel fields");
+    if (!userId || !parcelName || !quantity || !weight) {
+      throw new Error("Missing required parcel fields");
+    }
+
+    let trackingNo = generateTrackingNumber();
+    let exists = await dbClient.query.parcel.findMany({
+      where: eq(parcel.trackingNo, trackingNo)
+    });
+    
+    while (exists.length > 0) {
+      trackingNo = generateTrackingNumber();
+      exists = await dbClient.query.parcel.findMany({
+        where: eq(parcel.trackingNo, trackingNo)
+      });
+    }
 
     const result = await dbClient
       .insert(parcel)
       .values({ 
+        userId,
+        trackingNo,
+        status: "In Transit",
         senderAddressId, 
         recipientAddressId, 
         parcelName, 
@@ -414,6 +482,7 @@ app.post("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Re
         specialNotes 
       })
       .returning();
+    
     res.json({ msg: "Parcel created", data: result[0] });
   } catch (err) {
     next(err);

@@ -42,11 +42,16 @@ export const address = pgTable("address", {
 
 export const parcel = pgTable("parcel", {
   id: uuid("id").primaryKey().defaultRandom(),
-
-  senderAddressId: uuid("sender_address_id")
-    .references(() => address.id, { onDelete: "set null" }),
-  recipientAddressId: uuid("recipient_address_id")
-    .references(() => address.id, { onDelete: "set null" }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  senderAddressId: uuid("sender_address_id").references(() => address.id, {
+    onDelete: "set null",
+  }),
+  recipientAddressId: uuid("recipient_address_id").references(
+    () => address.id,
+    { onDelete: "set null" }
+  ),
 
   parcelName: varchar("parcel_name", { length: 150 }).notNull(),
   quantity: integer("quantity").notNull(),
@@ -61,4 +66,8 @@ export const parcel = pgTable("parcel", {
 
   allowedDeviation: real("allowed_deviation"),
   specialNotes: text("special_notes"),
+
+  trackingNo: varchar("tracking_no", { length: 15 }).unique().notNull(),
+  status: varchar("status", { length: 50 }).default("In Transit").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
