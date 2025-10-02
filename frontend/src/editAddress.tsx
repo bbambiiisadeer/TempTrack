@@ -211,7 +211,7 @@ function EditAddress() {
           </button>
           <button
             onClick={handleSave}
-            className="bg-black text-sm text-white py-2 px-6 rounded-full w-32 h-12"
+            className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
           >
             Save
           </button>

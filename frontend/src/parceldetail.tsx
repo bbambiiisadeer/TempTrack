@@ -354,7 +354,7 @@ function ParcelDetail() {
         <div className="flex items-center justify-end mt-4">
           <button
             type="submit"
-            className="bg-black text-sm text-white py-2 px-6 rounded-full w-32 h-12"
+            className="bg-black hover:bg-gray-800 text-sm text-white py-2 px-6 rounded-full w-32 h-12"
           >
             Done
           </button>

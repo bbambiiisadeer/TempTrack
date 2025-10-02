@@ -15,6 +15,7 @@ import Signin from "./signin";
 import Signup from "./signup";
 import { AuthProvider } from './AuthContext';
 import Address from "./address";
+import Sent from "./sent";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -33,6 +34,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/address" element={<Address />} />
+          <Route path="/sent" element={<Sent />} />
         </Routes>
       </BrowserRouter>
     </ShippingProvider>

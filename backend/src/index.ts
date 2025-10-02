@@ -187,8 +187,7 @@ app.post("/users", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// UPDATE users 
-// UPDATE user by ID (RESTful style)
+// UPDATE users
 app.patch("/users/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -205,7 +204,6 @@ app.patch("/users/:id", authenticateToken, async (req: AuthenticatedRequest, res
       return;
     }
 
-    // ตรวจสอบว่าเป็นเจ้าของ account หรือไม่
     if (req.user?.userId !== id) {
       res.status(403).json({ msg: "Unauthorized" });
       return;
@@ -224,7 +222,6 @@ app.patch("/users/:id", authenticateToken, async (req: AuthenticatedRequest, res
       .where(eq(users.id, id))
       .returning();
 
-    // Update cookie with new user data
     res.cookie('user_data', JSON.stringify({
       id: result[0].id,
       name: result[0].name,
@@ -277,6 +274,7 @@ app.get("/address", authenticateToken, async (req: AuthenticatedRequest, res: Re
           eq(address.userId, userId as string),
           eq(address.isSaved, isSaved)
         ),
+      orderBy: (address, { desc }) => [desc(address.createdAt)],
     });
 
     res.json(results);
