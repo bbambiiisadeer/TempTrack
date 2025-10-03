@@ -4,11 +4,13 @@ import { IoIosAdd } from "react-icons/io";
 import { useAuth } from "./AuthContext";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
+import { FaCircleNotch, FaCheckCircle } from "react-icons/fa";
+import { MdContentCopy } from "react-icons/md";
 
 interface ParcelData {
   id: string;
   trackingNo: string;
-  status: string;
+  isDelivered: boolean;
   createdAt: string;
   senderAddress?: {
     company?: string;
@@ -32,14 +34,14 @@ function SentPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchParcels = async () => {
       if (!user?.id) return;
-      
+
       try {
         const res = await fetch(
           `http://localhost:3000/parcel?userId=${user.id}`,
@@ -47,9 +49,9 @@ function SentPage() {
             credentials: "include",
           }
         );
-        
+
         if (!res.ok) throw new Error("Failed to fetch parcels");
-        
+
         const data = await res.json();
         setParcels(data);
       } catch (err) {
@@ -76,7 +78,7 @@ function SentPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-CA'); 
+    return date.toLocaleDateString("en-CA");
   };
 
   useEffect(() => {
@@ -122,12 +124,20 @@ function SentPage() {
     }
   };
 
+  const handleCopyTracking = async (trackingNo: string) => {
+    try {
+      const numberOnly = trackingNo.replace(/[^0-9]/g, "");
+      await navigator.clipboard.writeText(numberOnly);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
     <div
       className="relative min-h-screen overflow-x-hidden flex flex-col"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      {/* Navbar */}
       <div className="flex justify-between items-center px-8 py-5 border-b border-black">
         <Link to="/">
           <img
@@ -288,56 +298,78 @@ function SentPage() {
           <div className="px-8 space-y-1 flex-1 flex flex-col">
             <div
               className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1"
-              style={{ minHeight: "calc(100vh - 180px)" }}
+              style={{ minHeight: "calc(100vh - 178px)" }}
             >
+              {/* Header */}
               <div
-                className="grid border-b border-black font-medium py-6 px-6 text-black"
+                className="grid border-b border-black font-medium py-6 px-6 text-base text-black"
                 style={{
                   gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                 }}
               >
-                <div>Tracking No.</div>
-                <div>Date</div>
-                <div>From</div>
-                <div>To</div>
-                <div>Duration</div>
-                <div>Average Temp (°C)</div>
-                <div>Status</div>
+                <div className="pl-4">Tracking No.</div>
+                <div className="pl-4">Date</div>
+                <div className="pl-4">From</div>
+                <div className="pl-4">To</div>
+                <div className="pl-4">Duration</div>
+                <div className="pl-4">Average Temp (°C)</div>
+                <div className="pl-4">Status</div>
               </div>
 
-              <div className="flex-1 overflow-auto mt-2">
+              {/* Rows */}
+              <div className="flex-1 overflow-auto">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
-                    <p className="text-gray-500">Loading...</p>
+                    <p className="text-gray-500 text-md">Loading...</p>
                   </div>
                 ) : filteredParcels.length === 0 ? (
-                  <div className="flex items-center justify-center py-12">
-                    <p className="text-gray-500">No parcels found</p>
+                  <div className="flex items-center justify-center py-8">
+                    <p className="text-gray-500 text-md">No parcels found</p>
                   </div>
                 ) : (
                   filteredParcels.map((parcel) => (
                     <div
                       key={parcel.id}
-                      className="grid border-b border-gray-200 py-4.5 px-6"
+                      className="grid border-b border-gray-200 py-3 px-6 items-center"
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}
                     >
-                      <div>{parcel.trackingNo}</div>
-                      <div>{formatDate(parcel.createdAt)}</div>
-                      <div>
+                      <div className="text-sm relative flex items-center gap-2 pl-4">
+                        <span>{parcel.trackingNo}</span>
+                        <button
+                          onClick={() => handleCopyTracking(parcel.trackingNo)}
+                          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                        >
+                          <MdContentCopy className="w-4 h-4 text-black" />
+                        </button>
+                      </div>
+                      <div className="text-sm pl-4">
+                        {formatDate(parcel.createdAt)}
+                      </div>
+                      <div className="text-sm pl-4">
                         {parcel.senderAddress?.company ||
                           parcel.senderAddress?.name ||
                           "-"}
                       </div>
-                      <div>
+                      <div className="text-sm pl-4">
                         {parcel.recipientAddress?.company ||
                           parcel.recipientAddress?.name ||
                           "-"}
                       </div>
-                      <div>-</div>
-                      <div>-</div>
-                      <div>{parcel.status}</div>
+                      <div className="pl-4">-</div>
+                      <div className="pl-4">-</div>
+                      {parcel.isDelivered ? (
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaCheckCircle className="text-black w-4 h-4 mr-3" />
+                          Delivered
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-29 rounded-md ml-4">
+                          <FaCircleNotch className="text-black w-4 h-4 mr-3" />
+                          In transit
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

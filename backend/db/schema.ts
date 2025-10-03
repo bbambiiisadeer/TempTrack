@@ -68,6 +68,6 @@ export const parcel = pgTable("parcel", {
   specialNotes: text("special_notes"),
 
   trackingNo: varchar("tracking_no", { length: 20 }).unique().notNull(),
-  status: varchar("status", { length: 50 }).default("In Transit").notNull(),
+  isDelivered: boolean("is_delivered").default(false).notNull(), 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

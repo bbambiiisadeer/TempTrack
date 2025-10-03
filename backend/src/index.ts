@@ -4,7 +4,12 @@ import { users, address, parcel } from "@db/schema.js";
 import cors from "cors";
 import Debug from "debug";
 import { eq } from "drizzle-orm";
-import type { ErrorRequestHandler, Request, Response, NextFunction } from "express";
+import type {
+  ErrorRequestHandler,
+  Request,
+  Response,
+  NextFunction,
+} from "express";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -16,7 +21,8 @@ import { desc } from "drizzle-orm";
 const debug = Debug("pf-backend");
 const app = express();
 
-const JWT_SECRET = process.env.JWT_SECRET || '34tgefdswe345t6y4e5htndbfgdder45tyhertw';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "34tgefdswe345t6y4e5htndbfgdder45tyhertw";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -30,30 +36,35 @@ interface AuthenticatedRequest extends Request {
 
 app.use(morgan("dev"));
 app.use(helmet());
-app.use(cors({ 
-  origin: "http://localhost:5173", 
-  credentials: true 
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
-app.use(cookieParser()); 
+app.use(cookieParser());
 
-const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
- 
-  const authHeader = req.headers['authorization'];
-  let token = authHeader && authHeader.split(' ')[1];
-  
+const authenticateToken = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.headers["authorization"];
+  let token = authHeader && authHeader.split(" ")[1];
+
   if (!token) {
     token = req.cookies?.auth_token;
   }
 
   if (!token) {
-    res.status(401).json({ msg: 'Access token required' });
+    res.status(401).json({ msg: "Access token required" });
     return;
   }
 
   jwt.verify(token, JWT_SECRET, (err: jwt.VerifyErrors | null, user: any) => {
     if (err) {
-      res.status(403).json({ msg: 'Invalid or expired token' });
+      res.status(403).json({ msg: "Invalid or expired token" });
       return;
     }
     req.user = user;
@@ -62,29 +73,29 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
 };
 
 function generateTrackingNumber(): string {
-  const digits = Math.floor(100000000000000 + Math.random() * 900000000000000);
+  const digits = Math.floor(1000000000000 + Math.random() * 9000000000000);
   return `#${digits}`;
 }
 
-// SIGNIN 
+// SIGNIN
 app.post("/signin", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password }: { email: string; password: string } = req.body;
-    
+
     if (!email || !password) {
-      res.status(400).json({ 
-        msg: "Email and password are required" 
+      res.status(400).json({
+        msg: "Email and password are required",
       });
       return;
     }
 
     const userResult = await dbClient.query.users.findMany({
-      where: eq(users.email, email)
+      where: eq(users.email, email),
     });
 
     if (userResult.length === 0) {
-      res.status(401).json({ 
-        msg: "Invalid email or password" 
+      res.status(401).json({
+        msg: "Invalid email or password",
       });
       return;
     }
@@ -92,42 +103,46 @@ app.post("/signin", async (req: Request, res: Response, next: NextFunction) => {
     const user = userResult[0];
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
+
     if (!isPasswordValid) {
-      res.status(401).json({ 
-        msg: "Invalid email or password" 
+      res.status(401).json({
+        msg: "Invalid email or password",
       });
       return;
     }
 
     const token = jwt.sign(
-      { 
-        userId: user.id, 
+      {
+        userId: user.id,
         email: user.email,
-        name: user.name 
+        name: user.name,
       },
       JWT_SECRET,
-      { expiresIn: '7d' } 
+      { expiresIn: "7d" }
     );
 
-    res.cookie('auth_token', token, {
-      httpOnly: false, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 
+    res.cookie("auth_token", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.cookie('user_data', JSON.stringify({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt
-    }), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie(
+      "user_data",
+      JSON.stringify({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      }),
+      {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      }
+    );
 
     res.json({
       msg: "Login successful",
@@ -136,28 +151,31 @@ app.post("/signin", async (req: Request, res: Response, next: NextFunction) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        createdAt: user.createdAt
-      }
+        createdAt: user.createdAt,
+      },
     });
-
   } catch (err) {
     next(err);
   }
 });
 
-// LOGOUT 
+// LOGOUT
 app.post("/logout", (req: Request, res: Response) => {
-  res.clearCookie('auth_token');
-  res.clearCookie('user_data');
+  res.clearCookie("auth_token");
+  res.clearCookie("user_data");
   res.json({ msg: "Logged out successfully" });
 });
 
-app.post("/verify-token", authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  res.json({
-    msg: "Token is valid",
-    user: req.user
-  });
-});
+app.post(
+  "/verify-token",
+  authenticateToken,
+  (req: AuthenticatedRequest, res: Response) => {
+    res.json({
+      msg: "Token is valid",
+      user: req.user,
+    });
+  }
+);
 
 // GET users
 app.get("/users", async (req: Request, res: Response, next: NextFunction) => {
@@ -169,14 +187,18 @@ app.get("/users", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// CREATE users 
+// CREATE users
 app.post("/users", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password }: { name: string; email: string; password: string } = req.body;
+    const {
+      name,
+      email,
+      password,
+    }: { name: string; email: string; password: string } = req.body;
     if (!name || !email || !password) throw new Error("Missing fields");
 
     const existingUser = await dbClient.query.users.findMany({
-      where: eq(users.email, email)
+      where: eq(users.email, email),
     });
 
     if (existingUser.length > 0) {
@@ -186,7 +208,10 @@ app.post("/users", async (req: Request, res: Response, next: NextFunction) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const result = await dbClient.insert(users).values({ name, email, password: hashedPassword }).returning();
+    const result = await dbClient
+      .insert(users)
+      .values({ name, email, password: hashedPassword })
+      .returning();
     res.json({ msg: "User created", data: result[0] });
   } catch (err) {
     next(err);
@@ -194,333 +219,420 @@ app.post("/users", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // UPDATE users
-app.patch("/users/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const { name, email, password } = req.body;
-    
-    if (!id) {
-      res.status(400).json({ msg: "Missing id" });
-      return;
+app.patch(
+  "/users/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { name, email, password } = req.body;
+
+      if (!id) {
+        res.status(400).json({ msg: "Missing id" });
+        return;
+      }
+
+      const exists = await dbClient.query.users.findMany({
+        where: eq(users.id, id),
+      });
+      if (exists.length === 0) {
+        res.status(404).json({ msg: "User not found" });
+        return;
+      }
+
+      if (req.user?.userId !== id) {
+        res.status(403).json({ msg: "Unauthorized" });
+        return;
+      }
+
+      const updateData: { name?: string; email?: string; password?: string } =
+        {};
+      if (name !== undefined) updateData.name = name;
+      if (email !== undefined) updateData.email = email;
+      if (password !== undefined) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
+
+      const result = await dbClient
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+
+      res.cookie(
+        "user_data",
+        JSON.stringify({
+          id: result[0].id,
+          name: result[0].name,
+          email: result[0].email,
+          createdAt: result[0].createdAt,
+        }),
+        {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        }
+      );
+
+      res.json({ msg: "User updated", data: result[0] });
+    } catch (err) {
+      next(err);
     }
-
-    const exists = await dbClient.query.users.findMany({ where: eq(users.id, id) });
-    if (exists.length === 0) {
-      res.status(404).json({ msg: "User not found" });
-      return;
-    }
-
-    if (req.user?.userId !== id) {
-      res.status(403).json({ msg: "Unauthorized" });
-      return;
-    }
-
-    const updateData: { name?: string; email?: string; password?: string } = {};
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email;
-    if (password !== undefined) {
-      updateData.password = await bcrypt.hash(password, 10);
-    }
-
-    const result = await dbClient
-      .update(users)
-      .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
-
-    res.cookie('user_data', JSON.stringify({
-      id: result[0].id,
-      name: result[0].name,
-      email: result[0].email,
-      createdAt: result[0].createdAt
-    }), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    res.json({ msg: "User updated", data: result[0] });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 // DELETE users
-app.delete("/users", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id }: { id: string } = req.body;
-    if (!id) throw new Error("Missing id");
+app.delete(
+  "/users",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id }: { id: string } = req.body;
+      if (!id) throw new Error("Missing id");
 
-    const exists = await dbClient.query.users.findMany({ where: eq(users.id, id) });
-    if (exists.length === 0) throw new Error("Invalid id");
+      const exists = await dbClient.query.users.findMany({
+        where: eq(users.id, id),
+      });
+      if (exists.length === 0) throw new Error("Invalid id");
 
-    await dbClient.delete(users).where(eq(users.id, id));
-    res.json({ msg: "User deleted", data: { id } });
-  } catch (err) {
-    next(err);
+      await dbClient.delete(users).where(eq(users.id, id));
+      res.json({ msg: "User deleted", data: { id } });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // GET saved address
-app.get("/address", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { userId, saved } = req.query;
+app.get(
+  "/address",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { userId, saved } = req.query;
 
-    if (!userId) {
-      res.status(400).json({ error: "userId is required" });
-      return;
+      if (!userId) {
+        res.status(400).json({ error: "userId is required" });
+        return;
+      }
+
+      const isSaved = saved === "true";
+
+      const results = await dbClient.query.address.findMany({
+        where: (address, { eq, and }) =>
+          and(
+            eq(address.userId, userId as string),
+            eq(address.isSaved, isSaved)
+          ),
+        orderBy: (address, { desc }) => [desc(address.createdAt)],
+      });
+
+      res.json(results);
+    } catch (err) {
+      next(err);
     }
-
-    const isSaved = saved === "true";
-
-    const results = await dbClient.query.address.findMany({
-      where: (address, { eq, and }) =>
-        and(
-          eq(address.userId, userId as string),
-          eq(address.isSaved, isSaved)
-        ),
-      orderBy: (address, { desc }) => [desc(address.createdAt)],
-    });
-
-    res.json(results);
-  } catch (err) {
-    next(err);
   }
-});
+);
 
-// CREATE address 
-app.post("/address", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { 
-      userId, 
-      name, 
-      company, 
-      email, 
-      phoneNumber, 
-      type, 
-      address: addr, 
-      city, 
-      state, 
-      postalCode, 
-      isSaved 
-    } = req.body;
-    
-    if (!userId || !name || !addr) throw new Error("Missing fields");
+// CREATE address
+app.post(
+  "/address",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const {
+        userId,
+        name,
+        company,
+        email,
+        phoneNumber,
+        type,
+        address: addr,
+        city,
+        state,
+        postalCode,
+        isSaved,
+      } = req.body;
 
-    const result = await dbClient
-      .insert(address)
-      .values({ userId, name, company, email, phoneNumber, type, address: addr, city, state, postalCode, isSaved })
-      .returning({ id: address.id }); 
-    res.json({ msg: "Address created", data: result[0] });
-  } catch (err) {
-    next(err);
+      if (!userId || !name || !addr) throw new Error("Missing fields");
+
+      const result = await dbClient
+        .insert(address)
+        .values({
+          userId,
+          name,
+          company,
+          email,
+          phoneNumber,
+          type,
+          address: addr,
+          city,
+          state,
+          postalCode,
+          isSaved,
+        })
+        .returning({ id: address.id });
+      res.json({ msg: "Address created", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // UPDATE address
-app.patch("/address/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    
-    const allowedFields = [
-      'name', 'company', 'email', 'phoneNumber', 
-      'type', 'address', 'city', 'state', 'postalCode', 'isSaved'
-    ];
-    
-    const updateData: any = {};
-    allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
+app.patch(
+  "/address/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const allowedFields = [
+        "name",
+        "company",
+        "email",
+        "phoneNumber",
+        "type",
+        "address",
+        "city",
+        "state",
+        "postalCode",
+        "isSaved",
+      ];
+
+      const updateData: any = {};
+      allowedFields.forEach((field) => {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      });
+
+      const exists = await dbClient.query.address.findMany({
+        where: eq(address.id, id),
+      });
+
+      if (!exists.length) {
+        return res.status(404).json({ msg: "Address not found" });
       }
-    });
 
-    const exists = await dbClient.query.address.findMany({ 
-      where: eq(address.id, id) 
-    });
-    
-    if (!exists.length) {
-      return res.status(404).json({ msg: "Address not found" });
+      const result = await dbClient
+        .update(address)
+        .set(updateData)
+        .where(eq(address.id, id))
+        .returning();
+
+      res.json({ msg: "Address updated", data: result[0] });
+    } catch (err: any) {
+      console.error("Update error:", err);
+      res.status(500).json({ msg: err.message });
     }
-
-    const result = await dbClient
-      .update(address)
-      .set(updateData)
-      .where(eq(address.id, id))
-      .returning();
-      
-    res.json({ msg: "Address updated", data: result[0] });
-  } catch (err: any) {
-    console.error("Update error:", err);
-    res.status(500).json({ msg: err.message });
   }
-});
+);
 
 // DELETE address by id
-app.delete("/address/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ msg: "Missing id" });
+app.delete(
+  "/address/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ msg: "Missing id" });
 
-    const exists = await dbClient.query.address.findMany({ where: eq(address.id, id) });
-    if (exists.length === 0) return res.status(404).json({ msg: "Address not found" });
+      const exists = await dbClient.query.address.findMany({
+        where: eq(address.id, id),
+      });
+      if (exists.length === 0)
+        return res.status(404).json({ msg: "Address not found" });
 
-    await dbClient.delete(address).where(eq(address.id, id));
-    res.json({ msg: "Address deleted", data: { id } });
-  } catch (err) {
-    next(err);
-  }
-});
-
-
-// GET parcel 
-app.get("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { userId } = req.query;
-
-    if (!userId) {
-      res.status(400).json({ error: "userId is required" });
-      return;
+      await dbClient.delete(address).where(eq(address.id, id));
+      res.json({ msg: "Address deleted", data: { id } });
+    } catch (err) {
+      next(err);
     }
-
-    const parcels = await dbClient.query.parcel.findMany({
-      where: eq(parcel.userId, userId as string),
-      orderBy: [desc(parcel.createdAt)],
-    });
-
-    const addressIds = new Set<string>();
-    parcels.forEach(p => {
-      if (p.senderAddressId) addressIds.add(p.senderAddressId);
-      if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
-    });
-
-    const addresses = await dbClient.query.address.findMany({
-      where: (address, { inArray }) => 
-        inArray(address.id, Array.from(addressIds))
-    });
-
-    const addressMap = new Map(addresses.map(a => [a.id, a]));
-
-    const results = parcels.map(p => ({
-      id: p.id,
-      trackingNo: p.trackingNo,
-      status: p.status,
-      createdAt: p.createdAt,
-      parcelName: p.parcelName,
-      quantity: p.quantity,
-      weight: p.weight,
-      senderAddress: p.senderAddressId ? {
-        id: addressMap.get(p.senderAddressId)?.id,
-        name: addressMap.get(p.senderAddressId)?.name,
-        company: addressMap.get(p.senderAddressId)?.company,
-      } : null,
-      recipientAddress: p.recipientAddressId ? {
-        id: addressMap.get(p.recipientAddressId)?.id,
-        name: addressMap.get(p.recipientAddressId)?.name,
-        company: addressMap.get(p.recipientAddressId)?.company,
-      } : null,
-    }));
-
-    res.json(results);
-  } catch (err) {
-    next(err);
   }
-});
+);
+
+// GET parcel
+app.get(
+  "/parcel",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.query;
+
+      if (!userId) {
+        res.status(400).json({ error: "userId is required" });
+        return;
+      }
+
+      const parcels = await dbClient.query.parcel.findMany({
+        where: eq(parcel.userId, userId as string),
+        orderBy: [desc(parcel.createdAt)],
+      });
+
+      const addressIds = new Set<string>();
+      parcels.forEach((p) => {
+        if (p.senderAddressId) addressIds.add(p.senderAddressId);
+        if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
+      });
+
+      const addresses = await dbClient.query.address.findMany({
+        where: (address, { inArray }) =>
+          inArray(address.id, Array.from(addressIds)),
+      });
+
+      const addressMap = new Map(addresses.map((a) => [a.id, a]));
+
+      const results = parcels.map((p) => ({
+        id: p.id,
+        trackingNo: p.trackingNo,
+        isDelivered: p.isDelivered,
+        createdAt: p.createdAt,
+        parcelName: p.parcelName,
+        quantity: p.quantity,
+        weight: p.weight,
+        senderAddress: p.senderAddressId
+          ? {
+              id: addressMap.get(p.senderAddressId)?.id,
+              name: addressMap.get(p.senderAddressId)?.name,
+              company: addressMap.get(p.senderAddressId)?.company,
+            }
+          : null,
+        recipientAddress: p.recipientAddressId
+          ? {
+              id: addressMap.get(p.recipientAddressId)?.id,
+              name: addressMap.get(p.recipientAddressId)?.name,
+              company: addressMap.get(p.recipientAddressId)?.company,
+            }
+          : null,
+      }));
+
+      res.json(results);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 // CREATE parcel
-app.post("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { 
-      userId,
-      senderAddressId, 
-      recipientAddressId, 
-      parcelName, 
-      quantity, 
-      weight, 
-      dimensionLength, 
-      dimensionWidth, 
-      dimensionHeight, 
-      temperatureRangeMin, 
-      temperatureRangeMax, 
-      allowedDeviation, 
-      specialNotes 
-    } = req.body;
-
-    if (!userId || !parcelName || !quantity || !weight) {
-      throw new Error("Missing required parcel fields");
-    }
-
-    // สร้าง tracking number
-    let trackingNo = generateTrackingNumber();
-    let exists = await dbClient.query.parcel.findMany({
-      where: eq(parcel.trackingNo, trackingNo)
-    });
-    
-    while (exists.length > 0) {
-      trackingNo = generateTrackingNumber();
-      exists = await dbClient.query.parcel.findMany({
-        where: eq(parcel.trackingNo, trackingNo)
-      });
-    }
-
-    const result = await dbClient
-      .insert(parcel)
-      .values({ 
+app.post(
+  "/parcel",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const {
         userId,
-        trackingNo,
-        status: "In Transit",
-        senderAddressId, 
-        recipientAddressId, 
-        parcelName, 
-        quantity: Number(quantity),
-        weight: Number(weight), 
-        dimensionLength: dimensionLength ? Number(dimensionLength) : null,
-        dimensionWidth: dimensionWidth ? Number(dimensionWidth) : null,
-        dimensionHeight: dimensionHeight ? Number(dimensionHeight) : null,
-        temperatureRangeMin: temperatureRangeMin ? Number(temperatureRangeMin) : null,
-        temperatureRangeMax: temperatureRangeMax ? Number(temperatureRangeMax) : null,
-        allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
-        specialNotes: specialNotes || null,
-      })
-      .returning();
-    
-    res.json({ msg: "Parcel created", data: result[0] });
-  } catch (err) {
-    next(err);
+        senderAddressId,
+        recipientAddressId,
+        parcelName,
+        quantity,
+        weight,
+        dimensionLength,
+        dimensionWidth,
+        dimensionHeight,
+        temperatureRangeMin,
+        temperatureRangeMax,
+        allowedDeviation,
+        specialNotes,
+      } = req.body;
+
+      if (!userId || !parcelName || !quantity || !weight) {
+        throw new Error("Missing required parcel fields");
+      }
+
+      // สร้าง tracking number
+      let trackingNo = generateTrackingNumber();
+      let exists = await dbClient.query.parcel.findMany({
+        where: eq(parcel.trackingNo, trackingNo),
+      });
+
+      while (exists.length > 0) {
+        trackingNo = generateTrackingNumber();
+        exists = await dbClient.query.parcel.findMany({
+          where: eq(parcel.trackingNo, trackingNo),
+        });
+      }
+
+      const result = await dbClient
+        .insert(parcel)
+        .values({
+          userId,
+          trackingNo,
+          senderAddressId,
+          recipientAddressId,
+          parcelName,
+          quantity: Number(quantity),
+          weight: Number(weight),
+          dimensionLength: dimensionLength ? Number(dimensionLength) : null,
+          dimensionWidth: dimensionWidth ? Number(dimensionWidth) : null,
+          dimensionHeight: dimensionHeight ? Number(dimensionHeight) : null,
+          temperatureRangeMin: temperatureRangeMin
+            ? Number(temperatureRangeMin)
+            : null,
+          temperatureRangeMax: temperatureRangeMax
+            ? Number(temperatureRangeMax)
+            : null,
+          allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
+          specialNotes: specialNotes || null,
+          isDelivered: false,
+        })
+        .returning();
+
+      res.json({ msg: "Parcel created", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-// UPDATE parcel 
-app.patch("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id, ...rest } = req.body;
-    if (!id) throw new Error("Missing id");
+// UPDATE parcel
+app.patch(
+  "/parcel",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id, ...rest } = req.body;
+      if (!id) throw new Error("Missing id");
 
-    const exists = await dbClient.query.parcel.findMany({ where: eq(parcel.id, id) });
-    if (exists.length === 0) throw new Error("Invalid id");
+      const exists = await dbClient.query.parcel.findMany({
+        where: eq(parcel.id, id),
+      });
+      if (exists.length === 0) throw new Error("Invalid id");
 
-    const result = await dbClient.update(parcel).set(rest).where(eq(parcel.id, id)).returning();
-    res.json({ msg: "Parcel updated", data: result[0] });
-  } catch (err) {
-    next(err);
+      const result = await dbClient
+        .update(parcel)
+        .set(rest)
+        .where(eq(parcel.id, id))
+        .returning();
+      res.json({ msg: "Parcel updated", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-// DELETE parcel 
-app.delete("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id }: { id: string } = req.body;
-    if (!id) throw new Error("Missing id");
+// DELETE parcel
+app.delete(
+  "/parcel",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id }: { id: string } = req.body;
+      if (!id) throw new Error("Missing id");
 
-    const exists = await dbClient.query.parcel.findMany({ where: eq(parcel.id, id) });
-    if (exists.length === 0) throw new Error("Invalid id");
+      const exists = await dbClient.query.parcel.findMany({
+        where: eq(parcel.id, id),
+      });
+      if (exists.length === 0) throw new Error("Invalid id");
 
-    await dbClient.delete(parcel).where(eq(parcel.id, id));
-    res.json({ msg: "Parcel deleted", data: { id } });
-  } catch (err) {
-    next(err);
+      await dbClient.delete(parcel).where(eq(parcel.id, id));
+      res.json({ msg: "Parcel deleted", data: { id } });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 const jsonErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   debug(err.message);

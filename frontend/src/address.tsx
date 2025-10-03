@@ -242,7 +242,9 @@ function AddressPage() {
               style={{ minHeight: "calc(100vh - 180px)" }}
             >
               {addresses.length === 0 ? (
-                <p className="text-gray-500 p-4">No saved addresses.</p>
+                <div className="flex items-center justify-center py-8">
+                    <p className="text-gray-500 text-md">No parcels found</p>
+                  </div>
               ) : (
                 addresses.map((addr) => (
                   <div
