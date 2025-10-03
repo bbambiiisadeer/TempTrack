@@ -238,8 +238,8 @@ function AddressPage() {
 
           <div className="px-8 space-y-1">
             <div
-              className="bg-white rounded-t-2xl shadow-md px-8 py-4"
-              style={{ minHeight: "calc(100vh - 180px)" }}
+              className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 py-4 pb-4"
+              style={{ minHeight: "calc(100vh - 178px)" }}
             >
               {addresses.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
@@ -249,7 +249,7 @@ function AddressPage() {
                 addresses.map((addr) => (
                   <div
                     key={addr.id}
-                    className="border-b space-y-0.5 border-black p-4 transition cursor-pointer"
+                    className="border-b space-y-0.5 border-black py-4 transition cursor-pointer px-12"
                   >
                     <div className="flex justify-between items-start py-1.5">
                       <div className="space-y-0.5">

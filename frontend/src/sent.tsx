@@ -65,16 +65,20 @@ function SentPage() {
   }, [user?.id]);
 
   const filteredParcels = parcels.filter((p) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      p.trackingNo.toLowerCase().includes(query) ||
-      p.senderAddress?.company?.toLowerCase().includes(query) ||
-      p.senderAddress?.name.toLowerCase().includes(query) ||
-      p.recipientAddress?.company?.toLowerCase().includes(query) ||
-      p.recipientAddress?.name.toLowerCase().includes(query)
-    );
-  });
+  if (!searchQuery) return true;
+  const query = searchQuery.toLowerCase();
+  const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
+  const statusStr = p.isDelivered ? "delivered" : "in transit";
+  return (
+    p.trackingNo.toLowerCase().includes(query) ||
+    p.senderAddress?.company?.toLowerCase().includes(query) ||
+    p.senderAddress?.name.toLowerCase().includes(query) ||
+    p.recipientAddress?.company?.toLowerCase().includes(query) ||
+    p.recipientAddress?.name.toLowerCase().includes(query) ||
+    dateStr.includes(query) ||     
+    statusStr.includes(query)       
+  );
+});
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
