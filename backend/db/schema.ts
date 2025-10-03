@@ -67,7 +67,7 @@ export const parcel = pgTable("parcel", {
   allowedDeviation: real("allowed_deviation"),
   specialNotes: text("special_notes"),
 
-  trackingNo: varchar("tracking_no", { length: 15 }).unique().notNull(),
+  trackingNo: varchar("tracking_no", { length: 20 }).unique().notNull(),
   status: varchar("status", { length: 50 }).default("In Transit").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -36,6 +36,13 @@
       "when": 1759398292362,
       "tag": "0004_wild_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759462313134,
+      "tag": "0005_tough_bug",
+      "breakpoints": true
     }
   ]
 }

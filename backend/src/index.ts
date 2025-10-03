@@ -62,7 +62,7 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
 };
 
 function generateTrackingNumber(): string {
-  const digits = Math.floor(1000000000 + Math.random() * 9000000000);
+  const digits = Math.floor(100000000000000 + Math.random() * 900000000000000);
   return `#${digits}`;
 }
 
@@ -450,6 +450,7 @@ app.post("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Re
       throw new Error("Missing required parcel fields");
     }
 
+    // สร้าง tracking number
     let trackingNo = generateTrackingNumber();
     let exists = await dbClient.query.parcel.findMany({
       where: eq(parcel.trackingNo, trackingNo)
@@ -471,15 +472,15 @@ app.post("/parcel", authenticateToken, async (req: AuthenticatedRequest, res: Re
         senderAddressId, 
         recipientAddressId, 
         parcelName, 
-        quantity, 
-        weight, 
-        dimensionLength, 
-        dimensionWidth, 
-        dimensionHeight, 
-        temperatureRangeMin, 
-        temperatureRangeMax, 
-        allowedDeviation, 
-        specialNotes 
+        quantity: Number(quantity),
+        weight: Number(weight), 
+        dimensionLength: dimensionLength ? Number(dimensionLength) : null,
+        dimensionWidth: dimensionWidth ? Number(dimensionWidth) : null,
+        dimensionHeight: dimensionHeight ? Number(dimensionHeight) : null,
+        temperatureRangeMin: temperatureRangeMin ? Number(temperatureRangeMin) : null,
+        temperatureRangeMax: temperatureRangeMax ? Number(temperatureRangeMax) : null,
+        allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
+        specialNotes: specialNotes || null,
       })
       .returning();
     
