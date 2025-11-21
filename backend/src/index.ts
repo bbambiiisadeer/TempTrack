@@ -453,6 +453,75 @@ app.delete(
   }
 );
 
+// GET parcel by tracking number (public - ไม่ต้อง login)
+app.get(
+  "/parcel/track/:trackingNo",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { trackingNo } = req.params;
+
+      if (!trackingNo) {
+        res.status(400).json({ error: "trackingNo is required" });
+        return;
+      }
+
+      // ค้นหา parcel ด้วย trackingNo
+      const result = await dbClient.query.parcel.findFirst({
+        where: eq(parcel.trackingNo, trackingNo),
+      });
+
+      if (!result) {
+        res.status(404).json({ error: "Parcel not found" });
+        return;
+      }
+
+      // ดึง address ของ sender และ recipient
+      let senderAddress = null;
+      let recipientAddress = null;
+
+      if (result.senderAddressId) {
+        const sender = await dbClient.query.address.findFirst({
+          where: eq(address.id, result.senderAddressId),
+        });
+        if (sender) {
+          senderAddress = {
+            id: sender.id,
+            name: sender.name,
+            company: sender.company,
+          };
+        }
+      }
+
+      if (result.recipientAddressId) {
+        const recipient = await dbClient.query.address.findFirst({
+          where: eq(address.id, result.recipientAddressId),
+        });
+        if (recipient) {
+          recipientAddress = {
+            id: recipient.id,
+            name: recipient.name,
+            company: recipient.company,
+          };
+        }
+      }
+
+      res.json({
+        id: result.id,
+        trackingNo: result.trackingNo,
+        isDelivered: result.isDelivered,
+        createdAt: result.createdAt,
+        parcelName: result.parcelName,
+        quantity: result.quantity,
+        weight: result.weight,
+        senderAddress,
+        recipientAddress,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // GET parcel
 app.get(
   "/parcel",
