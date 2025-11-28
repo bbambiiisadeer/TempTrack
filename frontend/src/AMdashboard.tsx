@@ -1,6 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { IoSearch } from "react-icons/io5";
+import { MdContentCopy } from "react-icons/md";
+import { IoIosArrowDown } from "react-icons/io";
+
+interface Driver {
+  id: string;
+  name: string;
+  regNumber?: string;
+  email?: string;
+  phoneNumber?: string;
+  imageUrl?: string;
+}
 
 interface ParcelData {
   id: string;
@@ -8,6 +20,15 @@ interface ParcelData {
   isDelivered: boolean;
   isShipped: boolean;
   createdAt: string;
+  driverId?: string;
+  senderAddress?: {
+    company?: string;
+    name: string;
+  };
+  recipientAddress?: {
+    company?: string;
+    name: string;
+  };
 }
 
 function AMdashboard() {
@@ -19,7 +40,9 @@ function AMdashboard() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -31,28 +54,31 @@ function AMdashboard() {
   }, [isEditingName]);
 
   useEffect(() => {
-    const fetchParcels = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:3000/parcel/all`,
-          {
-            credentials: "include",
-          }
-        );
+        // Fetch all parcels
+        const parcelRes = await fetch(`http://localhost:3000/parcel/all`, {
+          credentials: "include",
+        });
+        if (!parcelRes.ok) throw new Error("Failed to fetch parcels");
+        const parcelData = await parcelRes.json();
+        setParcels(parcelData);
 
-        if (!res.ok) throw new Error("Failed to fetch parcels");
-
-        const data = await res.json();
-        console.log("Fetched all parcels:", data);
-        setParcels(data);
+        // Fetch all drivers
+        const driverRes = await fetch(`http://localhost:3000/driver`, {
+          credentials: "include",
+        });
+        if (!driverRes.ok) throw new Error("Failed to fetch drivers");
+        const driverData = await driverRes.json();
+        setDrivers(driverData);
       } catch (err) {
-        console.error("Error fetching parcels:", err);
+        console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchParcels();
+    fetchData();
   }, []);
 
   const handleSaveName = async () => {
@@ -92,12 +118,102 @@ function AMdashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const totalPending = parcels.filter(p => !p.isDelivered && !p.isShipped).length;
-  const totalShipped = parcels.filter(p => p.isShipped).length;
-  const totalDelivered = parcels.filter(p => p.isDelivered).length;
+  const handleCopyTracking = async (trackingNo: string) => {
+    try {
+      const numberOnly = trackingNo.replace(/[^0-9]/g, "");
+      await navigator.clipboard.writeText(numberOnly);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const handleDriverChange = async (parcelId: string, driverId: string) => {
+    try {
+      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ driverId: driverId || null }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update driver");
+
+      // Update local state
+      setParcels((prev) =>
+        prev.map((p) =>
+          p.id === parcelId ? { ...p, driverId: driverId || undefined } : p
+        )
+      );
+    } catch (err) {
+      console.error("Error updating driver:", err);
+      alert("Failed to update driver");
+    }
+  };
+
+  const handleToggleShipped = async (
+    parcelId: string,
+    currentStatus: boolean
+  ) => {
+    try {
+      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ isShipped: !currentStatus }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update shipped status");
+
+      // Update local state
+      setParcels((prev) =>
+        prev.map((p) =>
+          p.id === parcelId ? { ...p, isShipped: !currentStatus } : p
+        )
+      );
+    } catch (err) {
+      console.error("Error updating shipped status:", err);
+      alert("Failed to update shipped status");
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-CA");
+  };
+
+  const totalPending = parcels.filter(
+    (p) => !p.isDelivered && !p.isShipped
+  ).length;
+  const totalShipped = parcels.filter((p) => p.isShipped).length;
+  const totalDelivered = parcels.filter((p) => p.isDelivered).length;
+
+  const filteredParcels = parcels
+    .filter((p) => !p.isDelivered && !p.isShipped)
+    .filter((p) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
+      const driver = drivers.find((d) => d.id === p.driverId);
+      return (
+        p.trackingNo.toLowerCase().includes(query) ||
+        p.senderAddress?.company?.toLowerCase().includes(query) ||
+        p.senderAddress?.name.toLowerCase().includes(query) ||
+        p.recipientAddress?.company?.toLowerCase().includes(query) ||
+        p.recipientAddress?.name.toLowerCase().includes(query) ||
+        driver?.name.toLowerCase().includes(query) ||
+        dateStr.includes(query)
+      );
+    });
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F1ECE6" }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "#F1ECE6" }}
+    >
       {/* Header */}
       <div className="flex justify-between items-center px-8 py-5">
         <h2 className="text-2xl font-semibold text-black">Dashboard</h2>
@@ -193,21 +309,181 @@ function AMdashboard() {
           <span className="text-4xl font-semibold mt-3">
             {loading ? "..." : totalShipped}
           </span>
-          <span className="text-black text-sm mt-3">Has been dispatched and is on the way</span>
+          <span className="text-black text-sm mt-3">
+            Has been dispatched and is on the way
+          </span>
         </div>
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Delivered</span>
           <span className="text-4xl font-semibold mt-3">
             {loading ? "..." : totalDelivered}
           </span>
-          <span className="text-black text-sm mt-3">Successfully received by the recipient</span>
+          <span className="text-black text-sm mt-3">
+            Successfully received by the recipient
+          </span>
         </div>
       </div>
 
-      {/* Main container */}
-      <div className="flex items-center justify-center">
-        <div className="w-400">
-          {/* ใส่ content อื่น ๆ ของ dashboard ได้ที่นี่ */}
+      <div className="flex justify-center px-8 flex-1">
+        <div className="flex justify-center flex-1">
+          <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
+            <div className="flex gap-8 mt-2 px-6">
+              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer">
+                Pending
+              </div>
+
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
+                Shipped
+              </div>
+
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
+                Delivered
+              </div>
+
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
+                Driver
+              </div>
+
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
+                All parcels
+              </div>
+            </div>
+            <div className="w-full h-[1px] bg-gray-400"></div>
+            <div className="relative w-88 mt-6 px-6">
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
+              />
+              <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+            </div>
+
+            {/* Table Header */}
+            <div
+              className="grid border-b border-black font-medium py-6 text-base text-black mt-2"
+              style={{
+                gridTemplateColumns: "5fr 3fr 6fr 6fr 7fr 3fr",
+              }}
+            >
+              <div className="pl-10">Tracking No.</div>
+              <div className="pl-4">Date</div>
+              <div className="pl-4">From</div>
+              <div className="pl-4">To</div>
+              <div className="pl-4">Driver</div>
+              <div className="pl-4">Shipped</div>
+            </div>
+
+            {/* Table Rows */}
+            <div className="flex-1 overflow-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <p className="text-gray-500 text-md">Loading...</p>
+                </div>
+              ) : filteredParcels.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-gray-500 text-md">No parcels found</p>
+                </div>
+              ) : (
+                filteredParcels.map((parcel) => (
+                  <div
+                    key={parcel.id}
+                    className="grid border-b border-gray-200 py-3 items-center"
+                    style={{
+                      gridTemplateColumns: "5fr 3fr 6fr 6fr 7fr 3fr",
+                    }}
+                  >
+                    <div className="text-sm relative flex items-center gap-2 pl-10">
+                      <span>{parcel.trackingNo}</span>
+                      <button
+                        onClick={() => handleCopyTracking(parcel.trackingNo)}
+                        className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                      >
+                        <MdContentCopy className="w-4 h-4 text-black" />
+                      </button>
+                    </div>
+                    <div className="text-sm pl-4">
+                      {formatDate(parcel.createdAt)}
+                    </div>
+                    <div className="text-sm pl-4">
+                      {parcel.senderAddress?.company ||
+                        parcel.senderAddress?.name ||
+                        "-"}
+                    </div>
+                    <div className="text-sm pl-4">
+                      {parcel.recipientAddress?.company ||
+                        parcel.recipientAddress?.name ||
+                        "-"}
+                    </div>
+                    <div className="pl-4">
+                      <div className="relative inline-block w-full max-w-60">
+                        <select
+                          value={parcel.driverId || ""}
+                          onChange={(e) =>
+                            handleDriverChange(parcel.id, e.target.value)
+                          }
+                          className="appearance-none w-full bg-white border border-gray-300 text-black text-sm rounded-r-lg rounded-l-4xl   px-3 py-3 pr-8 focus:outline-none focus:border-black"
+                          style={{
+                            paddingLeft:
+                              parcel.driverId &&
+                              drivers.find((d) => d.id === parcel.driverId)
+                                ?.imageUrl
+                                ? "3rem"
+                                : "1rem",
+                          }}
+                        >
+                          <option value="">Select Driver</option>
+                          {drivers.map((driver) => (
+                            <option key={driver.id} value={driver.id}>
+                              {driver.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Driver Image Circle */}
+                        {parcel.driverId &&
+                          drivers.find((d) => d.id === parcel.driverId)
+                            ?.imageUrl && (
+                            <div className="pointer-events-none absolute inset-y-0 left-2 flex items-center">
+                              <img
+                                src={
+                                  drivers.find((d) => d.id === parcel.driverId)
+                                    ?.imageUrl
+                                }
+                                alt="Driver"
+                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                              />
+                            </div>
+                          )}
+
+                        {/* Arrow Down Icon */}
+                        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          <IoIosArrowDown className="text-black w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pl-4">
+                      <button
+                        onClick={() =>
+                          handleToggleShipped(parcel.id, parcel.isShipped)
+                        }
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          parcel.isShipped ? "bg-black" : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            parcel.isShipped ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

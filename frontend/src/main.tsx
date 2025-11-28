@@ -20,6 +20,7 @@ import Sent from "./sent";
 import TrackStatus from "./trackStatus";
 import IncomingPage from "./incoming";
 import AMdashboard from "./AMdashboard";
+import AMadddriver from "./AMadddriver";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -43,6 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/trackstatus" element={<TrackStatus />} />
               <Route path="/incoming" element={<IncomingPage />} />
               <Route path="/amdashboard" element={<AMdashboard />} />
+              <Route path="/amadddriver" element={<AMadddriver />} />
             </Routes>
           </BrowserRouter>
         </ShippingProvider>

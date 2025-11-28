@@ -52,7 +52,9 @@ export const parcel = pgTable("parcel", {
     () => address.id,
     { onDelete: "set null" }
   ),
-
+  driverId: uuid("driver_id").references(() => driver.id, {
+    onDelete: "set null",
+  }),
   parcelName: varchar("parcel_name", { length: 150 }).notNull(),
   quantity: integer("quantity").notNull(),
   weight: real("weight").notNull(),
@@ -68,7 +70,17 @@ export const parcel = pgTable("parcel", {
   specialNotes: text("special_notes"),
 
   trackingNo: varchar("tracking_no", { length: 20 }).unique().notNull(),
-  isDelivered: boolean("is_delivered").default(false).notNull(), 
+  isDelivered: boolean("is_delivered").default(false).notNull(),
   isShipped: boolean("is_shipped").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const driver = pgTable("driver", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 100 }).notNull(),
+  regNumber: varchar("reg_number", { length: 50 }),
+  imageUrl: text("image_url"),
+  email: varchar("email", { length: 150 }),
+  phoneNumber: varchar("phone_number", { length: 20 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

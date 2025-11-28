@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { dbClient } from "@db/client.js";
-import { users, address, parcel } from "@db/schema.js";
+import { users, address, parcel, driver } from "@db/schema.js";
 import cors from "cors";
 import Debug from "debug";
 import { eq } from "drizzle-orm";
@@ -305,6 +305,130 @@ app.delete(
   }
 );
 
+// ==================== DRIVER ROUTES ====================
+
+// GET all drivers
+app.get(
+  "/driver",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const drivers = await dbClient.query.driver.findMany({
+        orderBy: [desc(driver.createdAt)],
+      });
+      res.json(drivers);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// CREATE driver
+app.post(
+  "/driver",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { name, regNumber, imageUrl, email, phoneNumber } = req.body;
+
+      if (!name) {
+        res.status(400).json({ msg: "Name is required" });
+        return;
+      }
+
+      const result = await dbClient
+        .insert(driver)
+        .values({
+          name,
+          regNumber: regNumber || null,
+          imageUrl: imageUrl || null,
+          email: email || null,
+          phoneNumber: phoneNumber || null,
+        })
+        .returning();
+
+      res.json({ msg: "Driver created", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// UPDATE driver
+app.patch(
+  "/driver/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { name, regNumber, imageUrl, email, phoneNumber } = req.body;
+
+      if (!id) {
+        res.status(400).json({ msg: "Missing id" });
+        return;
+      }
+
+      const exists = await dbClient.query.driver.findMany({
+        where: eq(driver.id, id),
+      });
+
+      if (exists.length === 0) {
+        res.status(404).json({ msg: "Driver not found" });
+        return;
+      }
+
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (regNumber !== undefined) updateData.regNumber = regNumber;
+      if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+      if (email !== undefined) updateData.email = email;
+      if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+
+      const result = await dbClient
+        .update(driver)
+        .set(updateData)
+        .where(eq(driver.id, id))
+        .returning();
+
+      res.json({ msg: "Driver updated", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// DELETE driver
+app.delete(
+  "/driver/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ msg: "Missing id" });
+        return;
+      }
+
+      const exists = await dbClient.query.driver.findMany({
+        where: eq(driver.id, id),
+      });
+
+      if (exists.length === 0) {
+        res.status(404).json({ msg: "Driver not found" });
+        return;
+      }
+
+      await dbClient.delete(driver).where(eq(driver.id, id));
+      res.json({ msg: "Driver deleted", data: { id } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ==================== ADDRESS ROUTES ====================
+
 // GET saved address
 app.get(
   "/address",
@@ -454,6 +578,8 @@ app.delete(
   }
 );
 
+// ==================== PARCEL ROUTES ====================
+
 // GET parcel by tracking number (public - ไม่ต้อง login)
 app.get(
   "/parcel/track/:trackingNo",
@@ -466,7 +592,6 @@ app.get(
         return;
       }
 
-      // ค้นหา parcel ด้วย trackingNo
       const result = await dbClient.query.parcel.findFirst({
         where: eq(parcel.trackingNo, trackingNo),
       });
@@ -476,7 +601,6 @@ app.get(
         return;
       }
 
-      // ดึง address ของ sender และ recipient
       let senderAddress = null;
       let recipientAddress = null;
 
@@ -510,6 +634,7 @@ app.get(
         id: result.id,
         trackingNo: result.trackingNo,
         isDelivered: result.isDelivered,
+        isShipped: result.isShipped,
         createdAt: result.createdAt,
         parcelName: result.parcelName,
         quantity: result.quantity,
@@ -517,136 +642,6 @@ app.get(
         senderAddress,
         recipientAddress,
       });
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-
-// GET parcel
-app.get(
-  "/parcel",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const { userId } = req.query;
-
-      if (!userId) {
-        res.status(400).json({ error: "userId is required" });
-        return;
-      }
-
-      const parcels = await dbClient.query.parcel.findMany({
-        where: eq(parcel.userId, userId as string),
-        orderBy: [desc(parcel.createdAt)],
-      });
-
-      const addressIds = new Set<string>();
-      parcels.forEach((p) => {
-        if (p.senderAddressId) addressIds.add(p.senderAddressId);
-        if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
-      });
-
-      const addresses = await dbClient.query.address.findMany({
-        where: (address, { inArray }) =>
-          inArray(address.id, Array.from(addressIds)),
-      });
-
-      const addressMap = new Map(addresses.map((a) => [a.id, a]));
-
-      const results = parcels.map((p) => ({
-        id: p.id,
-        trackingNo: p.trackingNo,
-        isDelivered: p.isDelivered,
-        createdAt: p.createdAt,
-        parcelName: p.parcelName,
-        quantity: p.quantity,
-        weight: p.weight,
-        senderAddress: p.senderAddressId
-          ? {
-              id: addressMap.get(p.senderAddressId)?.id,
-              name: addressMap.get(p.senderAddressId)?.name,
-              company: addressMap.get(p.senderAddressId)?.company,
-            }
-          : null,
-        recipientAddress: p.recipientAddressId
-          ? {
-              id: addressMap.get(p.recipientAddressId)?.id,
-              name: addressMap.get(p.recipientAddressId)?.name,
-              company: addressMap.get(p.recipientAddressId)?.company,
-            }
-          : null,
-      }));
-
-      res.json(results);
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-
-// CREATE parcel
-app.post(
-  "/parcel",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const {
-        userId,
-        senderAddressId,
-        recipientAddressId,
-        parcelName,
-        quantity,
-        weight,
-        dimensionLength,
-        dimensionWidth,
-        dimensionHeight,
-        temperatureRangeMin,
-        temperatureRangeMax,
-        allowedDeviation,
-        specialNotes,
-      } = req.body;
-
-      if (!userId || !parcelName || !quantity || !weight) {
-        throw new Error("Missing required parcel fields");
-      }
-
-      // สร้าง tracking number
-      let trackingNo = generateTrackingNumber();
-      let exists = await dbClient.query.parcel.findMany({
-        where: eq(parcel.trackingNo, trackingNo),
-      });
-
-      while (exists.length > 0) {
-        trackingNo = generateTrackingNumber();
-        exists = await dbClient.query.parcel.findMany({
-          where: eq(parcel.trackingNo, trackingNo),
-        });
-      }
-
-      const result = await dbClient
-        .insert(parcel)
-        .values({
-          userId,
-          trackingNo,
-          senderAddressId,
-          recipientAddressId,
-          parcelName,
-          quantity: Number(quantity),
-          weight: Number(weight),
-          dimensionLength: dimensionLength ? Number(dimensionLength) : null,
-          dimensionWidth: dimensionWidth ? Number(dimensionWidth) : null,
-          dimensionHeight: dimensionHeight ? Number(dimensionHeight) : null,
-          temperatureRangeMin: temperatureRangeMin ? Number(temperatureRangeMin) : null,
-          temperatureRangeMax: temperatureRangeMax ? Number(temperatureRangeMax) : null,
-          allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
-          specialNotes: specialNotes || null,
-          isDelivered: false,
-          isShipped: false, // ✅ ตั้ง default
-        })
-        .returning();
-
-      res.json({ msg: "Parcel created", data: result[0] });
     } catch (err) {
       next(err);
     }
@@ -684,7 +679,8 @@ app.get(
         id: p.id,
         trackingNo: p.trackingNo,
         isDelivered: p.isDelivered,
-        isShipped: p.isShipped, // ✅ เพิ่มตรงนี้
+        isShipped: p.isShipped,
+        driverId: p.driverId,
         createdAt: p.createdAt,
         parcelName: p.parcelName,
         quantity: p.quantity,
@@ -739,7 +735,8 @@ app.get(
         id: p.id,
         trackingNo: p.trackingNo,
         isDelivered: p.isDelivered,
-        isShipped: p.isShipped, // ✅ เพิ่มตรงนี้
+        isShipped: p.isShipped,
+        driverId: p.driverId,
         createdAt: p.createdAt,
         parcelName: p.parcelName,
         quantity: p.quantity,
@@ -767,21 +764,99 @@ app.get(
   }
 );
 
-// UPDATE parcel
-app.patch(
+// CREATE parcel
+app.post(
   "/parcel",
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { id, ...rest } = req.body;
-      if (!id) throw new Error("Missing id");
+      const {
+        userId,
+        senderAddressId,
+        recipientAddressId,
+        parcelName,
+        quantity,
+        weight,
+        dimensionLength,
+        dimensionWidth,
+        dimensionHeight,
+        temperatureRangeMin,
+        temperatureRangeMax,
+        allowedDeviation,
+        specialNotes,
+      } = req.body;
 
-      const exists = await dbClient.query.parcel.findMany({
+      if (!userId || !parcelName || !quantity || !weight) {
+        throw new Error("Missing required parcel fields");
+      }
+
+      let trackingNo = generateTrackingNumber();
+      let exists = await dbClient.query.parcel.findMany({
+        where: eq(parcel.trackingNo, trackingNo),
+      });
+
+      while (exists.length > 0) {
+        trackingNo = generateTrackingNumber();
+        exists = await dbClient.query.parcel.findMany({
+          where: eq(parcel.trackingNo, trackingNo),
+        });
+      }
+
+      const result = await dbClient
+        .insert(parcel)
+        .values({
+          userId,
+          trackingNo,
+          senderAddressId,
+          recipientAddressId,
+          parcelName,
+          quantity: Number(quantity),
+          weight: Number(weight),
+          dimensionLength: dimensionLength ? Number(dimensionLength) : null,
+          dimensionWidth: dimensionWidth ? Number(dimensionWidth) : null,
+          dimensionHeight: dimensionHeight ? Number(dimensionHeight) : null,
+          temperatureRangeMin: temperatureRangeMin
+            ? Number(temperatureRangeMin)
+            : null,
+          temperatureRangeMax: temperatureRangeMax
+            ? Number(temperatureRangeMax)
+            : null,
+          allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
+          specialNotes: specialNotes || null,
+          isDelivered: false,
+          isShipped: false,
+        })
+        .returning();
+
+      res.json({ msg: "Parcel created", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// UPDATE parcel by ID (support driverId and isShipped)
+app.patch(
+  "/parcel/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ msg: "Missing parcel id" });
+        return;
+      }
+
+      const exists = await dbClient.query.parcel.findFirst({
         where: eq(parcel.id, id),
       });
-      if (exists.length === 0) throw new Error("Invalid id");
 
-      // ✅ อนุญาตให้ update isShipped
+      if (!exists) {
+        res.status(404).json({ msg: "Parcel not found" });
+        return;
+      }
+
       const allowedFields = [
         "parcelName",
         "quantity",
@@ -795,11 +870,14 @@ app.patch(
         "specialNotes",
         "isDelivered",
         "isShipped",
+        "driverId",
       ];
 
       const updateData: any = {};
       allowedFields.forEach((field) => {
-        if (rest[field] !== undefined) updateData[field] = rest[field];
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
       });
 
       const result = await dbClient
