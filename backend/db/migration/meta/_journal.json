@@ -71,6 +71,13 @@
       "when": 1764337718862,
       "tag": "0009_unknown_thunderball",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1764346354373,
+      "tag": "0010_classy_madrox",
+      "breakpoints": true
     }
   ]
 }

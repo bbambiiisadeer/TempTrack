@@ -19,6 +19,7 @@ import Address from "./address";
 import Sent from "./sent";
 import TrackStatus from "./trackStatus";
 import IncomingPage from "./incoming";
+import AMdashboard from "./AMdashboard";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/sent" element={<Sent />} />
               <Route path="/trackstatus" element={<TrackStatus />} />
               <Route path="/incoming" element={<IncomingPage />} />
+              <Route path="/amdashboard" element={<AMdashboard />} />
             </Routes>
           </BrowserRouter>
         </ShippingProvider>

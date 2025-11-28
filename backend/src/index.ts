@@ -152,6 +152,7 @@ app.post("/signin", async (req: Request, res: Response, next: NextFunction) => {
         name: user.name,
         email: user.email,
         createdAt: user.createdAt,
+        isAdmin: user.isAdmin,
       },
     });
   } catch (err) {
@@ -636,19 +637,130 @@ app.post(
           dimensionLength: dimensionLength ? Number(dimensionLength) : null,
           dimensionWidth: dimensionWidth ? Number(dimensionWidth) : null,
           dimensionHeight: dimensionHeight ? Number(dimensionHeight) : null,
-          temperatureRangeMin: temperatureRangeMin
-            ? Number(temperatureRangeMin)
-            : null,
-          temperatureRangeMax: temperatureRangeMax
-            ? Number(temperatureRangeMax)
-            : null,
+          temperatureRangeMin: temperatureRangeMin ? Number(temperatureRangeMin) : null,
+          temperatureRangeMax: temperatureRangeMax ? Number(temperatureRangeMax) : null,
           allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
           specialNotes: specialNotes || null,
           isDelivered: false,
+          isShipped: false, // ✅ ตั้ง default
         })
         .returning();
 
       res.json({ msg: "Parcel created", data: result[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET parcel (user)
+app.get(
+  "/parcel",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) return res.status(400).json({ error: "userId is required" });
+
+      const parcels = await dbClient.query.parcel.findMany({
+        where: eq(parcel.userId, userId as string),
+        orderBy: [desc(parcel.createdAt)],
+      });
+
+      const addressIds = new Set<string>();
+      parcels.forEach((p) => {
+        if (p.senderAddressId) addressIds.add(p.senderAddressId);
+        if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
+      });
+
+      const addresses = await dbClient.query.address.findMany({
+        where: (address, { inArray }) =>
+          inArray(address.id, Array.from(addressIds)),
+      });
+
+      const addressMap = new Map(addresses.map((a) => [a.id, a]));
+
+      const results = parcels.map((p) => ({
+        id: p.id,
+        trackingNo: p.trackingNo,
+        isDelivered: p.isDelivered,
+        isShipped: p.isShipped, // ✅ เพิ่มตรงนี้
+        createdAt: p.createdAt,
+        parcelName: p.parcelName,
+        quantity: p.quantity,
+        weight: p.weight,
+        senderAddress: p.senderAddressId
+          ? {
+              id: addressMap.get(p.senderAddressId)?.id,
+              name: addressMap.get(p.senderAddressId)?.name,
+              company: addressMap.get(p.senderAddressId)?.company,
+            }
+          : null,
+        recipientAddress: p.recipientAddressId
+          ? {
+              id: addressMap.get(p.recipientAddressId)?.id,
+              name: addressMap.get(p.recipientAddressId)?.name,
+              company: addressMap.get(p.recipientAddressId)?.company,
+            }
+          : null,
+      }));
+
+      res.json(results);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET all parcels (admin)
+app.get(
+  "/parcel/all",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const parcels = await dbClient.query.parcel.findMany({
+        orderBy: [desc(parcel.createdAt)],
+      });
+
+      const addressIds = new Set<string>();
+      parcels.forEach((p) => {
+        if (p.senderAddressId) addressIds.add(p.senderAddressId);
+        if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
+      });
+
+      const addresses = await dbClient.query.address.findMany({
+        where: (address, { inArray }) =>
+          inArray(address.id, Array.from(addressIds)),
+      });
+
+      const addressMap = new Map(addresses.map((a) => [a.id, a]));
+
+      const results = parcels.map((p) => ({
+        id: p.id,
+        trackingNo: p.trackingNo,
+        isDelivered: p.isDelivered,
+        isShipped: p.isShipped, // ✅ เพิ่มตรงนี้
+        createdAt: p.createdAt,
+        parcelName: p.parcelName,
+        quantity: p.quantity,
+        weight: p.weight,
+        senderAddress: p.senderAddressId
+          ? {
+              id: addressMap.get(p.senderAddressId)?.id,
+              name: addressMap.get(p.senderAddressId)?.name,
+              company: addressMap.get(p.senderAddressId)?.company,
+            }
+          : null,
+        recipientAddress: p.recipientAddressId
+          ? {
+              id: addressMap.get(p.recipientAddressId)?.id,
+              name: addressMap.get(p.recipientAddressId)?.name,
+              company: addressMap.get(p.recipientAddressId)?.company,
+            }
+          : null,
+      }));
+
+      res.json(results);
     } catch (err) {
       next(err);
     }
@@ -669,11 +781,33 @@ app.patch(
       });
       if (exists.length === 0) throw new Error("Invalid id");
 
+      // ✅ อนุญาตให้ update isShipped
+      const allowedFields = [
+        "parcelName",
+        "quantity",
+        "weight",
+        "dimensionLength",
+        "dimensionWidth",
+        "dimensionHeight",
+        "temperatureRangeMin",
+        "temperatureRangeMax",
+        "allowedDeviation",
+        "specialNotes",
+        "isDelivered",
+        "isShipped",
+      ];
+
+      const updateData: any = {};
+      allowedFields.forEach((field) => {
+        if (rest[field] !== undefined) updateData[field] = rest[field];
+      });
+
       const result = await dbClient
         .update(parcel)
-        .set(rest)
+        .set(updateData)
         .where(eq(parcel.id, id))
         .returning();
+
       res.json({ msg: "Parcel updated", data: result[0] });
     } catch (err) {
       next(err);

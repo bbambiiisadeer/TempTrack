@@ -1,0 +1,1 @@
+ALTER TABLE "parcel" ADD COLUMN "is_shipped" boolean DEFAULT false NOT NULL;

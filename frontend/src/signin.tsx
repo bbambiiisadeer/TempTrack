@@ -39,7 +39,13 @@ function Signin() {
       if (res.ok) {
         login(data.token, data.user);
         console.log("Login success:", data);
-        navigate("/sent"); 
+
+        // ตรวจสอบ isAdmin
+        if (data.user.isAdmin) {
+          navigate("/amdashboard"); // สำหรับ admin
+        } else {
+          navigate("/sent"); // สำหรับ user ปกติ
+        }
       } else {
         setError(data.msg || "Login failed");
       }
