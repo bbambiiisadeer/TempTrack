@@ -1,40 +1,64 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import { useAuth } from "./AuthContext";
 
 interface TrackingContextType {
-  trackingNo: string | null;
-  setTrackingNo: (trackingNo: string | null) => void;
+  trackingNumbers: string[];
+  addTrackingNo: (trackingNo: string) => void;
+  removeTrackingNo: (trackingNo: string) => void;
   clearTracking: () => void;
 }
 
 const TrackingContext = createContext<TrackingContextType | undefined>(undefined);
 
 export function TrackingProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  
+  // สร้าง key ตาม userId (ถ้าไม่ login ใช้ "guest")
+  const storageKey = user?.id ? `trackingNumbers_${user.id}` : "trackingNumbers_guest";
+
   // อ่านค่าจาก sessionStorage ตอนเริ่มต้น
-  const [trackingNo, setTrackingNoState] = useState<string | null>(() => {
-    return sessionStorage.getItem("trackingNo");
+  const [trackingNumbers, setTrackingNumbers] = useState<string[]>(() => {
+    const stored = sessionStorage.getItem(storageKey);
+    return stored ? JSON.parse(stored) : [];
   });
 
-  // เมื่อ trackingNo เปลี่ยน ให้เก็บลง sessionStorage
+  // เมื่อ user เปลี่ยน ให้โหลดข้อมูลของ user คนนั้น
   useEffect(() => {
-    if (trackingNo) {
-      sessionStorage.setItem("trackingNo", trackingNo);
-    } else {
-      sessionStorage.removeItem("trackingNo");
-    }
-  }, [trackingNo]);
+    const stored = sessionStorage.getItem(storageKey);
+    setTrackingNumbers(stored ? JSON.parse(stored) : []);
+  }, [storageKey]);
 
-  const setTrackingNo = (value: string | null) => {
-    setTrackingNoState(value);
+  // เมื่อ trackingNumbers เปลี่ยน ให้เก็บลง sessionStorage
+  useEffect(() => {
+    if (trackingNumbers.length > 0) {
+      sessionStorage.setItem(storageKey, JSON.stringify(trackingNumbers));
+    } else {
+      sessionStorage.removeItem(storageKey);
+    }
+  }, [trackingNumbers, storageKey]);
+
+  const addTrackingNo = (value: string) => {
+    setTrackingNumbers((prev) => {
+      // ไม่ให้ซ้ำ
+      if (prev.includes(value)) return prev;
+      return [...prev, value];
+    });
+  };
+
+  const removeTrackingNo = (value: string) => {
+    setTrackingNumbers((prev) => prev.filter((no) => no !== value));
   };
 
   const clearTracking = () => {
-    setTrackingNoState(null);
-    sessionStorage.removeItem("trackingNo");
+    setTrackingNumbers([]);
+    sessionStorage.removeItem(storageKey);
   };
 
   return (
-    <TrackingContext.Provider value={{ trackingNo, setTrackingNo, clearTracking }}>
+    <TrackingContext.Provider
+      value={{ trackingNumbers, addTrackingNo, removeTrackingNo, clearTracking }}
+    >
       {children}
     </TrackingContext.Provider>
   );

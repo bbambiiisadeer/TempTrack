@@ -23,7 +23,7 @@ interface ParcelData {
 
 function IncomingPage() {
   const { user, logout, updateUser } = useAuth();
-  const { trackingNo: trackingNoFromContext } = useTracking();
+  const { trackingNumbers } = useTracking();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -38,41 +38,58 @@ function IncomingPage() {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log("trackingNoFromContext:", trackingNoFromContext);
+    console.log("trackingNumbers:", trackingNumbers);
     
     const fetchParcels = async () => {
-      if (!trackingNoFromContext) {
-        console.log("No tracking number, skipping fetch");
+      if (trackingNumbers.length === 0) {
+        console.log("No tracking numbers, skipping fetch");
         setParcels([]);
         return;
       }
 
       setLoading(true);
       try {
-        const formattedTrackingNo = trackingNoFromContext.startsWith("#")
-          ? trackingNoFromContext
-          : `#${trackingNoFromContext}`;
-        const url = `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`;
-        console.log("Fetching URL:", url);
+        // Fetch all tracking numbers in parallel
+        const promises = trackingNumbers.map(async (trackingNo) => {
+          const formattedTrackingNo = trackingNo.startsWith("#")
+            ? trackingNo
+            : `#${trackingNo}`;
+          const url = `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`;
+          console.log("Fetching URL:", url);
 
-        const res = await fetch(url, {
-          credentials: "include",
+          try {
+            const res = await fetch(url, {
+              credentials: "include",
+            });
+
+            console.log(`Response status for ${trackingNo}:`, res.status);
+
+            if (!res.ok) return null;
+
+            const data = await res.json();
+            console.log(`API Response for ${trackingNo}:`, data);
+            
+            if (Array.isArray(data)) {
+              return data;
+            } else if (data) {
+              return [data];
+            }
+            return null;
+          } catch (err) {
+            console.error(`Error fetching ${trackingNo}:`, err);
+            return null;
+          }
         });
 
-        console.log("Response status:", res.status);
-
-        if (!res.ok) throw new Error("Failed to fetch parcels");
-
-        const data = await res.json();
-        console.log("API Response:", data);
+        const results = await Promise.all(promises);
         
-        if (Array.isArray(data)) {
-          setParcels(data);
-        } else if (data) {
-          setParcels([data]);
-        } else {
-          setParcels([]);
-        }
+        // Flatten and filter out null results
+        const allParcels = results
+          .filter((result): result is ParcelData[] => result !== null)
+          .flat();
+        
+        console.log("All parcels:", allParcels);
+        setParcels(allParcels);
       } catch (err) {
         console.error("Error fetching parcels:", err);
         setParcels([]);
@@ -82,7 +99,7 @@ function IncomingPage() {
     };
 
     fetchParcels();
-  }, [trackingNoFromContext]);
+  }, [trackingNumbers]);
 
   const filteredParcels = parcels.filter((p) => {
     if (!searchQuery) return true;
@@ -323,7 +340,7 @@ function IncomingPage() {
 
               {/* Rows */}
               <div className="flex-1 overflow-auto">
-                {!trackingNoFromContext ? (
+                {trackingNumbers.length === 0 ? (
                   <div className="flex items-center justify-center py-12">
                     <p className="text-gray-500 text-md">
                       Please enter a tracking number to search

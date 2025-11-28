@@ -39,7 +39,7 @@ function Signin() {
       if (res.ok) {
         login(data.token, data.user);
         console.log("Login success:", data);
-        navigate("/address"); 
+        navigate("/sent"); 
       } else {
         setError(data.msg || "Login failed");
       }
