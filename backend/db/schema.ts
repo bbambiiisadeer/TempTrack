@@ -14,7 +14,7 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 150 }).unique().notNull(),
   password: varchar("password", { length: 255 }).notNull(),
-  //role: varchar("role", { length: 50 }).default("user").notNull(), //เป็นadminหรือuser
+  isAdmin: boolean("is_admin").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

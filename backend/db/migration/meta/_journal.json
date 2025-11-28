@@ -64,6 +64,13 @@
       "when": 1759481258902,
       "tag": "0008_wet_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1764337718862,
+      "tag": "0009_unknown_thunderball",
+      "breakpoints": true
     }
   ]
 }
