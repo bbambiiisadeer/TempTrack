@@ -22,12 +22,16 @@ import IncomingPage from "./incoming";
 import AMdashboard from "./AMdashboard";
 import AMadddriver from "./AMadddriver";
 import AMshipped from "./AMshipped";
+import AMdelivered from "./AMdelivered";
+import AMdriver from "./AMdriver";
+import { ParcelProvider } from "./ParcelContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <TrackingProvider>
         <ShippingProvider>
+          <ParcelProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/senderinfo" element={<SenderInfo />} />
@@ -47,8 +51,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/amdashboard" element={<AMdashboard />} />
               <Route path="/amadddriver" element={<AMadddriver />} />
               <Route path="/amshipped" element={<AMshipped />} />
+              <Route path="/amdelivered" element={<AMdelivered />} />
+              <Route path="/amdriver" element={<AMdriver />} />
             </Routes>
           </BrowserRouter>
+          </ParcelProvider>
         </ShippingProvider>
       </TrackingProvider>
     </AuthProvider>

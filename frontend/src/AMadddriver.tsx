@@ -102,8 +102,7 @@ function AMadddriver() {
 
       const data = await res.json();
       console.log("Driver created:", data);
-      alert("Driver added successfully!");
-      navigate("/admin");
+      navigate("/amdriver");
     } catch (err) {
       console.error(err);
       alert("Error creating driver");

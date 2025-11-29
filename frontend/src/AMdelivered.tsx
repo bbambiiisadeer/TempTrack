@@ -4,10 +4,11 @@ import { useAuth } from "./AuthContext";
 import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
+import { IoIosArrowDown } from "react-icons/io";
 
-function AMshipped() {
+function AMdelivered() {
   const { user, logout, updateUser } = useAuth();
-  const { parcels, drivers, loading, totalPending, totalShipped, totalDelivered, setParcels } = useParcel();
+  const { parcels, drivers, loading, totalPending, totalShipped, totalDelivered } = useParcel();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -15,6 +16,7 @@ function AMshipped() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedParcelId, setExpandedParcelId] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -71,40 +73,13 @@ function AMshipped() {
     }
   };
 
-  const handleToggleDelivered = async (
-    parcelId: string,
-    currentStatus: boolean
-  ) => {
-    try {
-      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ isDelivered: !currentStatus }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update delivered status");
-
-      setParcels((prev) =>
-        prev.map((p) =>
-          p.id === parcelId ? { ...p, isDelivered: !currentStatus } : p
-        )
-      );
-    } catch (err) {
-      console.error("Error updating delivered status:", err);
-      alert("Failed to update delivered status");
-    }
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-CA");
   };
 
   const filteredParcels = parcels
-    .filter((p) => p.isShipped && !p.isDelivered)
+    .filter((p) => p.isDelivered)
     .filter((p) => {
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
@@ -257,13 +232,12 @@ function AMshipped() {
                 Pending
               </div>
 
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer"
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
               onClick={() => navigate("/amshipped")}>
                 Shipped
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdelivered")}>
+              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer">
                 Delivered
               </div>
 
@@ -271,6 +245,7 @@ function AMshipped() {
               onClick={() => navigate("/amdriver")}>
                 Driver
               </div>
+
             </div>
             <div className="w-full h-[1px] bg-gray-400"></div>
             <div className="relative w-88 mt-6 px-6">
@@ -296,7 +271,7 @@ function AMshipped() {
               <div className="pl-4">From</div>
               <div className="pl-4">To</div>
               <div className="pl-4">Driver</div>
-              <div className="pl-4">Delivered</div>
+              <div></div>
             </div>
 
             {/* Table Rows */}
@@ -311,68 +286,76 @@ function AMshipped() {
                 </div>
               ) : (
                 filteredParcels.map((parcel) => {
+                  const isExpanded = expandedParcelId === parcel.id;
                   return (
-                    <div
-                      key={parcel.id}
-                      className="grid border-b border-gray-200 py-3 items-center h-15.5"
-                      style={{
-                        gridTemplateColumns: "5fr 3fr 6fr 6fr 7fr 3fr",
-                      }}
-                    >
-                      <div className="text-sm relative flex items-center gap-2 pl-10">
-                        <span>{parcel.trackingNo}</span>
-                        <button
-                          onClick={() => handleCopyTracking(parcel.trackingNo)}
-                          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
-                        >
-                          <MdContentCopy className="w-4 h-4 text-black" />
-                        </button>
-                      </div>
-                      <div className="text-sm pl-4">
-                        {formatDate(parcel.createdAt)}
-                      </div>
-                      <div className="text-sm pl-4">
-                        {parcel.senderAddress?.company ||
-                          parcel.senderAddress?.name ||
-                          "-"}
-                      </div>
-                      <div className="text-sm pl-4">
-                        {parcel.recipientAddress?.company ||
-                          parcel.recipientAddress?.name ||
-                          "-"}
-                      </div>
-                      <div className="pl-4">
-                        <div className="flex items-center gap-2">
-                          {parcel.driverId && drivers.find((d) => d.id === parcel.driverId)?.imageUrl && (
-                            <img
-                              src={drivers.find((d) => d.id === parcel.driverId)?.imageUrl}
-                              alt="Driver"
-                              className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                    <div key={parcel.id}>
+                      <div
+                        className="grid border-b border-gray-200 py-3 items-center h-15.5"
+                        style={{
+                          gridTemplateColumns: "5fr 3fr 6fr 6fr 7fr 3fr",
+                        }}
+                      >
+                        <div className="text-sm relative flex items-center gap-2 pl-10">
+                          <span>{parcel.trackingNo}</span>
+                          <button
+                            onClick={() => handleCopyTracking(parcel.trackingNo)}
+                            className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                          >
+                            <MdContentCopy className="w-4 h-4 text-black" />
+                          </button>
+                        </div>
+                        <div className="text-sm pl-4">
+                          {formatDate(parcel.createdAt)}
+                        </div>
+                        <div className="text-sm pl-4">
+                          {parcel.senderAddress?.company ||
+                            parcel.senderAddress?.name ||
+                            "-"}
+                        </div>
+                        <div className="text-sm pl-4">
+                          {parcel.recipientAddress?.company ||
+                            parcel.recipientAddress?.name ||
+                            "-"}
+                        </div>
+                        <div className="pl-4">
+                          <div className="flex items-center gap-2">
+                            {parcel.driverId && drivers.find((d) => d.id === parcel.driverId)?.imageUrl && (
+                              <img
+                                src={drivers.find((d) => d.id === parcel.driverId)?.imageUrl}
+                                alt="Driver"
+                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                              />
+                            )}
+                            <span className="text-sm text-black">
+                              {drivers.find((d) => d.id === parcel.driverId)?.name || "-"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex justify-center">
+                          <button 
+                            onClick={() => setExpandedParcelId(isExpanded ? null : parcel.id)}
+                            className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                          >
+                            <IoIosArrowDown 
+                              className={`w-5 h-5 text-black transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                             />
-                          )}
-                          <span className="text-sm text-black">
-                            {drivers.find((d) => d.id === parcel.driverId)?.name || "-"}
-                          </span>
+                          </button>
                         </div>
                       </div>
-                      <div className="pl-4">
-                        <button
-                          onClick={() =>
-                            handleToggleDelivered(parcel.id, parcel.isDelivered)
-                          }
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            parcel.isDelivered 
-                              ? "bg-black" 
-                              : "bg-gray-300 hover:bg-gray-400"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              parcel.isDelivered ? "translate-x-6" : "translate-x-1"
-                            }`}
-                          />
-                        </button>
-                      </div>
+                      
+                      {isExpanded && (
+                        <div className="bg-gray-100 px-10 py-4 border-b border-gray-200">
+                          <div className="bg-white rounded-lg p-4 shadow-sm">
+                            <h3 className="font-semibold text-sm mb-3">Sender Information</h3>
+                            <div className="space-y-2 text-sm">
+                              <p><span className="font-medium">Name:</span> {parcel.senderAddress?.name || "-"}</p>
+                              {parcel.senderAddress?.company && (
+                                <p><span className="font-medium">Company:</span> {parcel.senderAddress.company}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -385,4 +368,4 @@ function AMshipped() {
   );
 }
 
-export default AMshipped;
+export default AMdelivered;

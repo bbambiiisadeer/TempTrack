@@ -1,47 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
 
-interface Driver {
-  id: string;
-  name: string;
-  regNumber?: string;
-  email?: string;
-  phoneNumber?: string;
-  imageUrl?: string;
-}
-
-interface ParcelData {
-  id: string;
-  trackingNo: string;
-  isDelivered: boolean;
-  isShipped: boolean;
-  createdAt: string;
-  driverId?: string;
-  senderAddress?: {
-    company?: string;
-    name: string;
-  };
-  recipientAddress?: {
-    company?: string;
-    name: string;
-  };
-}
-
 function AMdashboard() {
   const { user, logout, updateUser } = useAuth();
+  const { parcels, drivers, loading, totalPending, totalShipped, totalDelivered, setParcels } = useParcel();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [parcels, setParcels] = useState<ParcelData[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -52,34 +25,6 @@ function AMdashboard() {
       nameInputRef.current.focus();
     }
   }, [isEditingName]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch all parcels
-        const parcelRes = await fetch(`http://localhost:3000/parcel/all`, {
-          credentials: "include",
-        });
-        if (!parcelRes.ok) throw new Error("Failed to fetch parcels");
-        const parcelData = await parcelRes.json();
-        setParcels(parcelData);
-
-        // Fetch all drivers
-        const driverRes = await fetch(`http://localhost:3000/driver`, {
-          credentials: "include",
-        });
-        if (!driverRes.ok) throw new Error("Failed to fetch drivers");
-        const driverData = await driverRes.json();
-        setDrivers(driverData);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const handleSaveName = async () => {
     try {
@@ -140,7 +85,6 @@ function AMdashboard() {
 
       if (!res.ok) throw new Error("Failed to update driver");
 
-      // Update local state
       setParcels((prev) =>
         prev.map((p) =>
           p.id === parcelId ? { ...p, driverId: driverId || undefined } : p
@@ -157,7 +101,6 @@ function AMdashboard() {
     currentStatus: boolean,
     hasDriver: boolean
   ) => {
-    // ตรวจสอบว่ามี driver หรือไม่
     if (!hasDriver) {
       alert("Please select a driver before marking as shipped");
       return;
@@ -175,7 +118,6 @@ function AMdashboard() {
 
       if (!res.ok) throw new Error("Failed to update shipped status");
 
-      // Update local state
       setParcels((prev) =>
         prev.map((p) =>
           p.id === parcelId ? { ...p, isShipped: !currentStatus } : p
@@ -191,14 +133,6 @@ function AMdashboard() {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-CA");
   };
-
-  const totalPending = parcels.filter(
-    (p) => !p.isDelivered && !p.isShipped
-  ).length;
-  const totalShipped = parcels.filter(
-    (p) => p.isShipped && !p.isDelivered
-  ).length;
-  const totalDelivered = parcels.filter((p) => p.isDelivered).length;
 
   const filteredParcels = parcels
     .filter((p) => !p.isDelivered && !p.isShipped)
@@ -304,19 +238,27 @@ function AMdashboard() {
         </div>
       </div>
 
-      {/* White boxes a b c */}
-      <div className="flex justify-start gap-6 px-8 ">
+      {/* White boxes */}
+      <div className="flex justify-start gap-6 px-8">
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Total pending</span>
           <span className="text-4xl font-semibold mt-3">
-            {loading ? "..." : totalPending}
+            {loading ? (
+              <span className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></span>
+            ) : (
+              totalPending
+            )}
           </span>
           <span className="text-black text-sm mt-3">Waiting to be shipped</span>
         </div>
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Shipped</span>
           <span className="text-4xl font-semibold mt-3">
-            {loading ? "..." : totalShipped}
+            {loading ? (
+              <span className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></span>
+            ) : (
+              totalShipped
+            )}
           </span>
           <span className="text-black text-sm mt-3">
             Has been dispatched and is on the way
@@ -325,7 +267,11 @@ function AMdashboard() {
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Delivered</span>
           <span className="text-4xl font-semibold mt-3">
-            {loading ? "..." : totalDelivered}
+            {loading ? (
+              <span className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></span>
+            ) : (
+              totalDelivered
+            )}
           </span>
           <span className="text-black text-sm mt-3">
             Successfully received by the recipient
@@ -337,7 +283,8 @@ function AMdashboard() {
         <div className="flex justify-center flex-1">
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer">
+              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer"
+              onClick={() => navigate("/amdashboard")}>
                 Pending
               </div>
 
@@ -348,16 +295,14 @@ function AMdashboard() {
                 Shipped
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+              onClick={() => navigate("/amdelivered")}>
                 Delivered
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+              onClick={() => navigate("/amdriver")}>
                 Driver
-              </div>
-
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer">
-                All parcels
               </div>
             </div>
             <div className="w-full h-[1px] bg-gray-400"></div>
@@ -404,7 +349,7 @@ function AMdashboard() {
                   return (
                     <div
                       key={parcel.id}
-                      className="grid border-b border-gray-200 py-3 items-center"
+                      className="grid border-b border-gray-200 py-1.5 items-center h-15.5"
                       style={{
                         gridTemplateColumns: "5fr 3fr 6fr 6fr 7fr 3fr",
                       }}
@@ -438,7 +383,7 @@ function AMdashboard() {
                             onChange={(e) =>
                               handleDriverChange(parcel.id, e.target.value)
                             }
-                            className="appearance-none w-full bg-white border border-gray-300 text-black text-sm rounded-r-lg rounded-l-4xl   px-3 py-3 pr-8 focus:outline-none focus:border-black"
+                            className="appearance-none w-full bg-white border border-gray-300 text-black text-sm rounded-r-lg rounded-l-4xl px-3 py-3 pr-8 focus:outline-none focus:border-black"
                             style={{
                               paddingLeft:
                                 parcel.driverId &&
@@ -456,7 +401,6 @@ function AMdashboard() {
                             ))}
                           </select>
 
-                          {/* Driver Image Circle */}
                           {parcel.driverId &&
                             drivers.find((d) => d.id === parcel.driverId)
                               ?.imageUrl && (
@@ -473,7 +417,6 @@ function AMdashboard() {
                               </div>
                             )}
 
-                          {/* Arrow Down Icon */}
                           <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                             <IoIosArrowDown className="text-black w-4 h-4" />
                           </div>
