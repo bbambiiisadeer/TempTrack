@@ -92,6 +92,13 @@
       "when": 1764359542966,
       "tag": "0012_tiresome_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1764447678573,
+      "tag": "0013_lush_firebrand",
+      "breakpoints": true
     }
   ]
 }

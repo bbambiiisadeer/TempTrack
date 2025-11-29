@@ -97,37 +97,47 @@ function AMdashboard() {
   };
 
   const handleToggleShipped = async (
-    parcelId: string,
-    currentStatus: boolean,
-    hasDriver: boolean
-  ) => {
-    if (!hasDriver) {
-      alert("Please select a driver before marking as shipped");
-      return;
-    }
+  parcelId: string,
+  currentStatus: boolean,
+  hasDriver: boolean
+) => {
+  if (!hasDriver) {
+    alert("Please select a driver before marking as shipped");
+    return;
+  }
 
-    try {
-      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ isShipped: !currentStatus }),
-      });
+  try {
+    const newStatus = !currentStatus;
+    
+    const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ isShipped: newStatus }),
+    });
 
-      if (!res.ok) throw new Error("Failed to update shipped status");
+    if (!res.ok) throw new Error("Failed to update shipped status");
 
-      setParcels((prev) =>
-        prev.map((p) =>
-          p.id === parcelId ? { ...p, isShipped: !currentStatus } : p
-        )
-      );
-    } catch (err) {
-      console.error("Error updating shipped status:", err);
-      alert("Failed to update shipped status");
-    }
-  };
+    const responseData = await res.json();
+
+    setParcels((prev) =>
+      prev.map((p) =>
+        p.id === parcelId 
+          ? { 
+              ...p, 
+              isShipped: newStatus,
+              shippedAt: responseData.data.shippedAt 
+            } 
+          : p
+      )
+    );
+  } catch (err) {
+    console.error("Error updating shipped status:", err);
+    alert("Failed to update shipped status");
+  }
+};
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

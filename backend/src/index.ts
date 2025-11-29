@@ -691,46 +691,48 @@ app.get(
       const driverMap = new Map(drivers.map((d) => [d.id, d]));
 
       const results = parcels.map((p) => ({
-        id: p.id,
-        trackingNo: p.trackingNo,
-        isDelivered: p.isDelivered,
-        isShipped: p.isShipped,
-        driverId: p.driverId,
-        createdAt: p.createdAt,
-        parcelName: p.parcelName,
-        quantity: p.quantity,
-        weight: p.weight,
-        dimensionLength: p.dimensionLength,
-        dimensionWidth: p.dimensionWidth,
-        dimensionHeight: p.dimensionHeight,
-        temperatureRangeMin: p.temperatureRangeMin,
-        temperatureRangeMax: p.temperatureRangeMax,
-        allowedDeviation: p.allowedDeviation,
-        specialNotes: p.specialNotes,
-        senderAddress: p.senderAddressId
-          ? {
-              id: addressMap.get(p.senderAddressId)?.id,
-              name: addressMap.get(p.senderAddressId)?.name,
-              company: addressMap.get(p.senderAddressId)?.company,
-            }
-          : null,
-        recipientAddress: p.recipientAddressId
-          ? {
-              id: addressMap.get(p.recipientAddressId)?.id,
-              name: addressMap.get(p.recipientAddressId)?.name,
-              company: addressMap.get(p.recipientAddressId)?.company,
-            }
-          : null,
-        driver: p.driverId
-          ? {
-              id: driverMap.get(p.driverId)?.id,
-              name: driverMap.get(p.driverId)?.name,
-              regNumber: driverMap.get(p.driverId)?.regNumber,
-              email: driverMap.get(p.driverId)?.email,
-              phoneNumber: driverMap.get(p.driverId)?.phoneNumber,
-            }
-          : null,
-      }));
+  id: p.id,
+  trackingNo: p.trackingNo,
+  isDelivered: p.isDelivered,
+  isShipped: p.isShipped,
+  driverId: p.driverId,
+  createdAt: p.createdAt,
+  shippedAt: p.shippedAt,        // เพิ่มบรรทัดนี้
+  deliveredAt: p.deliveredAt,    // เพิ่มบรรทัดนี้
+  parcelName: p.parcelName,
+  quantity: p.quantity,
+  weight: p.weight,
+  dimensionLength: p.dimensionLength,
+  dimensionWidth: p.dimensionWidth,
+  dimensionHeight: p.dimensionHeight,
+  temperatureRangeMin: p.temperatureRangeMin,
+  temperatureRangeMax: p.temperatureRangeMax,
+  allowedDeviation: p.allowedDeviation,
+  specialNotes: p.specialNotes,
+  senderAddress: p.senderAddressId
+    ? {
+        id: addressMap.get(p.senderAddressId)?.id,
+        name: addressMap.get(p.senderAddressId)?.name,
+        company: addressMap.get(p.senderAddressId)?.company,
+      }
+    : null,
+  recipientAddress: p.recipientAddressId
+    ? {
+        id: addressMap.get(p.recipientAddressId)?.id,
+        name: addressMap.get(p.recipientAddressId)?.name,
+        company: addressMap.get(p.recipientAddressId)?.company,
+      }
+    : null,
+  driver: p.driverId
+    ? {
+        id: driverMap.get(p.driverId)?.id,
+        name: driverMap.get(p.driverId)?.name,
+        regNumber: driverMap.get(p.driverId)?.regNumber,
+        email: driverMap.get(p.driverId)?.email,
+        phoneNumber: driverMap.get(p.driverId)?.phoneNumber,
+      }
+    : null,
+}));
 
       res.json(results);
     } catch (err) {
@@ -763,30 +765,32 @@ app.get(
       const addressMap = new Map(addresses.map((a) => [a.id, a]));
 
       const results = parcels.map((p) => ({
-        id: p.id,
-        trackingNo: p.trackingNo,
-        isDelivered: p.isDelivered,
-        isShipped: p.isShipped,
-        driverId: p.driverId,
-        createdAt: p.createdAt,
-        parcelName: p.parcelName,
-        quantity: p.quantity,
-        weight: p.weight,
-        senderAddress: p.senderAddressId
-          ? {
-              id: addressMap.get(p.senderAddressId)?.id,
-              name: addressMap.get(p.senderAddressId)?.name,
-              company: addressMap.get(p.senderAddressId)?.company,
-            }
-          : null,
-        recipientAddress: p.recipientAddressId
-          ? {
-              id: addressMap.get(p.recipientAddressId)?.id,
-              name: addressMap.get(p.recipientAddressId)?.name,
-              company: addressMap.get(p.recipientAddressId)?.company,
-            }
-          : null,
-      }));
+  id: p.id,
+  trackingNo: p.trackingNo,
+  isDelivered: p.isDelivered,
+  isShipped: p.isShipped,
+  driverId: p.driverId,
+  createdAt: p.createdAt,
+  shippedAt: p.shippedAt,        // เพิ่มบรรทัดนี้
+  deliveredAt: p.deliveredAt,    // เพิ่มบรรทัดนี้
+  parcelName: p.parcelName,
+  quantity: p.quantity,
+  weight: p.weight,
+  senderAddress: p.senderAddressId
+    ? {
+        id: addressMap.get(p.senderAddressId)?.id,
+        name: addressMap.get(p.senderAddressId)?.name,
+        company: addressMap.get(p.senderAddressId)?.company,
+      }
+    : null,
+  recipientAddress: p.recipientAddressId
+    ? {
+        id: addressMap.get(p.recipientAddressId)?.id,
+        name: addressMap.get(p.recipientAddressId)?.name,
+        company: addressMap.get(p.recipientAddressId)?.company,
+      }
+    : null,
+}));
 
       res.json(results);
     } catch (err) {
@@ -902,6 +906,8 @@ app.patch(
         "isDelivered",
         "isShipped",
         "driverId",
+        "shippedAt",      // เพิ่มบรรทัดนี้
+        "deliveredAt",    // เพิ่มบรรทัดนี้
       ];
 
       const updateData: any = {};
@@ -910,6 +916,24 @@ app.patch(
           updateData[field] = req.body[field];
         }
       });
+
+      // Auto-set shippedAt when isShipped changes
+      if (req.body.isShipped !== undefined) {
+        if (req.body.isShipped === true && !exists.shippedAt) {
+          updateData.shippedAt = new Date();
+        } else if (req.body.isShipped === false) {
+          updateData.shippedAt = null;
+        }
+      }
+
+      // Auto-set deliveredAt when isDelivered changes
+      if (req.body.isDelivered !== undefined) {
+        if (req.body.isDelivered === true && !exists.deliveredAt) {
+          updateData.deliveredAt = new Date();
+        } else if (req.body.isDelivered === false) {
+          updateData.deliveredAt = null;
+        }
+      }
 
       const result = await dbClient
         .update(parcel)

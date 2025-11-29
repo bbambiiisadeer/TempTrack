@@ -72,31 +72,41 @@ function AMshipped() {
   };
 
   const handleToggleDelivered = async (
-    parcelId: string,
-    currentStatus: boolean
-  ) => {
-    try {
-      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ isDelivered: !currentStatus }),
-      });
+  parcelId: string,
+  currentStatus: boolean
+) => {
+  try {
+    const newStatus = !currentStatus;
+    
+    const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ isDelivered: newStatus }),
+    });
 
-      if (!res.ok) throw new Error("Failed to update delivered status");
+    if (!res.ok) throw new Error("Failed to update delivered status");
 
-      setParcels((prev) =>
-        prev.map((p) =>
-          p.id === parcelId ? { ...p, isDelivered: !currentStatus } : p
-        )
-      );
-    } catch (err) {
-      console.error("Error updating delivered status:", err);
-      alert("Failed to update delivered status");
-    }
-  };
+    const responseData = await res.json();
+
+    setParcels((prev) =>
+      prev.map((p) =>
+        p.id === parcelId 
+          ? { 
+              ...p, 
+              isDelivered: newStatus,
+              deliveredAt: responseData.data.deliveredAt 
+            } 
+          : p
+      )
+    );
+  } catch (err) {
+    console.error("Error updating delivered status:", err);
+    alert("Failed to update delivered status");
+  }
+};
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

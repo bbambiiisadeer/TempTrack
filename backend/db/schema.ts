@@ -71,7 +71,9 @@ export const parcel = pgTable("parcel", {
 
   trackingNo: varchar("tracking_no", { length: 20 }).unique().notNull(),
   isDelivered: boolean("is_delivered").default(false).notNull(),
+  deliveredAt: timestamp("delivered_at"),
   isShipped: boolean("is_shipped").default(false).notNull(),
+  shippedAt: timestamp("shipped_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
