@@ -111,35 +111,15 @@ function AddressPage() {
       className="relative min-h-screen overflow-x-hidden flex flex-col"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      <div className="flex justify-between items-center px-8 py-5 border-b border-black">
+      <div className="flex justify-between items-center px-8 border-b border-black">
         <Link to="/">
   <img src="/images/logo.png" alt="logo" className="h-7 object-contain cursor-pointer" />
 </Link>
         <div className="flex gap-26">
-          <Link
-            to="/sent"
-            className="text-sm text-black hover:font-medium transition"
-          >
-            Sent
-          </Link>
-          <Link
-            to="/incoming"
-            className="text-sm text-black hover:font-medium transition"
-          >
-            Incoming
-          </Link>
-          <Link
-            to="/notification"
-            className="text-sm text-black hover:font-medium transition"
-          >
-            Notification
-          </Link>
-          <Link
-            to="/address"
-            className="text-sm text-black font-medium  transition"
-          >
-            Address
-          </Link>
+          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/sent")}>Sent</div>
+          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/incoming")}>Incoming</div>
+          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/notification")}>Notification</div>
+          <div className="border-b-3 bg-transparent font-semibold transition flex items-center h-20 px-2" onClick={() => navigate("/address")}>Address</div>
         </div>
 
         <div className="relative" ref={menuRef}>

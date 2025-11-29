@@ -7,6 +7,14 @@ import { IoSearch } from "react-icons/io5";
 import { FaCircleNotch, FaCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
 
+interface DriverData {
+  id: string;
+  name: string;
+  regNumber?: string;
+  email?: string;
+  phoneNumber?: string;
+}
+
 interface ParcelData {
   id: string;
   trackingNo: string;
@@ -20,6 +28,7 @@ interface ParcelData {
     company?: string;
     name: string;
   };
+  driver?: DriverData; 
 }
 
 function SentPage() {
@@ -149,7 +158,7 @@ function SentPage() {
       className="relative min-h-screen overflow-x-hidden flex flex-col"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      <div className="flex justify-between items-center px-8 py-5 border-b border-black">
+      <div className="flex justify-between items-center px-8 border-b border-black">
         <Link to="/">
           <img
             src="/images/logo.png"
@@ -158,30 +167,10 @@ function SentPage() {
           />
         </Link>
         <div className="flex gap-26">
-          <Link
-            to="/sent"
-            className="text-sm text-black font-medium transition"
-          >
-            Sent
-          </Link>
-          <Link
-            to="/incoming"
-            className="text-sm text-black hover:font-medium transition"
-          >
-            Incoming
-          </Link>
-          <Link
-            to="/notification"
-            className="text-sm text-black hover:font-medium transition"
-          >
-            Notification
-          </Link>
-          <Link
-            to="/address"
-            className="text-sm text-black hover:font-medium transition"
-          >
-            Address
-          </Link>
+          <div className="border-b-3 bg-transparent font-semibold transition flex items-center h-20 px-2" onClick={() => navigate("/sent")}>Sent</div>
+          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/incoming")}>Incoming</div>
+          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/notification")}>Notification</div>
+          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/address")}>Address</div>
         </div>
 
         <div className="relative" ref={menuRef}>
@@ -339,12 +328,13 @@ function SentPage() {
                   </div>
                 ) : (
                   filteredParcels.map((parcel) => (
-                    <div
-                      key={parcel.id}
-                      className="grid border-b border-gray-200 py-3 px-6 items-center"
-                      style={{
-                        gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
-                      }}
+  <div
+    key={parcel.id}
+    className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
+    onClick={() => navigate('/report', { state: { parcel } })}
+    style={{
+      gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
+    }}
                     >
                       <div className="text-sm relative flex items-center gap-2 pl-4">
                         <span>{parcel.trackingNo}</span>

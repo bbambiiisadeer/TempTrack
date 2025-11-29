@@ -662,18 +662,33 @@ app.get(
         orderBy: [desc(parcel.createdAt)],
       });
 
+      // Collect all address IDs
       const addressIds = new Set<string>();
       parcels.forEach((p) => {
         if (p.senderAddressId) addressIds.add(p.senderAddressId);
         if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
       });
 
+      // Collect all driver IDs
+      const driverIds = new Set<string>();
+      parcels.forEach((p) => {
+        if (p.driverId) driverIds.add(p.driverId);
+      });
+
+      // Fetch addresses
       const addresses = await dbClient.query.address.findMany({
         where: (address, { inArray }) =>
           inArray(address.id, Array.from(addressIds)),
       });
 
+      // Fetch drivers
+      const drivers = await dbClient.query.driver.findMany({
+        where: (driver, { inArray }) =>
+          inArray(driver.id, Array.from(driverIds)),
+      });
+
       const addressMap = new Map(addresses.map((a) => [a.id, a]));
+      const driverMap = new Map(drivers.map((d) => [d.id, d]));
 
       const results = parcels.map((p) => ({
         id: p.id,
@@ -685,6 +700,13 @@ app.get(
         parcelName: p.parcelName,
         quantity: p.quantity,
         weight: p.weight,
+        dimensionLength: p.dimensionLength,
+        dimensionWidth: p.dimensionWidth,
+        dimensionHeight: p.dimensionHeight,
+        temperatureRangeMin: p.temperatureRangeMin,
+        temperatureRangeMax: p.temperatureRangeMax,
+        allowedDeviation: p.allowedDeviation,
+        specialNotes: p.specialNotes,
         senderAddress: p.senderAddressId
           ? {
               id: addressMap.get(p.senderAddressId)?.id,
@@ -697,6 +719,15 @@ app.get(
               id: addressMap.get(p.recipientAddressId)?.id,
               name: addressMap.get(p.recipientAddressId)?.name,
               company: addressMap.get(p.recipientAddressId)?.company,
+            }
+          : null,
+        driver: p.driverId
+          ? {
+              id: driverMap.get(p.driverId)?.id,
+              name: driverMap.get(p.driverId)?.name,
+              regNumber: driverMap.get(p.driverId)?.regNumber,
+              email: driverMap.get(p.driverId)?.email,
+              phoneNumber: driverMap.get(p.driverId)?.phoneNumber,
             }
           : null,
       }));

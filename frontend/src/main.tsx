@@ -25,6 +25,7 @@ import AMshipped from "./AMshipped";
 import AMdelivered from "./AMdelivered";
 import AMdriver from "./AMdriver";
 import { ParcelProvider } from "./ParcelContext";
+import Report from "./report";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -53,6 +54,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/amshipped" element={<AMshipped />} />
               <Route path="/amdelivered" element={<AMdelivered />} />
               <Route path="/amdriver" element={<AMdriver />} />
+              <Route path="/report" element={<Report />} />
             </Routes>
           </BrowserRouter>
           </ParcelProvider>

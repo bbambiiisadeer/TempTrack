@@ -257,7 +257,7 @@ function AMshipped() {
                 Pending
               </div>
 
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer"
+              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center  font-semibold text-black cursor-pointer"
               onClick={() => navigate("/amshipped")}>
                 Shipped
               </div>

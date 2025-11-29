@@ -283,7 +283,7 @@ function AMdashboard() {
         <div className="flex justify-center flex-1">
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer"
+              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center font-semibold text-black cursor-pointer"
               onClick={() => navigate("/amdashboard")}>
                 Pending
               </div>
