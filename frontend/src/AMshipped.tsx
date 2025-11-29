@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
-import { IoIosArrowDown } from "react-icons/io";
 
 interface Driver {
   id: string;
@@ -31,7 +30,7 @@ interface ParcelData {
   };
 }
 
-function AMdashboard() {
+function AMshipped() {
   const { user, logout, updateUser } = useAuth();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
@@ -127,42 +126,10 @@ function AMdashboard() {
     }
   };
 
-  const handleDriverChange = async (parcelId: string, driverId: string) => {
-    try {
-      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ driverId: driverId || null }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update driver");
-
-      // Update local state
-      setParcels((prev) =>
-        prev.map((p) =>
-          p.id === parcelId ? { ...p, driverId: driverId || undefined } : p
-        )
-      );
-    } catch (err) {
-      console.error("Error updating driver:", err);
-      alert("Failed to update driver");
-    }
-  };
-
-  const handleToggleShipped = async (
+  const handleToggleDelivered = async (
     parcelId: string,
-    currentStatus: boolean,
-    hasDriver: boolean
+    currentStatus: boolean
   ) => {
-    // ตรวจสอบว่ามี driver หรือไม่
-    if (!hasDriver) {
-      alert("Please select a driver before marking as shipped");
-      return;
-    }
-
     try {
       const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
         method: "PATCH",
@@ -170,20 +137,20 @@ function AMdashboard() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ isShipped: !currentStatus }),
+        body: JSON.stringify({ isDelivered: !currentStatus }),
       });
 
-      if (!res.ok) throw new Error("Failed to update shipped status");
+      if (!res.ok) throw new Error("Failed to update delivered status");
 
       // Update local state
       setParcels((prev) =>
         prev.map((p) =>
-          p.id === parcelId ? { ...p, isShipped: !currentStatus } : p
+          p.id === parcelId ? { ...p, isDelivered: !currentStatus } : p
         )
       );
     } catch (err) {
-      console.error("Error updating shipped status:", err);
-      alert("Failed to update shipped status");
+      console.error("Error updating delivered status:", err);
+      alert("Failed to update delivered status");
     }
   };
 
@@ -195,13 +162,11 @@ function AMdashboard() {
   const totalPending = parcels.filter(
     (p) => !p.isDelivered && !p.isShipped
   ).length;
-  const totalShipped = parcels.filter(
-    (p) => p.isShipped && !p.isDelivered
-  ).length;
+  const totalShipped = parcels.filter((p) => p.isShipped && !p.isDelivered).length;
   const totalDelivered = parcels.filter((p) => p.isDelivered).length;
 
   const filteredParcels = parcels
-    .filter((p) => !p.isDelivered && !p.isShipped)
+    .filter((p) => p.isShipped && !p.isDelivered)
     .filter((p) => {
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
@@ -337,14 +302,12 @@ function AMdashboard() {
         <div className="flex justify-center flex-1">
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer">
+              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+              onClick={() => navigate("/amdashboard")}>
                 Pending
               </div>
 
-              <div
-                onClick={() => navigate("/amshipped")}
-                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              >
+              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center text- font-semibold text-black cursor-pointer">
                 Shipped
               </div>
 
@@ -384,7 +347,7 @@ function AMdashboard() {
               <div className="pl-4">From</div>
               <div className="pl-4">To</div>
               <div className="pl-4">Driver</div>
-              <div className="pl-4">Shipped</div>
+              <div className="pl-4">Delivered</div>
             </div>
 
             {/* Table Rows */}
@@ -399,8 +362,6 @@ function AMdashboard() {
                 </div>
               ) : (
                 filteredParcels.map((parcel) => {
-                  const hasDriver = !!parcel.driverId;
-
                   return (
                     <div
                       key={parcel.id}
@@ -432,79 +393,33 @@ function AMdashboard() {
                           "-"}
                       </div>
                       <div className="pl-4">
-                        <div className="relative inline-block w-full max-w-60">
-                          <select
-                            value={parcel.driverId || ""}
-                            onChange={(e) =>
-                              handleDriverChange(parcel.id, e.target.value)
-                            }
-                            className="appearance-none w-full bg-white border border-gray-300 text-black text-sm rounded-r-lg rounded-l-4xl   px-3 py-3 pr-8 focus:outline-none focus:border-black"
-                            style={{
-                              paddingLeft:
-                                parcel.driverId &&
-                                drivers.find((d) => d.id === parcel.driverId)
-                                  ?.imageUrl
-                                  ? "3rem"
-                                  : "1rem",
-                            }}
-                          >
-                            <option value="">Select Driver</option>
-                            {drivers.map((driver) => (
-                              <option key={driver.id} value={driver.id}>
-                                {driver.name}
-                              </option>
-                            ))}
-                          </select>
-
-                          {/* Driver Image Circle */}
-                          {parcel.driverId &&
-                            drivers.find((d) => d.id === parcel.driverId)
-                              ?.imageUrl && (
-                              <div className="pointer-events-none absolute inset-y-0 left-2 flex items-center">
-                                <img
-                                  src={
-                                    drivers.find(
-                                      (d) => d.id === parcel.driverId
-                                    )?.imageUrl
-                                  }
-                                  alt="Driver"
-                                  className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                                />
-                              </div>
-                            )}
-
-                          {/* Arrow Down Icon */}
-                          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                            <IoIosArrowDown className="text-black w-4 h-4" />
-                          </div>
+                        <div className="flex items-center gap-2">
+                          {parcel.driverId && drivers.find((d) => d.id === parcel.driverId)?.imageUrl && (
+                            <img
+                              src={drivers.find((d) => d.id === parcel.driverId)?.imageUrl}
+                              alt="Driver"
+                              className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                            />
+                          )}
+                          <span className="text-sm text-black">
+                            {drivers.find((d) => d.id === parcel.driverId)?.name || "-"}
+                          </span>
                         </div>
                       </div>
                       <div className="pl-4">
                         <button
                           onClick={() =>
-                            handleToggleShipped(
-                              parcel.id,
-                              parcel.isShipped,
-                              hasDriver
-                            )
+                            handleToggleDelivered(parcel.id, parcel.isDelivered)
                           }
-                          disabled={!hasDriver}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            parcel.isShipped
-                              ? "bg-black"
-                              : hasDriver
-                              ? "bg-gray-300 hover:bg-gray-400"
-                              : "bg-gray-200 cursor-not-allowed"
+                            parcel.isDelivered 
+                              ? "bg-black" 
+                              : "bg-gray-300 hover:bg-gray-400"
                           }`}
-                          title={
-                            !hasDriver ? "Please select a driver first" : ""
-                          }
                         >
                           <span
                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              parcel.isShipped
-                                ? "translate-x-6"
-                                : "translate-x-1"
+                              parcel.isDelivered ? "translate-x-6" : "translate-x-1"
                             }`}
                           />
                         </button>
@@ -521,4 +436,4 @@ function AMdashboard() {
   );
 }
 
-export default AMdashboard;
+export default AMshipped;
