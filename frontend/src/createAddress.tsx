@@ -203,7 +203,7 @@ function CreateAddress() {
                 navigate(`/saveaddress?from=${fromPage}`);
               }
             }}
-            className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
+            className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer hover:underline"
           >
             Cancel
           </button>
