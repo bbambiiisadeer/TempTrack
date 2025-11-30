@@ -70,7 +70,7 @@ function Report() {
           <div className="flex gap-4 mb-4 h-20">
             {user && (
               <div
-                className="bg-white rounded-l-full  p-6 flex items-center justify-center w-20 hover:bg-gray-100 transition-colors"
+                className="bg-white rounded-l-full  p-6 flex items-center justify-center w-20 hover:bg-gray-50 transition-colors"
                 onClick={() => navigate(-1)}
               >
                 <button className="flex items-center justify-center w-12 h-12 rounded-full">
@@ -81,9 +81,9 @@ function Report() {
 
             {/* Right Box - Reg Number */}
             <div
-              className={`bg-white rounded-r-full  ${
-                user ? "flex-1" : "w-full"
-              } grid items-center px-8`}
+              className={`bg-white grid items-center px-8 transition-all
+    ${user ? "rounded-r-full flex-1" : "rounded-full w-full pl-12"} 
+  `}
               style={{
                 gridTemplateColumns: "1.5fr 2.5fr 3fr 4fr 4fr 2.3fr",
               }}

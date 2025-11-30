@@ -11,30 +11,46 @@ function TrackStatus() {
   const [trackingNo, setTrackingNo] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!trackingNo.trim()) {
-      alert("Please enter a tracking number");
-      return;
-    }
+  if (!trackingNo.trim()) {
+    alert("Please enter a tracking number");
+    return;
+  }
 
-    try {
-      console.log("Adding tracking number:", trackingNo.trim());
-      
-      // เพิ่ม tracking number เข้า context
+  try {
+    console.log("Adding tracking number:", trackingNo.trim());
+    
+    if (user) {
+      // ถ้า login แล้ว: เพิ่ม tracking number เข้า context แล้วไปหน้า incoming
       addTrackingNo(trackingNo.trim());
+      navigate("/incoming");
+    } else {
+      // ถ้าไม่ได้ login: fetch ข้อมูล parcel แล้วไปหน้า report
+      const formattedTrackingNo = trackingNo.trim().startsWith("#")
+        ? trackingNo.trim()
+        : `#${trackingNo.trim()}`;
       
-      // Navigate ทันที
-      if (user) {
-        navigate("/incoming");
-      } else {
-        navigate("/showtemp");
+      const res = await fetch(
+        `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) {
+        alert("Parcel not found");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error checking tracking status");
+
+      const parcel = await res.json();
+      navigate("/report", { state: { parcel } });
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Error checking tracking status");
+  }
+};
 
   return (
     <div

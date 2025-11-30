@@ -29,7 +29,7 @@ function Homepage() {
           </>
         ) : (
           <>
-            <Link to="/dashboard" className="hover:underline">
+            <Link to="/trackstatus" className="hover:underline">
               Track status
             </Link>
             <Link to="/suggestion" className="hover:underline">
