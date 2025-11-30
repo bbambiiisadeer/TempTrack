@@ -5,6 +5,7 @@ import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdContentCopy, MdPersonAdd } from "react-icons/md";
+import { RxCross2 } from "react-icons/rx";
 
 function AMdriver() {
   const { user, logout, updateUser } = useAuth();
@@ -79,15 +80,24 @@ function AMdriver() {
   };
 
   const filteredDrivers = drivers.filter((driver) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      driver.name.toLowerCase().includes(query) ||
-      driver.regNumber?.toLowerCase().includes(query) ||
-      driver.phoneNumber?.toLowerCase().includes(query) ||
-      driver.email?.toLowerCase().includes(query)
-    );
-  });
+  if (!searchQuery) return true;
+  const query = searchQuery.toLowerCase();
+  
+  // ค้นหาจากข้อมูลคนขับ
+  const matchDriver = 
+    driver.name.toLowerCase().includes(query) ||
+    driver.regNumber?.toLowerCase().includes(query) ||
+    driver.phoneNumber?.toLowerCase().includes(query) ||
+    driver.email?.toLowerCase().includes(query);
+  
+  // ค้นหาจาก tracking number ของ parcel ที่คนขับนี้รับผิดชอบ
+  const driverParcels = parcels.filter((p) => p.driverId === driver.id);
+  const matchTrackingNo = driverParcels.some((parcel) =>
+    parcel.trackingNo.toLowerCase().includes(query)
+  );
+  
+  return matchDriver || matchTrackingNo;
+});
 
   return (
     <div
@@ -242,24 +252,34 @@ function AMdriver() {
             <div className="w-full h-[1px] bg-gray-400"></div>
             
             {/* Search and Add Driver Button */}
-            <div className="flex items-center gap-4 mt-6 px-6">
-              <div className="relative w-76">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
-                />
-                <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              </div>
-              <button
-                onClick={() => navigate("/amadddriver")}
-                className="w-12 h-12 flex items-center justify-center rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0"
-              >
-                <MdPersonAdd className="w-6 h-6 mr-1" />
-              </button>
-            </div>
+            {/* Search and Add Driver Button */}
+<div className="flex items-center gap-4 mt-6 px-6">
+  <div className="relative w-76">
+    <input
+      type="text"
+      placeholder="Search"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
+    />
+    {searchQuery ? (
+      <button
+        onClick={() => setSearchQuery("")}
+        className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+      >
+        <RxCross2 className="w-5 h-5" />
+      </button>
+    ) : (
+      <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+    )}
+  </div>
+  <button
+    onClick={() => navigate("/amadddriver")}
+    className="w-12 h-12 flex items-center justify-center rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0"
+  >
+    <MdPersonAdd className="w-6 h-6 mr-1" />
+  </button>
+</div>
 
             {/* Table Header */}
             <div

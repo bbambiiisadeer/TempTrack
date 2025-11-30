@@ -4,8 +4,9 @@ import { IoIosAdd } from "react-icons/io";
 import { useAuth } from "./AuthContext";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
-import { FaCircleNotch, FaCheckCircle } from "react-icons/fa";
+import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
+import { RxCross2 } from "react-icons/rx";
 
 interface DriverData {
   id: string;
@@ -19,6 +20,7 @@ interface ParcelData {
   id: string;
   trackingNo: string;
   isDelivered: boolean;
+  isShipped: boolean;
   createdAt: string;
   senderAddress?: {
     company?: string;
@@ -28,7 +30,7 @@ interface ParcelData {
     company?: string;
     name: string;
   };
-  driver?: DriverData; 
+  driver?: DriverData;
 }
 
 function SentPage() {
@@ -91,7 +93,9 @@ function SentPage() {
     })
     .sort((a, b) => {
       if (sortBy === "date") {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       }
       return 0;
     });
@@ -167,10 +171,30 @@ function SentPage() {
           />
         </Link>
         <div className="flex gap-26">
-          <div className="border-b-3 bg-transparent font-semibold transition flex items-center h-20 px-2" onClick={() => navigate("/sent")}>Sent</div>
-          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/incoming")}>Incoming</div>
-          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/notification")}>Notification</div>
-          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/address")}>Address</div>
+          <div
+            className="border-b-3 bg-transparent font-semibold transition flex items-center h-20 px-2"
+            onClick={() => navigate("/sent")}
+          >
+            Sent
+          </div>
+          <div
+            className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2"
+            onClick={() => navigate("/incoming")}
+          >
+            Incoming
+          </div>
+          <div
+            className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2"
+            onClick={() => navigate("/notification")}
+          >
+            Notification
+          </div>
+          <div
+            className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2"
+            onClick={() => navigate("/address")}
+          >
+            Address
+          </div>
         </div>
 
         <div className="relative" ref={menuRef}>
@@ -282,7 +306,16 @@ function SentPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-white border border-black rounded-r-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
                 />
-                <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                {searchQuery ? (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <RxCross2 className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                )}
               </div>
 
               <button
@@ -328,18 +361,21 @@ function SentPage() {
                   </div>
                 ) : (
                   filteredParcels.map((parcel) => (
-  <div
-    key={parcel.id}
-    className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
-    onClick={() => navigate('/report', { state: { parcel } })}
-    style={{
-      gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
-    }}
+                    <div
+                      key={parcel.id}
+                      className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate("/report", { state: { parcel } })}
+                      style={{
+                        gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
+                      }}
                     >
                       <div className="text-sm relative flex items-center gap-2 pl-4">
                         <span>{parcel.trackingNo}</span>
                         <button
-                          onClick={() => handleCopyTracking(parcel.trackingNo)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyTracking(parcel.trackingNo);
+                          }}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
                           <MdContentCopy className="w-4 h-4 text-black" />
@@ -360,15 +396,20 @@ function SentPage() {
                       </div>
                       <div className="pl-4">-</div>
                       <div className="pl-4">-</div>
-                      {parcel.isDelivered ? (
+                      {!parcel.isShipped && !parcel.isDelivered ? (
                         <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaCheckCircle className="text-black w-4 h-4 mr-3" />
-                          Delivered
+                          <FaRegCircle className="text-black w-4 h-4 mr-3" />
+                          Pending
+                        </div>
+                      ) : parcel.isShipped && !parcel.isDelivered ? (
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
+                          In transit
                         </div>
                       ) : (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-29 rounded-md ml-4">
-                          <FaCircleNotch className="text-black w-4 h-4 mr-3" />
-                          In transit
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaRegCheckCircle className="text-black w-4 h-4 mr-3" />
+                          Delivered
                         </div>
                       )}
                     </div>

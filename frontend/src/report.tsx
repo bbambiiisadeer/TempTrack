@@ -29,18 +29,20 @@ interface ParcelData {
 // เพิ่ม helper function
 const formatThaiDateTime = (dateString: string | null | undefined): string => {
   if (!dateString) return "-";
-  
+
   const date = new Date(dateString);
-  
+
   // แปลงเป็นเวลาไทย
-  const thaiDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
-  
-  const day = String(thaiDate.getDate()).padStart(2, '0');
-  const month = String(thaiDate.getMonth() + 1).padStart(2, '0');
+  const thaiDate = new Date(
+    date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+  );
+
+  const day = String(thaiDate.getDate()).padStart(2, "0");
+  const month = String(thaiDate.getMonth() + 1).padStart(2, "0");
   const year = thaiDate.getFullYear();
-  const hours = String(thaiDate.getHours()).padStart(2, '0');
-  const minutes = String(thaiDate.getMinutes()).padStart(2, '0');
-  
+  const hours = String(thaiDate.getHours()).padStart(2, "0");
+  const minutes = String(thaiDate.getMinutes()).padStart(2, "0");
+
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
@@ -67,12 +69,11 @@ function Report() {
           {/* Top Section - Two boxes */}
           <div className="flex gap-4 mb-4 h-20">
             {user && (
-              <div className="bg-white rounded-l-full  p-6 flex items-center justify-center w-20 hover:bg-gray-100 transition-colors"
-              
-                  onClick={() => navigate(-1)}>
-                <button
-                  className="flex items-center justify-center w-12 h-12 rounded-full"
-                >
+              <div
+                className="bg-white rounded-l-full  p-6 flex items-center justify-center w-20 hover:bg-gray-100 transition-colors"
+                onClick={() => navigate(-1)}
+              >
+                <button className="flex items-center justify-center w-12 h-12 rounded-full">
                   <IoArrowBackOutline className="w-6 h-6 text-black" />
                 </button>
               </div>
@@ -131,8 +132,7 @@ function Report() {
             <div
               className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 p-6"
               style={{ minHeight: "calc(100vh - 128px)" }}
-            >
-            </div>
+            ></div>
           </div>
         </div>
       </div>

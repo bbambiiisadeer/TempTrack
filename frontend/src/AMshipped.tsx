@@ -4,10 +4,19 @@ import { useAuth } from "./AuthContext";
 import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
+import { RxCross2 } from "react-icons/rx";
 
 function AMshipped() {
   const { user, logout, updateUser } = useAuth();
-  const { parcels, drivers, loading, totalPending, totalShipped, totalDelivered, setParcels } = useParcel();
+  const {
+    parcels,
+    drivers,
+    loading,
+    totalPending,
+    totalShipped,
+    totalDelivered,
+    setParcels,
+  } = useParcel();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -72,41 +81,41 @@ function AMshipped() {
   };
 
   const handleToggleDelivered = async (
-  parcelId: string,
-  currentStatus: boolean
-) => {
-  try {
-    const newStatus = !currentStatus;
-    
-    const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ isDelivered: newStatus }),
-    });
+    parcelId: string,
+    currentStatus: boolean
+  ) => {
+    try {
+      const newStatus = !currentStatus;
 
-    if (!res.ok) throw new Error("Failed to update delivered status");
+      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ isDelivered: newStatus }),
+      });
 
-    const responseData = await res.json();
+      if (!res.ok) throw new Error("Failed to update delivered status");
 
-    setParcels((prev) =>
-      prev.map((p) =>
-        p.id === parcelId 
-          ? { 
-              ...p, 
-              isDelivered: newStatus,
-              deliveredAt: responseData.data.deliveredAt 
-            } 
-          : p
-      )
-    );
-  } catch (err) {
-    console.error("Error updating delivered status:", err);
-    alert("Failed to update delivered status");
-  }
-};
+      const responseData = await res.json();
+
+      setParcels((prev) =>
+        prev.map((p) =>
+          p.id === parcelId
+            ? {
+                ...p,
+                isDelivered: newStatus,
+                deliveredAt: responseData.data.deliveredAt,
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("Error updating delivered status:", err);
+      alert("Failed to update delivered status");
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -262,23 +271,31 @@ function AMshipped() {
         <div className="flex justify-center flex-1">
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdashboard")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdashboard")}
+              >
                 Pending
               </div>
 
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center  font-semibold text-black cursor-pointer"
-              onClick={() => navigate("/amshipped")}>
+              <div
+                className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center  font-semibold text-black cursor-pointer"
+                onClick={() => navigate("/amshipped")}
+              >
                 Shipped
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdelivered")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdelivered")}
+              >
                 Delivered
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdriver")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdriver")}
+              >
                 Driver
               </div>
             </div>
@@ -291,7 +308,16 @@ function AMshipped() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
               />
-              <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                >
+                  <RxCross2 className="w-5 h-5" />
+                </button>
+              ) : (
+                <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              )}
             </div>
 
             {/* Table Header */}
@@ -353,15 +379,21 @@ function AMshipped() {
                       </div>
                       <div className="pl-4">
                         <div className="flex items-center gap-2">
-                          {parcel.driverId && drivers.find((d) => d.id === parcel.driverId)?.imageUrl && (
-                            <img
-                              src={drivers.find((d) => d.id === parcel.driverId)?.imageUrl}
-                              alt="Driver"
-                              className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                            />
-                          )}
+                          {parcel.driverId &&
+                            drivers.find((d) => d.id === parcel.driverId)
+                              ?.imageUrl && (
+                              <img
+                                src={
+                                  drivers.find((d) => d.id === parcel.driverId)
+                                    ?.imageUrl
+                                }
+                                alt="Driver"
+                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                              />
+                            )}
                           <span className="text-sm text-black">
-                            {drivers.find((d) => d.id === parcel.driverId)?.name || "-"}
+                            {drivers.find((d) => d.id === parcel.driverId)
+                              ?.name || "-"}
                           </span>
                         </div>
                       </div>
@@ -371,14 +403,16 @@ function AMshipped() {
                             handleToggleDelivered(parcel.id, parcel.isDelivered)
                           }
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            parcel.isDelivered 
-                              ? "bg-black" 
+                            parcel.isDelivered
+                              ? "bg-black"
                               : "bg-gray-300 hover:bg-gray-400"
                           }`}
                         >
                           <span
                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              parcel.isDelivered ? "translate-x-6" : "translate-x-1"
+                              parcel.isDelivered
+                                ? "translate-x-6"
+                                : "translate-x-1"
                             }`}
                           />
                         </button>

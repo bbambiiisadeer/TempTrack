@@ -3,13 +3,23 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
 import { IoSearch } from "react-icons/io5";
-import { FaCircleNotch, FaCheckCircle } from "react-icons/fa";
+import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
+import { RxCross2 } from "react-icons/rx";
+
+interface DriverData {
+  id: string;
+  name: string;
+  regNumber?: string;
+  email?: string;
+  phoneNumber?: string;
+}
 
 interface ParcelData {
   id: string;
   trackingNo: string;
   isDelivered: boolean;
+  isShipped: boolean;
   createdAt: string;
   senderAddress?: {
     company?: string;
@@ -19,6 +29,7 @@ interface ParcelData {
     company?: string;
     name: string;
   };
+  driver?: DriverData;
 }
 
 function IncomingPage() {
@@ -39,7 +50,7 @@ function IncomingPage() {
 
   useEffect(() => {
     console.log("trackingNumbers:", trackingNumbers);
-    
+
     const fetchParcels = async () => {
       if (trackingNumbers.length === 0) {
         console.log("No tracking numbers, skipping fetch");
@@ -54,7 +65,9 @@ function IncomingPage() {
           const formattedTrackingNo = trackingNo.startsWith("#")
             ? trackingNo
             : `#${trackingNo}`;
-          const url = `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`;
+          const url = `http://localhost:3000/parcel/track/${encodeURIComponent(
+            formattedTrackingNo
+          )}`;
           console.log("Fetching URL:", url);
 
           try {
@@ -68,7 +81,7 @@ function IncomingPage() {
 
             const data = await res.json();
             console.log(`API Response for ${trackingNo}:`, data);
-            
+
             if (Array.isArray(data)) {
               return data;
             } else if (data) {
@@ -82,12 +95,12 @@ function IncomingPage() {
         });
 
         const results = await Promise.all(promises);
-        
+
         // Flatten and filter out null results
         const allParcels = results
           .filter((result): result is ParcelData[] => result !== null)
           .flat();
-        
+
         console.log("All parcels:", allParcels);
         setParcels(allParcels);
       } catch (err) {
@@ -188,10 +201,30 @@ function IncomingPage() {
           />
         </Link>
         <div className="flex gap-26">
-          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/sent")}>Sent</div>
-          <div className="border-b-3 bg-transparent font-semibold transition flex items-center h-20 px-2" onClick={() => navigate("/incoming")}>Incoming</div>
-          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/notification")}>Notification</div>
-          <div className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2" onClick={() => navigate("/address")}>Address</div>
+          <div
+            className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2"
+            onClick={() => navigate("/sent")}
+          >
+            Sent
+          </div>
+          <div
+            className="border-b-3 bg-transparent font-semibold transition flex items-center h-20 px-2"
+            onClick={() => navigate("/incoming")}
+          >
+            Incoming
+          </div>
+          <div
+            className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2"
+            onClick={() => navigate("/notification")}
+          >
+            Notification
+          </div>
+          <div
+            className="border-transparent bg-transparent text-sm hover:font-medium transition flex items-center h-20 px-2"
+            onClick={() => navigate("/address")}
+          >
+            Address
+          </div>
         </div>
 
         <div className="relative" ref={menuRef}>
@@ -275,7 +308,9 @@ function IncomingPage() {
       <div className="flex items-center justify-center">
         <div className="w-400">
           <div className="flex justify-between items-center px-8 py-6">
-            <h2 className="text-2xl font-semibold text-black">Incoming Parcels</h2>
+            <h2 className="text-2xl font-semibold text-black">
+              Incoming Parcels
+            </h2>
             <div className="flex items-center gap-2 ml-auto">
               <div className="relative w-58">
                 <input
@@ -285,7 +320,16 @@ function IncomingPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
                 />
-                <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                {searchQuery ? (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <RxCross2 className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                )}
               </div>
 
               <button
@@ -338,15 +382,19 @@ function IncomingPage() {
                   filteredParcels.map((parcel) => (
                     <div
                       key={parcel.id}
-                      className="grid border-b border-gray-200 py-3 px-6 items-center"
+                      className="grid border-b border-gray-200 py-3 px-6 items-center hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate("/report", { state: { parcel } })}
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}
                     >
-                      <div className="text-sm relative flex items-center gap-2 pl-4">
+                     <div className="text-sm relative flex items-center gap-2 pl-4">
                         <span>{parcel.trackingNo}</span>
                         <button
-                          onClick={() => handleCopyTracking(parcel.trackingNo)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyTracking(parcel.trackingNo);
+                          }}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
                           <MdContentCopy className="w-4 h-4 text-black" />
@@ -367,15 +415,20 @@ function IncomingPage() {
                       </div>
                       <div className="pl-4">-</div>
                       <div className="pl-4">-</div>
-                      {parcel.isDelivered ? (
+                      {!parcel.isShipped && !parcel.isDelivered ? (
                         <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaCheckCircle className="text-black w-4 h-4 mr-3" />
-                          Delivered
+                          <FaRegCircle className="text-black w-4 h-4 mr-3" />
+                          Pending
+                        </div>
+                      ) : parcel.isShipped && !parcel.isDelivered ? (
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
+                          In transit
                         </div>
                       ) : (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-29 rounded-md ml-4">
-                          <FaCircleNotch className="text-black w-4 h-4 mr-3" />
-                          In transit
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaRegCheckCircle className="text-black w-4 h-4 mr-3" />
+                          Delivered
                         </div>
                       )}
                     </div>

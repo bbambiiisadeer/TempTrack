@@ -12,7 +12,7 @@ interface DriverData {
 
 function AMadddriver() {
   const navigate = useNavigate();
-  
+
   const [driver, setDriver] = useState<DriverData>({
     name: "",
     email: "",
@@ -39,7 +39,7 @@ function AMadddriver() {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           const MAX_WIDTH = 800;
           const MAX_HEIGHT = 800;
           let width = img.width;
@@ -59,10 +59,10 @@ function AMadddriver() {
 
           canvas.width = width;
           canvas.height = height;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
           resolve(compressedBase64);
         };
         img.onerror = reject;
@@ -222,6 +222,13 @@ function AMadddriver() {
         </div>
 
         <div className="flex items-center justify-end mt-4">
+          <button
+            type="button"
+            onClick={() => navigate("/amdriver")}
+            className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"

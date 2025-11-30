@@ -5,10 +5,18 @@ import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
+import { RxCross2 } from "react-icons/rx";
 
 function AMdelivered() {
   const { user, logout, updateUser } = useAuth();
-  const { parcels, drivers, loading, totalPending, totalShipped, totalDelivered } = useParcel();
+  const {
+    parcels,
+    drivers,
+    loading,
+    totalPending,
+    totalShipped,
+    totalDelivered,
+  } = useParcel();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -227,13 +235,17 @@ function AMdelivered() {
         <div className="flex justify-center flex-1">
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdashboard")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdashboard")}
+              >
                 Pending
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amshipped")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amshipped")}
+              >
                 Shipped
               </div>
 
@@ -241,11 +253,12 @@ function AMdelivered() {
                 Delivered
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdriver")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdriver")}
+              >
                 Driver
               </div>
-
             </div>
             <div className="w-full h-[1px] bg-gray-400"></div>
             <div className="relative w-88 mt-6 px-6">
@@ -256,7 +269,16 @@ function AMdelivered() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
               />
-              <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                >
+                  <RxCross2 className="w-5 h-5" />
+                </button>
+              ) : (
+                <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              )}
             </div>
 
             {/* Table Header */}
@@ -298,7 +320,9 @@ function AMdelivered() {
                         <div className="text-sm relative flex items-center gap-2 pl-10">
                           <span>{parcel.trackingNo}</span>
                           <button
-                            onClick={() => handleCopyTracking(parcel.trackingNo)}
+                            onClick={() =>
+                              handleCopyTracking(parcel.trackingNo)
+                            }
                             className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                           >
                             <MdContentCopy className="w-4 h-4 text-black" />
@@ -319,38 +343,57 @@ function AMdelivered() {
                         </div>
                         <div className="pl-4">
                           <div className="flex items-center gap-2">
-                            {parcel.driverId && drivers.find((d) => d.id === parcel.driverId)?.imageUrl && (
-                              <img
-                                src={drivers.find((d) => d.id === parcel.driverId)?.imageUrl}
-                                alt="Driver"
-                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                              />
-                            )}
+                            {parcel.driverId &&
+                              drivers.find((d) => d.id === parcel.driverId)
+                                ?.imageUrl && (
+                                <img
+                                  src={
+                                    drivers.find(
+                                      (d) => d.id === parcel.driverId
+                                    )?.imageUrl
+                                  }
+                                  alt="Driver"
+                                  className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                                />
+                              )}
                             <span className="text-sm text-black">
-                              {drivers.find((d) => d.id === parcel.driverId)?.name || "-"}
+                              {drivers.find((d) => d.id === parcel.driverId)
+                                ?.name || "-"}
                             </span>
                           </div>
                         </div>
                         <div className="flex justify-center">
-                          <button 
-                            onClick={() => setExpandedParcelId(isExpanded ? null : parcel.id)}
+                          <button
+                            onClick={() =>
+                              setExpandedParcelId(isExpanded ? null : parcel.id)
+                            }
                             className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                           >
-                            <IoIosArrowDown 
-                              className={`w-5 h-5 text-black transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                            <IoIosArrowDown
+                              className={`w-5 h-5 text-black transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
                             />
                           </button>
                         </div>
                       </div>
-                      
+
                       {isExpanded && (
                         <div className="bg-gray-100 px-10 py-4 border-b border-gray-200">
                           <div className="bg-white rounded-lg p-4 shadow-sm">
-                            <h3 className="font-semibold text-sm mb-3">Sender Information</h3>
+                            <h3 className="font-semibold text-sm mb-3">
+                              Sender Information
+                            </h3>
                             <div className="space-y-2 text-sm">
-                              <p><span className="font-medium">Name:</span> {parcel.senderAddress?.name || "-"}</p>
+                              <p>
+                                <span className="font-medium">Name:</span>{" "}
+                                {parcel.senderAddress?.name || "-"}
+                              </p>
                               {parcel.senderAddress?.company && (
-                                <p><span className="font-medium">Company:</span> {parcel.senderAddress.company}</p>
+                                <p>
+                                  <span className="font-medium">Company:</span>{" "}
+                                  {parcel.senderAddress.company}
+                                </p>
                               )}
                             </div>
                           </div>

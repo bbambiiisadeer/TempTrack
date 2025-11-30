@@ -5,10 +5,19 @@ import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
+import { RxCross2 } from "react-icons/rx";
 
 function AMdashboard() {
   const { user, logout, updateUser } = useAuth();
-  const { parcels, drivers, loading, totalPending, totalShipped, totalDelivered, setParcels } = useParcel();
+  const {
+    parcels,
+    drivers,
+    loading,
+    totalPending,
+    totalShipped,
+    totalDelivered,
+    setParcels,
+  } = useParcel();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -97,47 +106,47 @@ function AMdashboard() {
   };
 
   const handleToggleShipped = async (
-  parcelId: string,
-  currentStatus: boolean,
-  hasDriver: boolean
-) => {
-  if (!hasDriver) {
-    alert("Please select a driver before marking as shipped");
-    return;
-  }
+    parcelId: string,
+    currentStatus: boolean,
+    hasDriver: boolean
+  ) => {
+    if (!hasDriver) {
+      alert("Please select a driver before marking as shipped");
+      return;
+    }
 
-  try {
-    const newStatus = !currentStatus;
-    
-    const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ isShipped: newStatus }),
-    });
+    try {
+      const newStatus = !currentStatus;
 
-    if (!res.ok) throw new Error("Failed to update shipped status");
+      const res = await fetch(`http://localhost:3000/parcel/${parcelId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ isShipped: newStatus }),
+      });
 
-    const responseData = await res.json();
+      if (!res.ok) throw new Error("Failed to update shipped status");
 
-    setParcels((prev) =>
-      prev.map((p) =>
-        p.id === parcelId 
-          ? { 
-              ...p, 
-              isShipped: newStatus,
-              shippedAt: responseData.data.shippedAt 
-            } 
-          : p
-      )
-    );
-  } catch (err) {
-    console.error("Error updating shipped status:", err);
-    alert("Failed to update shipped status");
-  }
-};
+      const responseData = await res.json();
+
+      setParcels((prev) =>
+        prev.map((p) =>
+          p.id === parcelId
+            ? {
+                ...p,
+                isShipped: newStatus,
+                shippedAt: responseData.data.shippedAt,
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("Error updating shipped status:", err);
+      alert("Failed to update shipped status");
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -293,8 +302,10 @@ function AMdashboard() {
         <div className="flex justify-center flex-1">
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
-              <div className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center font-semibold text-black cursor-pointer"
-              onClick={() => navigate("/amdashboard")}>
+              <div
+                className="py-3.5 px-2 border-b-3 border-black flex items-center justify-center font-semibold text-black cursor-pointer"
+                onClick={() => navigate("/amdashboard")}
+              >
                 Pending
               </div>
 
@@ -305,13 +316,17 @@ function AMdashboard() {
                 Shipped
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdelivered")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdelivered")}
+              >
                 Delivered
               </div>
 
-              <div className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
-              onClick={() => navigate("/amdriver")}>
+              <div
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                onClick={() => navigate("/amdriver")}
+              >
                 Driver
               </div>
             </div>
@@ -324,7 +339,16 @@ function AMdashboard() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
               />
-              <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                >
+                  <RxCross2 className="w-5 h-5" />
+                </button>
+              ) : (
+                <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+              )}
             </div>
 
             {/* Table Header */}

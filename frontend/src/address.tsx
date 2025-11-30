@@ -229,7 +229,7 @@ function AddressPage() {
                 addresses.map((addr) => (
                   <div
                     key={addr.id}
-                    className="border-b space-y-0.5 border-black py-4 transition cursor-pointer px-12"
+                    className="border-b space-y-0.5 border-gray-200 py-4 transition cursor-pointer px-12"
                   >
                     <div className="flex justify-between items-start py-1.5">
                       <div className="space-y-0.5">
@@ -257,9 +257,10 @@ function AddressPage() {
                       </div>
 
                       <div className="flex gap-6 mt-1">
+                        <div className="p-2 rounded-full hover:bg-gray-200 transition-colors">
                         <AiFillEdit
                           size={22}
-                          className="text-black cursor-pointer"
+                          className="text-black cursor-pointer "
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/editaddress/${addr.id}?from=address`, {
@@ -267,6 +268,8 @@ function AddressPage() {
                             });
                           }}
                         />
+                        </div>
+                         <div className="p-2 rounded-full hover:bg-gray-200 transition-colors">
                         <MdDelete
                           size={24}
                           className="text-black cursor-pointer"
@@ -275,6 +278,7 @@ function AddressPage() {
                             handleDelete(addr.id);
                           }}
                         />
+                        </div>
                       </div>
                     </div>
                   </div>

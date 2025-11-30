@@ -581,6 +581,7 @@ app.delete(
 // ==================== PARCEL ROUTES ====================
 
 // GET parcel by tracking number (public - ไม่ต้อง login)
+// GET parcel by tracking number (public - ไม่ต้อง login)
 app.get(
   "/parcel/track/:trackingNo",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -603,6 +604,7 @@ app.get(
 
       let senderAddress = null;
       let recipientAddress = null;
+      let driverData = null; // เพิ่มตัวแปรนี้
 
       if (result.senderAddressId) {
         const sender = await dbClient.query.address.findFirst({
@@ -630,17 +632,36 @@ app.get(
         }
       }
 
+      // เพิ่มส่วนนี้เพื่อดึงข้อมูล driver
+      if (result.driverId) {
+        const driverInfo = await dbClient.query.driver.findFirst({
+          where: eq(driver.id, result.driverId),
+        });
+        if (driverInfo) {
+          driverData = {
+            id: driverInfo.id,
+            name: driverInfo.name,
+            regNumber: driverInfo.regNumber,
+            email: driverInfo.email,
+            phoneNumber: driverInfo.phoneNumber,
+          };
+        }
+      }
+
       res.json({
         id: result.id,
         trackingNo: result.trackingNo,
         isDelivered: result.isDelivered,
         isShipped: result.isShipped,
         createdAt: result.createdAt,
+        shippedAt: result.shippedAt,        // เพิ่มบรรทัดนี้
+        deliveredAt: result.deliveredAt,    // เพิ่มบรรทัดนี้
         parcelName: result.parcelName,
         quantity: result.quantity,
         weight: result.weight,
         senderAddress,
         recipientAddress,
+        driver: driverData,  // เพิ่มบรรทัดนี้
       });
     } catch (err) {
       next(err);
@@ -871,6 +892,7 @@ app.post(
 );
 
 // UPDATE parcel by ID (support driverId and isShipped)
+// UPDATE parcel by ID (support driverId and isShipped)
 app.patch(
   "/parcel/:id",
   authenticateToken,
@@ -906,34 +928,43 @@ app.patch(
         "isDelivered",
         "isShipped",
         "driverId",
-        "shippedAt",      // เพิ่มบรรทัดนี้
-        "deliveredAt",    // เพิ่มบรรทัดนี้
       ];
 
       const updateData: any = {};
+      
       allowedFields.forEach((field) => {
         if (req.body[field] !== undefined) {
           updateData[field] = req.body[field];
         }
       });
 
-      // Auto-set shippedAt when isShipped changes
+      // จัดการ timestamp สำหรับ isShipped
       if (req.body.isShipped !== undefined) {
-        if (req.body.isShipped === true && !exists.shippedAt) {
-          updateData.shippedAt = new Date();
-        } else if (req.body.isShipped === false) {
+        if (req.body.isShipped === true) {
+          // Set shippedAt เฉพาะเมื่อยังไม่มีค่า
+          if (!exists.shippedAt) {
+            updateData.shippedAt = new Date(); // ใช้ new Date() ตรงๆ
+          }
+        } else {
+          // Clear shippedAt เมื่อ unset
           updateData.shippedAt = null;
         }
       }
 
-      // Auto-set deliveredAt when isDelivered changes
+      // จัดการ timestamp สำหรับ isDelivered
       if (req.body.isDelivered !== undefined) {
-        if (req.body.isDelivered === true && !exists.deliveredAt) {
-          updateData.deliveredAt = new Date();
-        } else if (req.body.isDelivered === false) {
+        if (req.body.isDelivered === true) {
+          // Set deliveredAt เฉพาะเมื่อยังไม่มีค่า
+          if (!exists.deliveredAt) {
+            updateData.deliveredAt = new Date(); // ใช้ new Date() ตรงๆ
+          }
+        } else {
+          // Clear deliveredAt เมื่อ unset
           updateData.deliveredAt = null;
         }
       }
+
+      console.log("Updating parcel with data:", updateData); // เพิ่ม log
 
       const result = await dbClient
         .update(parcel)
@@ -941,8 +972,11 @@ app.patch(
         .where(eq(parcel.id, id))
         .returning();
 
+      console.log("Update result:", result[0]); // เพิ่ม log
+
       res.json({ msg: "Parcel updated", data: result[0] });
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Error updating parcel:", err); // เพิ่ม log
       next(err);
     }
   }
