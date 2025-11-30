@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { dbClient } from "@db/client.js";
-import { users, address, parcel, driver } from "@db/schema.js";
+import { users, address, parcel, driver, notification } from "@db/schema.js";
 import cors from "cors";
 import Debug from "debug";
 import { eq } from "drizzle-orm";
@@ -581,7 +581,6 @@ app.delete(
 // ==================== PARCEL ROUTES ====================
 
 // GET parcel by tracking number (public - ไม่ต้อง login)
-// GET parcel by tracking number (public - ไม่ต้อง login)
 app.get(
   "/parcel/track/:trackingNo",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -604,7 +603,7 @@ app.get(
 
       let senderAddress = null;
       let recipientAddress = null;
-      let driverData = null; // เพิ่มตัวแปรนี้
+      let driverData = null;
 
       if (result.senderAddressId) {
         const sender = await dbClient.query.address.findFirst({
@@ -632,7 +631,6 @@ app.get(
         }
       }
 
-      // เพิ่มส่วนนี้เพื่อดึงข้อมูล driver
       if (result.driverId) {
         const driverInfo = await dbClient.query.driver.findFirst({
           where: eq(driver.id, result.driverId),
@@ -654,14 +652,16 @@ app.get(
         isDelivered: result.isDelivered,
         isShipped: result.isShipped,
         createdAt: result.createdAt,
-        shippedAt: result.shippedAt,        // เพิ่มบรรทัดนี้
-        deliveredAt: result.deliveredAt,    // เพิ่มบรรทัดนี้
+        shippedAt: result.shippedAt,
+        deliveredAt: result.deliveredAt,
         parcelName: result.parcelName,
         quantity: result.quantity,
         weight: result.weight,
+        signature: result.signature,        // เพิ่มบรรทัดนี้
+        signedAt: result.signedAt,          // เพิ่มบรรทัดนี้
         senderAddress,
         recipientAddress,
-        driver: driverData,  // เพิ่มบรรทัดนี้
+        driver: driverData,
       });
     } catch (err) {
       next(err);
@@ -712,48 +712,48 @@ app.get(
       const driverMap = new Map(drivers.map((d) => [d.id, d]));
 
       const results = parcels.map((p) => ({
-  id: p.id,
-  trackingNo: p.trackingNo,
-  isDelivered: p.isDelivered,
-  isShipped: p.isShipped,
-  driverId: p.driverId,
-  createdAt: p.createdAt,
-  shippedAt: p.shippedAt,        // เพิ่มบรรทัดนี้
-  deliveredAt: p.deliveredAt,    // เพิ่มบรรทัดนี้
-  parcelName: p.parcelName,
-  quantity: p.quantity,
-  weight: p.weight,
-  dimensionLength: p.dimensionLength,
-  dimensionWidth: p.dimensionWidth,
-  dimensionHeight: p.dimensionHeight,
-  temperatureRangeMin: p.temperatureRangeMin,
-  temperatureRangeMax: p.temperatureRangeMax,
-  allowedDeviation: p.allowedDeviation,
-  specialNotes: p.specialNotes,
-  senderAddress: p.senderAddressId
-    ? {
-        id: addressMap.get(p.senderAddressId)?.id,
-        name: addressMap.get(p.senderAddressId)?.name,
-        company: addressMap.get(p.senderAddressId)?.company,
-      }
-    : null,
-  recipientAddress: p.recipientAddressId
-    ? {
-        id: addressMap.get(p.recipientAddressId)?.id,
-        name: addressMap.get(p.recipientAddressId)?.name,
-        company: addressMap.get(p.recipientAddressId)?.company,
-      }
-    : null,
-  driver: p.driverId
-    ? {
-        id: driverMap.get(p.driverId)?.id,
-        name: driverMap.get(p.driverId)?.name,
-        regNumber: driverMap.get(p.driverId)?.regNumber,
-        email: driverMap.get(p.driverId)?.email,
-        phoneNumber: driverMap.get(p.driverId)?.phoneNumber,
-      }
-    : null,
-}));
+        id: p.id,
+        trackingNo: p.trackingNo,
+        isDelivered: p.isDelivered,
+        isShipped: p.isShipped,
+        driverId: p.driverId,
+        createdAt: p.createdAt,
+        shippedAt: p.shippedAt, // เพิ่มบรรทัดนี้
+        deliveredAt: p.deliveredAt, // เพิ่มบรรทัดนี้
+        parcelName: p.parcelName,
+        quantity: p.quantity,
+        weight: p.weight,
+        dimensionLength: p.dimensionLength,
+        dimensionWidth: p.dimensionWidth,
+        dimensionHeight: p.dimensionHeight,
+        temperatureRangeMin: p.temperatureRangeMin,
+        temperatureRangeMax: p.temperatureRangeMax,
+        allowedDeviation: p.allowedDeviation,
+        specialNotes: p.specialNotes,
+        senderAddress: p.senderAddressId
+          ? {
+              id: addressMap.get(p.senderAddressId)?.id,
+              name: addressMap.get(p.senderAddressId)?.name,
+              company: addressMap.get(p.senderAddressId)?.company,
+            }
+          : null,
+        recipientAddress: p.recipientAddressId
+          ? {
+              id: addressMap.get(p.recipientAddressId)?.id,
+              name: addressMap.get(p.recipientAddressId)?.name,
+              company: addressMap.get(p.recipientAddressId)?.company,
+            }
+          : null,
+        driver: p.driverId
+          ? {
+              id: driverMap.get(p.driverId)?.id,
+              name: driverMap.get(p.driverId)?.name,
+              regNumber: driverMap.get(p.driverId)?.regNumber,
+              email: driverMap.get(p.driverId)?.email,
+              phoneNumber: driverMap.get(p.driverId)?.phoneNumber,
+            }
+          : null,
+      }));
 
       res.json(results);
     } catch (err) {
@@ -786,32 +786,32 @@ app.get(
       const addressMap = new Map(addresses.map((a) => [a.id, a]));
 
       const results = parcels.map((p) => ({
-  id: p.id,
-  trackingNo: p.trackingNo,
-  isDelivered: p.isDelivered,
-  isShipped: p.isShipped,
-  driverId: p.driverId,
-  createdAt: p.createdAt,
-  shippedAt: p.shippedAt,        // เพิ่มบรรทัดนี้
-  deliveredAt: p.deliveredAt,    // เพิ่มบรรทัดนี้
-  parcelName: p.parcelName,
-  quantity: p.quantity,
-  weight: p.weight,
-  senderAddress: p.senderAddressId
-    ? {
-        id: addressMap.get(p.senderAddressId)?.id,
-        name: addressMap.get(p.senderAddressId)?.name,
-        company: addressMap.get(p.senderAddressId)?.company,
-      }
-    : null,
-  recipientAddress: p.recipientAddressId
-    ? {
-        id: addressMap.get(p.recipientAddressId)?.id,
-        name: addressMap.get(p.recipientAddressId)?.name,
-        company: addressMap.get(p.recipientAddressId)?.company,
-      }
-    : null,
-}));
+        id: p.id,
+        trackingNo: p.trackingNo,
+        isDelivered: p.isDelivered,
+        isShipped: p.isShipped,
+        driverId: p.driverId,
+        createdAt: p.createdAt,
+        shippedAt: p.shippedAt, // เพิ่มบรรทัดนี้
+        deliveredAt: p.deliveredAt, // เพิ่มบรรทัดนี้
+        parcelName: p.parcelName,
+        quantity: p.quantity,
+        weight: p.weight,
+        senderAddress: p.senderAddressId
+          ? {
+              id: addressMap.get(p.senderAddressId)?.id,
+              name: addressMap.get(p.senderAddressId)?.name,
+              company: addressMap.get(p.senderAddressId)?.company,
+            }
+          : null,
+        recipientAddress: p.recipientAddressId
+          ? {
+              id: addressMap.get(p.recipientAddressId)?.id,
+              name: addressMap.get(p.recipientAddressId)?.name,
+              company: addressMap.get(p.recipientAddressId)?.company,
+            }
+          : null,
+      }));
 
       res.json(results);
     } catch (err) {
@@ -891,7 +891,64 @@ app.post(
   }
 );
 
-// UPDATE parcel by ID (support driverId and isShipped)
+// POST /parcel/:id/signature - Save signature for delivered parcel
+app.post(
+  "/parcel/:id/signature",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { signature } = req.body;
+
+      if (!id) {
+        res.status(400).json({ msg: "Missing parcel id" });
+        return;
+      }
+
+      if (!signature) {
+        res.status(400).json({ msg: "Signature is required" });
+        return;
+      }
+
+      // Check if parcel exists
+      const exists = await dbClient.query.parcel.findFirst({
+        where: eq(parcel.id, id),
+      });
+
+      if (!exists) {
+        res.status(404).json({ msg: "Parcel not found" });
+        return;
+      }
+
+      // Check if parcel is delivered
+      if (!exists.isDelivered) {
+        res.status(400).json({ msg: "Parcel must be delivered before signing" });
+        return;
+      }
+
+      // Update parcel with signature
+      const result = await dbClient
+        .update(parcel)
+        .set({
+          signature: signature,
+          signedAt: new Date(),
+        })
+        .where(eq(parcel.id, id))
+        .returning();
+
+      console.log("Signature saved for parcel:", result[0].trackingNo);
+
+      res.json({
+        msg: "Signature saved successfully",
+        data: result[0],
+      });
+    } catch (err: any) {
+      console.error("Error saving signature:", err);
+      next(err);
+    }
+  }
+);
+
 // UPDATE parcel by ID (support driverId and isShipped)
 app.patch(
   "/parcel/:id",
@@ -931,7 +988,7 @@ app.patch(
       ];
 
       const updateData: any = {};
-      
+
       allowedFields.forEach((field) => {
         if (req.body[field] !== undefined) {
           updateData[field] = req.body[field];
@@ -998,6 +1055,128 @@ app.delete(
 
       await dbClient.delete(parcel).where(eq(parcel.id, id));
       res.json({ msg: "Parcel deleted", data: { id } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET notification status for a user
+app.get(
+  "/users/:userId/notification-status",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        res.status(400).json({ msg: "Missing userId" });
+        return;
+      }
+
+      // ตรวจสอบว่าเป็น user เดียวกัน
+      if (req.user?.userId !== userId) {
+        res.status(403).json({ msg: "Unauthorized" });
+        return;
+      }
+
+      const statuses = await dbClient.query.notification.findMany({
+        where: eq(notification.userId, userId),
+      });
+
+      const read: string[] = [];
+      const deleted: string[] = [];
+
+      statuses.forEach((status) => {
+        if (status.isRead) read.push(status.notificationId);
+        if (status.isDeleted) deleted.push(status.notificationId);
+      });
+
+      res.json({ read, deleted });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// UPDATE notification status (mark as read/deleted)
+app.patch(
+  "/users/:userId/notification-status",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const { read, deleted } = req.body;
+
+      if (!userId) {
+        res.status(400).json({ msg: "Missing userId" });
+        return;
+      }
+
+      // ตรวจสอบว่าเป็น user เดียวกัน
+      if (req.user?.userId !== userId) {
+        res.status(403).json({ msg: "Unauthorized" });
+        return;
+      }
+
+      // อัพเดท read status
+      if (Array.isArray(read)) {
+        for (const notificationId of read) {
+          // ตรวจสอบว่ามี record อยู่แล้วหรือไม่
+          const existing = await dbClient.query.notification.findFirst({
+            where: (n, { and, eq }) =>
+              and(
+                eq(n.userId, userId),
+                eq(n.notificationId, notificationId)
+              ),
+          });
+
+          if (existing) {
+            // อัพเดท
+            await dbClient
+              .update(notification)
+              .set({ isRead: true, updatedAt: new Date() })
+              .where(eq(notification.id, existing.id));
+          } else {
+            // สร้างใหม่
+            await dbClient.insert(notification).values({
+              userId,
+              notificationId,
+              isRead: true,
+              isDeleted: false,
+            });
+          }
+        }
+      }
+
+      // อัพเดท deleted status
+      if (Array.isArray(deleted)) {
+        for (const notificationId of deleted) {
+          const existing = await dbClient.query.notification.findFirst({
+            where: (n, { and, eq }) =>
+              and(
+                eq(n.userId, userId),
+                eq(n.notificationId, notificationId)
+              ),
+          });
+
+          if (existing) {
+            await dbClient
+              .update(notification)
+              .set({ isDeleted: true, updatedAt: new Date() })
+              .where(eq(notification.id, existing.id));
+          } else {
+            await dbClient.insert(notification).values({
+              userId,
+              notificationId,
+              isRead: false,
+              isDeleted: true,
+            });
+          }
+        }
+      }
+
+      res.json({ msg: "Notification status updated successfully" });
     } catch (err) {
       next(err);
     }

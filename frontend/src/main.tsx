@@ -26,6 +26,8 @@ import AMdelivered from "./AMdelivered";
 import AMdriver from "./AMdriver";
 import { ParcelProvider } from "./ParcelContext";
 import Report from "./report";
+import Notification from "./notification";
+import { NotificationProvider } from "./NotificationContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -33,6 +35,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <TrackingProvider>
         <ShippingProvider>
           <ParcelProvider>
+            <NotificationProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/senderinfo" element={<SenderInfo />} />
@@ -55,8 +58,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/amdelivered" element={<AMdelivered />} />
               <Route path="/amdriver" element={<AMdriver />} />
               <Route path="/report" element={<Report />} />
+              <Route path="/notification" element={<Notification />} />
             </Routes>
           </BrowserRouter>
+          </NotificationProvider>
           </ParcelProvider>
         </ShippingProvider>
       </TrackingProvider>

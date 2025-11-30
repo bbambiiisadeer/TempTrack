@@ -74,6 +74,8 @@ export const parcel = pgTable("parcel", {
   deliveredAt: timestamp("delivered_at"),
   isShipped: boolean("is_shipped").default(false).notNull(),
   shippedAt: timestamp("shipped_at"),
+  signature: text("signature"),
+  signedAt: timestamp("signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -85,4 +87,19 @@ export const driver = pgTable("driver", {
   email: varchar("email", { length: 150 }),
   phoneNumber: varchar("phone_number", { length: 20 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const notification = pgTable("notification", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  notificationId: varchar("notification_id", { length: 255 }).notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
