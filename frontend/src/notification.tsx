@@ -396,8 +396,6 @@ function Notification() {
       setShowSignature(false);
       setSelectedNotification(null);
       clearCanvas();
-
-      alert("Signature accepted successfully!");
     } catch (err) {
       console.error("Error saving signature:", err);
       alert("Failed to save signature");
