@@ -11,6 +11,7 @@ import { FaCheck } from "react-icons/fa6";
 import { RiDeleteBin4Line } from "react-icons/ri";
 import { LuMailOpen } from "react-icons/lu";
 import { TiMinus } from "react-icons/ti";
+import { FaChevronDown } from "react-icons/fa6";
 
 interface NotificationData {
   id: string;
@@ -21,17 +22,24 @@ interface NotificationData {
   driverRegNumber: string;
   shippedAt?: string;
   deliveredAt?: string;
-  type: 'shipped' | 'delivered';
+  type: "shipped" | "delivered";
   isIncoming?: boolean;
   signature?: string;
   signedAt?: string;
   isRead?: boolean;
 }
 
+type FilterType = "all" | "read" | "unread";
+
 function Notification() {
   const { user, logout, updateUser } = useAuth();
   const { trackingNumbers } = useTracking();
-  const { isRead, isDeleted, markAsRead: markAsReadContext, markAsDeleted } = useNotification();
+  const {
+    isRead,
+    isDeleted,
+    markAsRead: markAsReadContext,
+    markAsDeleted,
+  } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -42,13 +50,19 @@ function Notification() {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignature, setShowSignature] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
+  const [selectedNotification, setSelectedNotification] =
+    useState<NotificationData | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set());
+  const [selectedNotifications, setSelectedNotifications] = useState<
+    Set<string>
+  >(new Set());
+  const [filterType, setFilterType] = useState<FilterType>("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -201,10 +215,10 @@ function Notification() {
 
   // Filter out deleted notifications and apply read status from context
   const activeNotifications = notifications
-    .filter(n => !isDeleted(n.id))
-    .map(n => ({
+    .filter((n) => !isDeleted(n.id))
+    .map((n) => ({
       ...n,
-      isRead: isRead(n.id)
+      isRead: isRead(n.id),
     }));
 
   const filteredNotifications = activeNotifications.filter((n) => {
@@ -218,10 +232,10 @@ function Notification() {
     );
   });
 
-  const unreadCount = activeNotifications.filter(n => !n.isRead).length;
+  const unreadCount = activeNotifications.filter((n) => !n.isRead).length;
 
   const toggleNotificationSelect = (id: string) => {
-    setSelectedNotifications(prev => {
+    setSelectedNotifications((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
         newSet.delete(id);
@@ -236,26 +250,39 @@ function Notification() {
     if (selectedNotifications.size > 0) {
       // If any selected (including all or some), deselect all
       setSelectedNotifications(new Set());
+      setFilterType("all"); // กลับไปเป็น "all" เพื่อให้สีกลับเป็นปกติ
     } else {
       // If none selected, select all
-      setSelectedNotifications(new Set(filteredNotifications.map(n => n.id)));
+      setSelectedNotifications(new Set(filteredNotifications.map((n) => n.id)));
     }
   };
 
-  const isAllSelected = selectedNotifications.size === filteredNotifications.length && filteredNotifications.length > 0;
-  const isSomeSelected = selectedNotifications.size > 0 && selectedNotifications.size < filteredNotifications.length;
+  const isAllSelected =
+    selectedNotifications.size === filteredNotifications.length &&
+    filteredNotifications.length > 0;
+  const isSomeSelected =
+    selectedNotifications.size > 0 &&
+    selectedNotifications.size < filteredNotifications.length;
 
   const markAsRead = () => {
     if (selectedNotifications.size === 0) return;
-    
-    markAsReadContext(Array.from(selectedNotifications));
+
+    const allowedToRead = filteredNotifications
+      .filter((n) => selectedNotifications.has(n.id))
+      .filter((n) => !(n.isIncoming && n.type === "delivered" && !n.signature));
+
+    if (allowedToRead.length === 0) return;
+
+    markAsReadContext(allowedToRead.map((n) => n.id));
     setSelectedNotifications(new Set());
   };
 
   const deleteSelected = () => {
     if (selectedNotifications.size === 0) return;
-    
-    if (window.confirm(`Delete ${selectedNotifications.size} notification(s)?`)) {
+
+    if (
+      window.confirm(`Delete ${selectedNotifications.size} notification(s)?`)
+    ) {
       markAsDeleted(Array.from(selectedNotifications));
       setSelectedNotifications(new Set());
     }
@@ -357,7 +384,11 @@ function Notification() {
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === selectedNotification.id
-            ? { ...n, signature: signatureData, signedAt: new Date().toISOString() }
+            ? {
+                ...n,
+                signature: signatureData,
+                signedAt: new Date().toISOString(),
+              }
             : n
         )
       );
@@ -383,6 +414,9 @@ function Notification() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
         setIsEditingName(false);
+      }
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -419,6 +453,21 @@ function Notification() {
       console.error(err);
       alert("Failed to update name");
     }
+  };
+
+  const getNotificationBackgroundColor = (notification: NotificationData) => {
+    if (selectedNotifications.has(notification.id)) {
+      if (filterType === "read" && notification.isRead) {
+        return "bg-gray-100";
+      }
+      if (filterType === "unread" && !notification.isRead) {
+        return "bg-gray-100";
+      }
+      if (filterType === "all") {
+        return "bg-gray-100";
+      }
+    }
+    return "bg-white";
   };
 
   return (
@@ -546,38 +595,114 @@ function Notification() {
         <div className="w-400">
           <div className="flex justify-between items-center px-8 py-6">
             <div className="flex items-center gap-6">
-              <h2 className="text-2xl font-semibold text-black">Notification</h2>
-              
-              {/* Select All Checkbox - Always visible */}
-              <div
-                onClick={toggleSelectAll}
-                className={`w-5 h-5 border-2 rounded cursor-pointer flex items-center justify-center flex-shrink-0 transition-colors ${
-                  isAllSelected
-                    ? "bg-transparent border-black"
-                    : isSomeSelected
-                    ? "bg-transparent border-black"
-                    : "border-gray-400 hover:border-black"
-                }`}
-              >
-                {isAllSelected && <FaCheck className="w-4 h-4 text-black" />}
-                {isSomeSelected && <TiMinus className="w-3" />}
+              <h2 className="text-2xl font-semibold text-black">
+                Notification
+              </h2>
+
+              <div className="relative" ref={filterRef}>
+                <div
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="w-16 h-10 bg-transparent flex items-center justify-between px-2 rounded-xl cursor-pointer"
+                >
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelectAll();
+                    }}
+                    className={`w-5 h-5 border-2 rounded cursor-pointer flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isAllSelected
+                        ? "bg-transparent border-black"
+                        : isSomeSelected
+                        ? "bg-transparent border-black"
+                        : "border-black"
+                    }`}
+                  >
+                    {isAllSelected && (
+                      <FaCheck className="w-4 h-4 text-black" />
+                    )}
+                    {isSomeSelected && <TiMinus className="w-3" />}
+                  </div>
+                  <div className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors ml-4">
+                    <FaChevronDown className="w-4 h-4 text-black" />{" "}
+                  </div>
+                </div>
+
+                {isFilterOpen && (
+                  <div className="absolute top-full mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        setFilterType("all");
+                        setIsFilterOpen(false);
+                        // เลือกทั้งหมด
+                        setSelectedNotifications(
+                          new Set(filteredNotifications.map((n) => n.id))
+                        );
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                        filterType === "all" ? "font-semibold" : ""
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilterType("read");
+                        setIsFilterOpen(false);
+                        // เลือกเฉพาะที่ read แล้ว
+                        setSelectedNotifications(
+                          new Set(
+                            filteredNotifications
+                              .filter((n) => n.isRead)
+                              .map((n) => n.id)
+                          )
+                        );
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                        filterType === "read" ? "font-semibold" : ""
+                      }`}
+                    >
+                      Read
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilterType("unread");
+                        setIsFilterOpen(false);
+                        // เลือกเฉพาะที่ยัง unread
+                        setSelectedNotifications(
+                          new Set(
+                            filteredNotifications
+                              .filter((n) => !n.isRead)
+                              .map((n) => n.id)
+                          )
+                        );
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                        filterType === "unread" ? "font-semibold" : ""
+                      }`}
+                    >
+                      Unread
+                    </button>
+                  </div>
+                )}
               </div>
 
               {selectedNotifications.size > 0 && (
                 <div className="flex items-center gap-4">
-                  <button
-                    onClick={markAsRead}
-                    className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors"
-                  >
-                    <LuMailOpen size={22}/>
-                  </button>
+                  {filterType !== "read" && (
+                    <button
+                      onClick={markAsRead}
+                      className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors"
+                    >
+                      <LuMailOpen size={22} />
+                    </button>
+                  )}
                   <button
                     onClick={deleteSelected}
-                     className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors"
+                    className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors"
                   >
                     <RiDeleteBin4Line size={22} />
                   </button>
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-black">
                     {selectedNotifications.size} selected
                   </span>
                 </div>
@@ -624,10 +749,14 @@ function Notification() {
                   {filteredNotifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className="border-b border-gray-400 p-8 relative flex items-center gap-6"
+                      className={`border-b border-gray-400 p-8 relative flex items-center gap-6 ${getNotificationBackgroundColor(
+                        notification
+                      )}`}
                     >
                       <div
-                        onClick={() => toggleNotificationSelect(notification.id)}
+                        onClick={() =>
+                          toggleNotificationSelect(notification.id)
+                        }
                         className={`w-5 h-5 border-2 rounded cursor-pointer flex items-center justify-center flex-shrink-0 transition-colors ${
                           selectedNotifications.has(notification.id)
                             ? "bg-transparent border-black"
@@ -657,7 +786,13 @@ function Notification() {
                             )}
                           </div>
                           <div className="flex-1">
-                            <p className={`text-black mb-1 ${notification.isRead ? 'font-normal' : 'font-medium'}`}>
+                            <p
+                              className={`text-black mb-1 ${
+                                notification.isRead
+                                  ? "font-normal"
+                                  : "font-medium"
+                              }`}
+                            >
                               {notification.type === "delivered"
                                 ? `Your parcel ${notification.trackingNo} has been delivered`
                                 : `Your parcel ${notification.trackingNo} has been shipped`}
@@ -728,20 +863,20 @@ function Notification() {
 
       {/* Signature Modal */}
       {showSignature && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-[600px] relative">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-160 relative">
             <button
               onClick={() => {
                 setShowSignature(false);
                 setSelectedNotification(null);
                 clearCanvas();
               }}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors"
             >
-              <RxCross2 className="w-6 h-6 text-black" />
+              <RxCross2 size={24} className="text-black" />
             </button>
 
-            <h3 className="text-xl font-semibold text-black mb-4">
+            <h3 className="text-lg font-semibold text-black mb-1.5">
               Sign to Accept Parcel
             </h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -761,16 +896,16 @@ function Notification() {
               />
             </div>
 
-            <div className="flex justify-between gap-4">
+            <div className="flex items-center justify-end mt-4">
               <button
                 onClick={clearCanvas}
-                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded-lg transition-colors"
+                className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer hover:underline"
               >
                 Clear
               </button>
               <button
                 onClick={handleSignatureDone}
-                className="px-6 py-2 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors"
+                className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
               >
                 Done
               </button>
