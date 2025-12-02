@@ -8,6 +8,7 @@ import { IoSearch } from "react-icons/io5";
 import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
+import { BsCheckLg } from "react-icons/bs";
 
 interface DriverData {
   id: string;
@@ -34,6 +35,14 @@ interface ParcelData {
   driver?: DriverData;
 }
 
+const SORT_OPTIONS = [
+  { label: "Select", value: "" },
+  { label: "Date", value: "date" },
+  { label: "Duration", value: "duration" },
+  { label: "High Temp", value: "hightemp" },
+  { label: "Low Temp", value: "lowtemp" },
+];
+
 function SentPage() {
   const { user, logout, updateUser } = useAuth();
   const { unreadCount } = useNotification();
@@ -47,9 +56,11 @@ function SentPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const sortMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchParcels = async () => {
@@ -113,6 +124,9 @@ function SentPage() {
         setIsMenuOpen(false);
         setIsEditingName(false);
       }
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setIsSortMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -154,8 +168,15 @@ function SentPage() {
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
+
+      setCopiedTrackingNo(trackingNo);
+
+      setTimeout(() => {
+        setCopiedTrackingNo(null);
+      }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
+      setCopiedTrackingNo(null);
     }
   };
 
@@ -286,21 +307,33 @@ function SentPage() {
             <h2 className="text-2xl font-semibold text-black">Sent Parcels</h2>
             <div className="flex items-center gap-2 ml-auto">
               <span className="text-sm text-black mr-2">Sort by</span>
-              <div className="relative inline-block w-34">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none w-full bg-white border h-12 border-black text-black text-sm rounded-l-full px-4 pr-10 focus:outline-none"
+              <div className="relative inline-block w-34" ref={sortMenuRef}>
+                <button
+                  onClick={() => setIsSortMenuOpen((prev) => !prev)}
+                  className="appearance-none w-full bg-white border h-12 border-black text-black text-sm rounded-l-full px-4 pr-2.5 focus:outline-none flex items-center justify-between"
                 >
-                  <option value="">Select</option>
-                  <option value="date">Date</option>
-                  <option value="duration">Duration</option>
-                  <option value="hightemp">High Temp</option>
-                  <option value="lowtemp">Low Temp</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                  <IoIosArrowDown className="text-black w-4 h-4" />
-                </div>
+                  {SORT_OPTIONS.find(opt => opt.value === sortBy)?.label || "Select"}
+                  <IoIosArrowDown className={`text-black w-4 h-4 ${isSortMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+                </button>
+                
+                {isSortMenuOpen && (
+                  <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {SORT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value);
+                          setIsSortMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                          sortBy === option.value ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="relative w-58">
@@ -381,7 +414,11 @@ function SentPage() {
                           }}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
-                          <MdContentCopy className="w-4 h-4 text-black" />
+                          {copiedTrackingNo === parcel.trackingNo ? (
+                            <BsCheckLg className="w-4 h-4 text-black" />
+                          ) : (
+                            <MdContentCopy className="w-4 h-4 text-black" />
+                          )}
                         </button>
                       </div>
                       <div className="text-sm pl-4">

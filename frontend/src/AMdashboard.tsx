@@ -17,6 +17,7 @@ function AMdashboard() {
     totalShipped,
     totalDelivered,
     setParcels,
+    refreshData,
   } = useParcel();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
@@ -43,8 +44,6 @@ function AMdashboard() {
         setIsMenuOpen(false);
         setIsEditingName(false);
       }
-
-      // Close driver dropdown when clicking outside
       if (openDropdownId) {
         const dropdownRef = dropdownRefs.current[openDropdownId];
         if (dropdownRef && !dropdownRef.contains(e.target as Node)) {
@@ -111,6 +110,7 @@ function AMdashboard() {
       );
 
       setOpenDropdownId(null);
+      await refreshData();
     } catch (err) {
       console.error("Error updating driver:", err);
       alert("Failed to update driver");
@@ -154,6 +154,7 @@ function AMdashboard() {
             : p
         )
       );
+      await refreshData();
     } catch (err) {
       console.error("Error updating shipped status:", err);
       alert("Failed to update shipped status");

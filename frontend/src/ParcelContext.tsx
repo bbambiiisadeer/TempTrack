@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
 
 interface Driver {
@@ -46,12 +46,17 @@ export function ParcelProvider({ children }: { children: ReactNode }) {
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const initialLoadCompleted = useRef(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    const isInitialLoad = !initialLoadCompleted.current;
+    
+    if (isInitialLoad) {
+        setLoading(true);
+    }
+    
     try {
-      setLoading(true);
-      
-      // Fetch all parcels
       const parcelRes = await fetch(`http://localhost:3000/parcel/all`, {
         credentials: "include",
       });
@@ -59,23 +64,28 @@ export function ParcelProvider({ children }: { children: ReactNode }) {
       const parcelData = await parcelRes.json();
       setParcels(parcelData);
 
-      // Fetch all drivers
       const driverRes = await fetch(`http://localhost:3000/driver`, {
         credentials: "include",
       });
       if (!driverRes.ok) throw new Error("Failed to fetch drivers");
       const driverData = await driverRes.json();
       setDrivers(driverData);
+
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+        initialLoadCompleted.current = true;
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+    const intervalId = setInterval(fetchData, 10000);
+    return () => clearInterval(intervalId);
+  }, [fetchData]); 
 
   const totalPending = parcels.filter(
     (p) => !p.isDelivered && !p.isShipped
@@ -98,7 +108,7 @@ export function ParcelProvider({ children }: { children: ReactNode }) {
         totalDelivered,
         setParcels,
         setDrivers,
-        refreshData: fetchData,
+        refreshData: fetchData, 
       }}
     >
       {children}
