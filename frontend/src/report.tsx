@@ -81,52 +81,51 @@ function Report() {
 
             {/* Right Box - Reg Number */}
             <div
-              className={`bg-white grid items-center px-8 transition-all
+  className={`bg-white grid items-center px-8 transition-all
     ${user ? "rounded-r-full flex-1" : "rounded-full w-full pl-12"} 
   `}
-              style={{
-                gridTemplateColumns: "1.5fr 2.5fr 3fr 4fr 4fr 2.3fr",
-              }}
-            >
-              <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">Reg num</div>
-                <div className="text-2xl text-black font-medium">
-                  {parcelData?.driver?.regNumber || "-"}
-                </div>
-              </div>
-              <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">Driver</div>
-                <div className="text-lg text-black font-medium">
-                  {parcelData?.driver?.name || "-"}
-                </div>
-              </div>
-              <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">Shipped At</div>
-                <div className="text-lg text-black font-medium">
-                  {formatThaiDateTime(parcelData?.shippedAt)}
-                </div>
-              </div>
-              <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">From</div>
-                <div className="text-lg text-black font-medium">
-                  {parcelData?.senderAddress?.company || "-"}
-                </div>
-              </div>
-              <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">To</div>
-                <div className="text-lg text-black font-medium">
-                  {parcelData?.recipientAddress?.company || "-"}
-                </div>
-              </div>
-              <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">Tracking No.</div>
-                <div className="text-lg text-black font-medium">
-                  {parcelData?.trackingNo || "-"}
-                </div>
-              </div>
-            </div>
-          </div>
-
+  style={{
+    gridTemplateColumns: "1.5fr 2.5fr 3fr 4fr 4fr 2.3fr",
+  }}
+>
+  <div className="flex flex-col h-full py-3 justify-between">
+    <div className="text-sm text-gray-400">Reg num</div>
+    <div className="text-2xl text-black font-medium">
+      {parcelData?.driver?.regNumber || "-"}
+    </div>
+  </div>
+  <div className="flex flex-col h-full py-3 justify-between">
+    <div className="text-sm text-gray-400">Driver</div>
+    <div className="text-lg text-black font-medium">
+      {parcelData?.driver?.name || "-"}
+    </div>
+  </div>
+  <div className="flex flex-col h-full py-3 justify-between">
+    <div className="text-sm text-gray-400">Shipped At</div>
+    <div className="text-lg text-black font-medium">
+      {formatThaiDateTime(parcelData?.shippedAt)}
+    </div>
+  </div>
+  <div className="flex flex-col h-full py-3 justify-between">
+  <div className="text-sm text-gray-400">From</div>
+  <div className="text-lg text-black font-medium overflow-hidden text-ellipsis whitespace-nowrap pr-4">
+    {parcelData?.senderAddress?.company || "-"}
+  </div>
+</div>
+<div className="flex flex-col h-full py-3 justify-between">
+  <div className="text-sm text-gray-400">To</div>
+  <div className="text-lg text-black font-medium overflow-hidden text-ellipsis whitespace-nowrap pr-4">
+    {parcelData?.recipientAddress?.company || "-"}
+  </div>
+</div>
+  <div className="flex flex-col h-full py-3 justify-between">
+    <div className="text-sm text-gray-400">Tracking No.</div>
+    <div className="text-lg text-black font-medium">
+      {parcelData?.trackingNo || "-"}
+    </div>
+  </div>
+</div>
+</div>
           {/* Bottom Section - Large white box */}
           <div className="space-y-1 flex-1 flex flex-col">
             <div

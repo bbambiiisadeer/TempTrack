@@ -84,6 +84,50 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           }
         });
 
+        // Fetch incoming parcels from TrackingContext
+        const trackingNumbers = JSON.parse(
+          sessionStorage.getItem(`trackingNumbers_${user.id}`) || 
+          sessionStorage.getItem('trackingNumbers_guest') || 
+          '[]'
+        );
+
+        if (trackingNumbers.length > 0) {
+          const promises = trackingNumbers.map(async (trackingNo: string) => {
+            const formattedTrackingNo = trackingNo.startsWith("#")
+              ? trackingNo
+              : `#${trackingNo}`;
+            try {
+              const res = await fetch(
+                `http://localhost:3000/parcel/track/${encodeURIComponent(
+                  formattedTrackingNo
+                )}`,
+                { credentials: "include" }
+              );
+
+              if (!res.ok) return null;
+              const data = await res.json();
+              return Array.isArray(data) ? data : [data];
+            } catch {
+              return null;
+            }
+          });
+
+          const results = await Promise.all(promises);
+          const incomingParcels = results
+            .filter((result): result is any[] => result !== null)
+            .flat();
+
+          // Process incoming parcels
+          incomingParcels.forEach((p: any) => {
+            if (p.isDelivered && p.deliveredAt) {
+              allNotifications.push({ id: `${p.id}-delivered-incoming` });
+            }
+            if (p.isShipped && p.shippedAt) {
+              allNotifications.push({ id: `${p.id}-shipped-incoming` });
+            }
+          });
+        }
+
         // Filter out deleted and count unread
         const activeNotifications = allNotifications.filter(n => !deletedNotifications.has(n.id));
         const unread = activeNotifications.filter(n => !readNotifications.has(n.id)).length;
@@ -102,6 +146,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     // อัพเดท local state ทันที (Optimistic Update)
     const newReadSet = new Set([...readNotifications, ...ids]);
     setReadNotifications(newReadSet);
+
+    // อัพเดท unreadCount ทันที
+    setUnreadCount(prev => Math.max(0, prev - ids.length));
 
     // บันทึกไปยัง backend
     try {
@@ -122,6 +169,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to save read status:', err);
       // Rollback ถ้าเกิด error
       setReadNotifications(readNotifications);
+      setUnreadCount(prev => prev + ids.length);
     }
   };
 
@@ -132,6 +180,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const newReadSet = new Set(readNotifications);
     ids.forEach(id => newReadSet.delete(id));
     setReadNotifications(newReadSet);
+
+    // อัพเดท unreadCount ทันที
+    setUnreadCount(prev => prev + ids.length);
 
     // บันทึกไปยัง backend
     try {
@@ -152,15 +203,22 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to save unread status:', err);
       // Rollback ถ้าเกิด error
       setReadNotifications(readNotifications);
+      setUnreadCount(prev => prev - ids.length);
     }
   };
 
   const markAsDeleted = async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
 
+    // นับจำนวน unread ที่จะถูกลบ
+    const unreadBeingDeleted = ids.filter(id => !readNotifications.has(id)).length;
+
     // อัพเดท local state ทันที (Optimistic Update)
     const newDeletedSet = new Set([...deletedNotifications, ...ids]);
     setDeletedNotifications(newDeletedSet);
+
+    // อัพเดท unreadCount ทันที
+    setUnreadCount(prev => Math.max(0, prev - unreadBeingDeleted));
 
     // บันทึกไปยัง backend
     try {
@@ -181,6 +239,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to save deleted status:', err);
       // Rollback ถ้าเกิด error
       setDeletedNotifications(deletedNotifications);
+      setUnreadCount(prev => prev + unreadBeingDeleted);
     }
   };
 
