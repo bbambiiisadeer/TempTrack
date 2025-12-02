@@ -1121,18 +1121,21 @@ app.patch(
 
       // อัพเดท read status
       if (Array.isArray(read)) {
+        // ดึง notifications ทั้งหมดของ user นี้
+        const allUserNotifications = await dbClient.query.notification.findMany({
+          where: (n, { eq }) => eq(n.userId, userId),
+        });
+
+        const readSet = new Set(read);
+
+        // อัพเดทหรือสร้าง notifications
         for (const notificationId of read) {
-          // ตรวจสอบว่ามี record อยู่แล้วหรือไม่
-          const existing = await dbClient.query.notification.findFirst({
-            where: (n, { and, eq }) =>
-              and(
-                eq(n.userId, userId),
-                eq(n.notificationId, notificationId)
-              ),
-          });
+          const existing = allUserNotifications.find(
+            n => n.notificationId === notificationId
+          );
 
           if (existing) {
-            // อัพเดท
+            // อัพเดท isRead = true
             await dbClient
               .update(notification)
               .set({ isRead: true, updatedAt: new Date() })
@@ -1145,6 +1148,16 @@ app.patch(
               isRead: true,
               isDeleted: false,
             });
+          }
+        }
+
+        // อัพเดท notifications ที่ไม่อยู่ใน read array ให้เป็น unread
+        for (const existing of allUserNotifications) {
+          if (!readSet.has(existing.notificationId) && existing.isRead) {
+            await dbClient
+              .update(notification)
+              .set({ isRead: false, updatedAt: new Date() })
+              .where(eq(notification.id, existing.id));
           }
         }
       }

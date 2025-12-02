@@ -6,6 +6,7 @@ interface NotificationContextType {
   isRead: (id: string) => boolean;
   isDeleted: (id: string) => boolean;
   markAsRead: (ids: string[]) => Promise<void>;
+  markAsUnread: (ids: string[]) => Promise<void>;
   markAsDeleted: (ids: string[]) => Promise<void>;
 }
 
@@ -79,6 +80,36 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const markAsUnread = async (ids: string[]) => {
+    if (!user?.id || ids.length === 0) return;
+
+    // อัพเดท local state ทันที (Optimistic Update) - ลบ ids ออกจาก readNotifications
+    const newReadSet = new Set(readNotifications);
+    ids.forEach(id => newReadSet.delete(id));
+    setReadNotifications(newReadSet);
+
+    // บันทึกไปยัง backend
+    try {
+      const res = await fetch(
+        `http://localhost:3000/users/${user.id}/notification-status`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ read: Array.from(newReadSet) }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error('Failed to save unread status');
+      }
+    } catch (err) {
+      console.error('Failed to save unread status:', err);
+      // Rollback ถ้าเกิด error
+      setReadNotifications(readNotifications);
+    }
+  };
+
   const markAsDeleted = async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
 
@@ -121,6 +152,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         isRead,
         isDeleted,
         markAsRead,
+        markAsUnread,
         markAsDeleted,
       }}
     >

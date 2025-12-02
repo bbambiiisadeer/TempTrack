@@ -10,6 +10,7 @@ import { RiEdit2Line } from "react-icons/ri";
 import { FaCheck } from "react-icons/fa6";
 import { RiDeleteBin4Line } from "react-icons/ri";
 import { LuMailOpen } from "react-icons/lu";
+import { FaRegEnvelope } from "react-icons/fa6";
 import { TiMinus } from "react-icons/ti";
 import { FaChevronDown } from "react-icons/fa6";
 
@@ -38,6 +39,7 @@ function Notification() {
     isRead,
     isDeleted,
     markAsRead: markAsReadContext,
+    markAsUnread: markAsUnreadContext,
     markAsDeleted,
   } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
@@ -250,7 +252,7 @@ function Notification() {
     if (selectedNotifications.size > 0) {
       // If any selected (including all or some), deselect all
       setSelectedNotifications(new Set());
-      setFilterType("all"); // กลับไปเป็น "all" เพื่อให้สีกลับเป็นปกติ
+      setFilterType("all");
     } else {
       // If none selected, select all
       setSelectedNotifications(new Set(filteredNotifications.map((n) => n.id)));
@@ -274,6 +276,19 @@ function Notification() {
     if (allowedToRead.length === 0) return;
 
     markAsReadContext(allowedToRead.map((n) => n.id));
+    setSelectedNotifications(new Set());
+  };
+
+  const markAsUnread = () => {
+    if (selectedNotifications.size === 0) return;
+
+    const selectedIds = filteredNotifications
+      .filter((n) => selectedNotifications.has(n.id))
+      .map((n) => n.id);
+
+    if (selectedIds.length === 0) return;
+
+    markAsUnreadContext(selectedIds);
     setSelectedNotifications(new Set());
   };
 
@@ -621,7 +636,7 @@ function Notification() {
                     {isSomeSelected && <TiMinus className="w-3" />}
                   </div>
                   <div className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors ml-4">
-                    <FaChevronDown className="w-4 h-4 text-black" />{" "}
+                    <FaChevronDown className="w-4 h-4 text-black" />
                   </div>
                 </div>
 
@@ -631,7 +646,6 @@ function Notification() {
                       onClick={() => {
                         setFilterType("all");
                         setIsFilterOpen(false);
-                        // เลือกทั้งหมด
                         setSelectedNotifications(
                           new Set(filteredNotifications.map((n) => n.id))
                         );
@@ -646,7 +660,6 @@ function Notification() {
                       onClick={() => {
                         setFilterType("read");
                         setIsFilterOpen(false);
-                        // เลือกเฉพาะที่ read แล้ว
                         setSelectedNotifications(
                           new Set(
                             filteredNotifications
@@ -665,7 +678,6 @@ function Notification() {
                       onClick={() => {
                         setFilterType("unread");
                         setIsFilterOpen(false);
-                        // เลือกเฉพาะที่ยัง unread
                         setSelectedNotifications(
                           new Set(
                             filteredNotifications
@@ -690,8 +702,18 @@ function Notification() {
                     <button
                       onClick={markAsRead}
                       className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors"
+                      title="Mark as read"
                     >
                       <LuMailOpen size={22} />
+                    </button>
+                  )}
+                  {filterType !== "unread" && (
+                    <button
+                      onClick={markAsUnread}
+                      className="p-2 rounded-full hover:bg-[#DAD8D3] transition-colors"
+                      title="Mark as unread"
+                    >
+                      <FaRegEnvelope size={22} />
                     </button>
                   )}
                   <button
