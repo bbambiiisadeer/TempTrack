@@ -339,7 +339,7 @@ function AMshipped() {
             <div className="flex-1 overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <p className="text-gray-500 text-md">Loading...</p>
+                  <p className="text-gray-500 text-md"></p>
                 </div>
               ) : filteredParcels.length === 0 ? (
                 <div className="flex items-center justify-center py-8">

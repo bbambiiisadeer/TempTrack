@@ -25,15 +25,36 @@ function AMdashboard() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     if (isEditingName && nameInputRef.current) {
       nameInputRef.current.focus();
     }
   }, [isEditingName]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+        setIsEditingName(false);
+      }
+
+      // Close driver dropdown when clicking outside
+      if (openDropdownId) {
+        const dropdownRef = dropdownRefs.current[openDropdownId];
+        if (dropdownRef && !dropdownRef.contains(e.target as Node)) {
+          setOpenDropdownId(null);
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openDropdownId]);
 
   const handleSaveName = async () => {
     try {
@@ -60,17 +81,6 @@ function AMdashboard() {
       alert("Failed to update name");
     }
   };
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsMenuOpen(false);
-        setIsEditingName(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleCopyTracking = async (trackingNo: string) => {
     try {
@@ -99,6 +109,8 @@ function AMdashboard() {
           p.id === parcelId ? { ...p, driverId: driverId || undefined } : p
         )
       );
+
+      setOpenDropdownId(null);
     } catch (err) {
       console.error("Error updating driver:", err);
       alert("Failed to update driver");
@@ -370,7 +382,7 @@ function AMdashboard() {
             <div className="flex-1 overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <p className="text-gray-500 text-md">Loading...</p>
+                  <p className="text-gray-500 text-md"></p>
                 </div>
               ) : filteredParcels.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
@@ -379,6 +391,9 @@ function AMdashboard() {
               ) : (
                 filteredParcels.map((parcel) => {
                   const hasDriver = !!parcel.driverId;
+                  const selectedDriver = drivers.find(
+                    (d) => d.id === parcel.driverId
+                  );
 
                   return (
                     <div
@@ -411,49 +426,74 @@ function AMdashboard() {
                           "-"}
                       </div>
                       <div className="pl-4">
-                        <div className="relative inline-block w-full max-w-60">
-                          <select
-                            value={parcel.driverId || ""}
-                            onChange={(e) =>
-                              handleDriverChange(parcel.id, e.target.value)
+                        <div
+                          className="relative inline-block w-full max-w-60"
+                          ref={(el) => {
+                            dropdownRefs.current[parcel.id] = el;
+                          }}
+                        >
+                          <button
+                            onClick={() =>
+                              setOpenDropdownId(
+                                openDropdownId === parcel.id ? null : parcel.id
+                              )
                             }
-                            className="appearance-none w-full bg-white border border-gray-300 text-black text-sm rounded-r-lg rounded-l-4xl px-3 py-3 pr-8 focus:outline-none focus:border-black"
-                            style={{
-                              paddingLeft:
-                                parcel.driverId &&
-                                drivers.find((d) => d.id === parcel.driverId)
-                                  ?.imageUrl
-                                  ? "3rem"
-                                  : "1rem",
-                            }}
+                            className="w-full h-12 bg-white border border-gray-300 text-black text-sm rounded-r-lg rounded-l-4xl px-2 py-3 pr-8 focus:outline-none focus:border-black text-left flex items-center gap-2"
                           >
-                            <option value="">Select Driver</option>
-                            {drivers.map((driver) => (
-                              <option key={driver.id} value={driver.id}>
-                                {driver.name}
-                              </option>
-                            ))}
-                          </select>
-
-                          {parcel.driverId &&
-                            drivers.find((d) => d.id === parcel.driverId)
-                              ?.imageUrl && (
-                              <div className="pointer-events-none absolute inset-y-0 left-2 flex items-center">
-                                <img
-                                  src={
-                                    drivers.find(
-                                      (d) => d.id === parcel.driverId
-                                    )?.imageUrl
-                                  }
-                                  alt="Driver"
-                                  className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                                />
+                            {selectedDriver ? (
+                              <div className="flex items-center gap-2 mr-2">
+                                {selectedDriver.imageUrl && (
+                                  <img
+                                    src={selectedDriver.imageUrl}
+                                    alt="Driver"
+                                    className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                                  />
+                                )}
+                                <span>{selectedDriver.name}</span>
                               </div>
+                            ) : (
+                              <span className="ml-1.5">Select Driver</span>
                             )}
 
-                          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                            <IoIosArrowDown className="text-black w-4 h-4" />
-                          </div>
+                            <IoIosArrowDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4" />
+                          </button>
+
+                          {openDropdownId === parcel.id && (
+                            <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                              <button
+                                onClick={() =>
+                                  handleDriverChange(parcel.id, "")
+                                }
+                                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${
+                                  !parcel.driverId ? " bg-gray-50" : ""
+                                }`}
+                              >
+                                Select Driver
+                              </button>
+                              {drivers.map((driver) => (
+                                <button
+                                  key={driver.id}
+                                  onClick={() =>
+                                    handleDriverChange(parcel.id, driver.id)
+                                  }
+                                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 ${
+                                    parcel.driverId === driver.id
+                                      ? " bg-gray-100"
+                                      : ""
+                                  }`}
+                                >
+                                  {driver.imageUrl && (
+                                    <img
+                                      src={driver.imageUrl}
+                                      alt={driver.name}
+                                      className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                                    />
+                                  )}
+                                  <span>{driver.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="pl-4">

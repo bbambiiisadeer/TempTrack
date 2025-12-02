@@ -27,14 +27,15 @@ export const address = pgTable("address", {
   userId: uuid("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  name: varchar("name", { length: 100 }).notNull(), // ชื่อผู้ส่ง หรือส่งในนาม
+  name: varchar("name", { length: 100 }).notNull(),
   company: varchar("company", { length: 150 }),
   email: varchar("email", { length: 150 }),
   phoneNumber: varchar("phone_number", { length: 20 }),
-  type: varchar("type", { length: 20 }), // sender หรือ recipient
+  type: varchar("type", { length: 20 }),
   address: text("address").notNull(),
-  city: varchar("city", { length: 100 }),
-  state: varchar("state", { length: 100 }),
+  province: varchar("province", { length: 100 }),
+  district: varchar("district", { length: 100 }), 
+  subdistrict: varchar("subdistrict", { length: 100 }), 
   postalCode: varchar("postal_code", { length: 20 }),
   isSaved: boolean("is_saved").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),

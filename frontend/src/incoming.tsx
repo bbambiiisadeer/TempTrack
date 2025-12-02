@@ -45,7 +45,6 @@ function IncomingPage() {
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +59,6 @@ function IncomingPage() {
         return;
       }
 
-      setLoading(true);
       try {
         const promises = trackingNumbers.map(async (trackingNo) => {
           const formattedTrackingNo = trackingNo.startsWith("#")
@@ -107,7 +105,6 @@ function IncomingPage() {
         console.error("Error fetching parcels:", err);
         setParcels([]);
       } finally {
-        setLoading(false);
       }
     };
 
@@ -371,11 +368,7 @@ function IncomingPage() {
                       Please enter a tracking number to search
                     </p>
                   </div>
-                ) : loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <p className="text-gray-500 text-md">Loading...</p>
-                  </div>
-                ) : filteredParcels.length === 0 ? (
+                ) :  filteredParcels.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <p className="text-gray-500 text-md">No parcels found</p>
                   </div>

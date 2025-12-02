@@ -13,7 +13,7 @@ function SaveAddress() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { user } = useAuth();        
+  const { user } = useAuth();     
   const userId = user?.id || null;    
 
   const fromPage = searchParams.get("from") || location.state?.from;
@@ -147,7 +147,7 @@ function SaveAddress() {
             </div>
           </div>
         )}
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={handleClose}
@@ -157,7 +157,7 @@ function SaveAddress() {
           </button>
           <span className="text-black font-normal text-sm">My Addresses</span>
         </div>
-        
+
         <div className="space-y-1 -mt-2">
           {addresses.length > 0 &&
             addresses.map((addr) => (
@@ -192,7 +192,8 @@ function SaveAddress() {
                   <p className="font-normal text-sm inter">{addr.company}</p>
                 )}
                 <p className="font-normal text-sm inter">
-                  {addr.address} {addr.city}, {addr.state} {addr.postalCode}
+                  {addr.address} {addr.subdistrict}, {addr.district},{" "}
+                  {addr.province} {addr.postalCode}
                 </p>
                 {addr.email && (
                   <p className="font-normal text-sm inter mb-1.5">

@@ -2,8 +2,9 @@ export interface Recipient {
   name: string;
   company: string;
   address: string;
-  city: string;
-  state: string;
+  province: string;     
+  district: string;      
+  subdistrict: string;  
   postalCode: string;
   email: string;
   phoneNumber: string;
@@ -24,21 +25,22 @@ export interface Parcel {
   specialNotes?: string;
 }
 
-export interface Address  {
+export type Address = {
   id: string;
   userId: string;
   name: string;
   company?: string;
   email?: string;
   phoneNumber?: string;
-  type: string;
+  type?: string;
   address: string;
-  city?: string;
-  state?: string;
+  province?: string;     
+  district?: string;      
+  subdistrict?: string;  
   postalCode?: string;
-  isSaved: boolean;
+  isSaved?: boolean;
   createdAt?: string;
-}
+};
 
 export interface User {
   id?: string;

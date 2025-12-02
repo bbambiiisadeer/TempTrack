@@ -1,9 +1,36 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { IoIosArrowDown } from "react-icons/io";
 import { type Recipient } from "./types";
 import { useShipping } from "./shippingContext";
 import { useAuth } from "./AuthContext";
 import "./index.css";
+
+interface Province {
+  id: number;
+  provinceCode: number;
+  provinceNameEn: string;
+  provinceNameTh: string;
+}
+
+interface District {
+  id: number;
+  provinceCode: number;
+  districtCode: number;
+  districtNameEn: string;
+  districtNameTh: string;
+  postalCode: number;
+}
+
+interface Subdistrict {
+  id: number;
+  provinceCode: number;
+  districtCode: number;
+  subdistrictCode: number;
+  subdistrictNameEn: string;
+  subdistrictNameTh: string;
+  postalCode: number;
+}
 
 function RecipientInfo() {
   const navigate = useNavigate();
@@ -23,8 +50,9 @@ function RecipientInfo() {
       name: "",
       company: "",
       address: "",
-      city: "",
-      state: "",
+      province: "",
+      district: "",
+      subdistrict: "",
       postalCode: "",
       email: "",
       phoneNumber: "",
@@ -32,7 +60,25 @@ function RecipientInfo() {
   });
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [subdistricts, setSubdistricts] = useState<Subdistrict[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Dropdown states
+  const [isProvinceOpen, setIsProvinceOpen] = useState(false);
+  const [isDistrictOpen, setIsDistrictOpen] = useState(false);
+  const [isSubdistrictOpen, setIsSubdistrictOpen] = useState(false);
+
+  // Refs for click outside
+  const provinceRef = useRef<HTMLDivElement>(null);
+  const districtRef = useRef<HTMLDivElement>(null);
+  const subdistrictRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchProvinces();
+  }, []);
 
   useEffect(() => {
     setRecipientFormData(recipient);
@@ -45,8 +91,9 @@ function RecipientInfo() {
         name: selectedAddress.name || "",
         company: selectedAddress.company || "",
         address: selectedAddress.address || "",
-        city: selectedAddress.city || "",
-        state: selectedAddress.state || "",
+        province: selectedAddress.province || "",
+        district: selectedAddress.district || "",
+        subdistrict: selectedAddress.subdistrict || "",
         postalCode: selectedAddress.postalCode || "",
         email: selectedAddress.email || "",
         phoneNumber: selectedAddress.phoneNumber || "",
@@ -57,6 +104,97 @@ function RecipientInfo() {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // Load districts when province is set
+  useEffect(() => {
+    if (recipient.province && provinces.length > 0) {
+      const province = provinces.find(p => p.provinceNameEn === recipient.province);
+      if (province) {
+        fetchDistricts(province.provinceCode);
+      }
+    }
+  }, [recipient.province, provinces]);
+
+  // Load subdistricts when district is set
+  useEffect(() => {
+    if (recipient.district && districts.length > 0) {
+      const district = districts.find(d => d.districtNameEn === recipient.district);
+      if (district) {
+        fetchSubdistricts(district.districtCode);
+      }
+    }
+  }, [recipient.district, districts]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (provinceRef.current && !provinceRef.current.contains(event.target as Node)) {
+        setIsProvinceOpen(false);
+      }
+      if (districtRef.current && !districtRef.current.contains(event.target as Node)) {
+        setIsDistrictOpen(false);
+      }
+      if (subdistrictRef.current && !subdistrictRef.current.contains(event.target as Node)) {
+        setIsSubdistrictOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchProvinces = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        "https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/main/src/provinces.json"
+      );
+      const data = await response.json();
+      const sortedData = data.sort((a: Province, b: Province) => 
+        a.provinceNameEn.localeCompare(b.provinceNameEn)
+      );
+      setProvinces(sortedData);
+    } catch (error) {
+      console.error("Error fetching provinces:", error);
+      alert("Failed to load provinces data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDistricts = async (provinceCode: number) => {
+    try {
+      const response = await fetch(
+        "https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/main/src/districts.json"
+      );
+      const data: District[] = await response.json();
+      const filtered = data.filter((d) => d.provinceCode === provinceCode);
+      const sortedFiltered = filtered.sort((a, b) => 
+        a.districtNameEn.localeCompare(b.districtNameEn)
+      );
+      setDistricts(sortedFiltered);
+    } catch (error) {
+      console.error("Error fetching districts:", error);
+      alert("Failed to load districts data");
+    }
+  };
+
+  const fetchSubdistricts = async (districtCode: number) => {
+    try {
+      const response = await fetch(
+        "https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/main/src/subdistricts.json"
+      );
+      const data: Subdistrict[] = await response.json();
+      const filtered = data.filter((s) => s.districtCode === districtCode);
+      const sortedFiltered = filtered.sort((a, b) => 
+        a.subdistrictNameEn.localeCompare(b.subdistrictNameEn)
+      );
+      setSubdistricts(sortedFiltered);
+    } catch (error) {
+      console.error("Error fetching subdistricts:", error);
+      alert("Failed to load subdistricts data");
+    }
+  };
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -69,17 +207,50 @@ function RecipientInfo() {
     }
   }
 
-  const autoResize = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
+  const handleProvinceSelect = (province: Province) => {
+    setRecipient({
+      ...recipient,
+      province: province.provinceNameEn,
+      district: "",
+      subdistrict: "",
+      postalCode: "",
+    });
+    fetchDistricts(province.provinceCode);
+    setSubdistricts([]);
+    setIsProvinceOpen(false);
+    
+    if (selectedAddressId) {
+      setSelectedAddressId(null);
     }
   };
 
-  useEffect(() => {
-    autoResize();
-  }, [recipient.address]);
+  const handleDistrictSelect = (district: District) => {
+    setRecipient({
+      ...recipient,
+      district: district.districtNameEn,
+      subdistrict: "",
+      postalCode: String(district.postalCode),
+    });
+    fetchSubdistricts(district.districtCode);
+    setIsDistrictOpen(false);
+    
+    if (selectedAddressId) {
+      setSelectedAddressId(null);
+    }
+  };
+
+  const handleSubdistrictSelect = (subdistrict: Subdistrict) => {
+    setRecipient({
+      ...recipient,
+      subdistrict: subdistrict.subdistrictNameEn,
+      postalCode: String(subdistrict.postalCode),
+    });
+    setIsSubdistrictOpen(false);
+    
+    if (selectedAddressId) {
+      setSelectedAddressId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +292,17 @@ function RecipientInfo() {
     }
   };
   
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#F1ECE6" }}
+      >
+        <div className="text-2xl"></div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center"
@@ -195,46 +377,141 @@ function RecipientInfo() {
           />
         </div>
 
-        <div className="flex flex-col mb-7">
-          <label className="mb-2 font-normal text-sm">Address</label>
-          <textarea
-            ref={textareaRef}
-            name="address"
-            value={recipient.address}
-            onChange={handleChange}
-            onInput={autoResize}
-            rows={3}
-            className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
-            required
-          />
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+          <div className="flex flex-col mb-7 md:col-span-2">
+            <label className="mb-2 font-normal text-sm">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={recipient.address}
+              onChange={handleChange}
+              className="border-b border-black px-3 py-3 text-sm focus:outline-none"
+              required
+            />
+          </div>
+
+          {/* Province Dropdown */}
+          <div className="flex flex-col mb-7 relative md:col-span-1" ref={provinceRef}>
+            <label className="mb-2 font-normal text-sm">Province</label>
+            <button
+              type="button"
+              onClick={() => setIsProvinceOpen(!isProvinceOpen)}
+              className="border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors"
+            >
+              <span className={recipient.province ? "" : "text-gray-400"}>
+                {recipient.province || ""}
+              </span>
+              <IoIosArrowDown className="w-4 h-4" />
+            </button>
+
+            {isProvinceOpen && (
+              <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {provinces.map((province) => (
+                  <button
+                    key={province.id}
+                    type="button"
+                    onClick={() => handleProvinceSelect(province)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                      recipient.province === province.provinceNameEn
+                        ? "bg-gray-100"
+                        : ""
+                    }`}
+                  >
+                    {province.provinceNameEn}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-          <div className="flex flex-col mb-7">
-            <label className="mb-2 font-normal text-sm inter">City</label>
-            <input
-              type="text"
-              name="city"
-              value={recipient.city}
-              onChange={handleChange}
-              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
-              required
-            />
+          {/* District Dropdown */}
+          <div className="flex flex-col mb-7 relative md:col-span-1" ref={districtRef}>
+            <label className="mb-2 font-normal text-sm inter">District</label>
+            <button
+              type="button"
+              onClick={() =>
+                recipient.province && setIsDistrictOpen(!isDistrictOpen)
+              }
+              disabled={!recipient.province}
+              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors ${
+                !recipient.province
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+            >
+              <span className={recipient.district ? "" : ""}>
+                {recipient.district || ""}
+              </span>
+              <IoIosArrowDown className="w-4 h-4" />
+            </button>
+
+            {isDistrictOpen && recipient.province && (
+              <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {districts.map((district) => (
+                  <button
+                    key={district.id}
+                    type="button"
+                    onClick={() => handleDistrictSelect(district)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                      recipient.district === district.districtNameEn
+                        ? "bg-gray-100"
+                        : ""
+                    }`}
+                  >
+                    {district.districtNameEn}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-col mb-7">
-            <label className="mb-2 font-normal text-sm inter">State</label>
-            <input
-              type="text"
-              name="state"
-              value={recipient.state}
-              onChange={handleChange}
-              className="border-b border-black px-3 py-3 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
-              required
-            />
+          {/* Subdistrict Dropdown */}
+          <div className="flex flex-col mb-7 relative md:col-span-1" ref={subdistrictRef}>
+            <label className="mb-2 font-normal text-sm inter">
+              Subdistrict
+            </label>
+            <button
+              type="button"
+              onClick={() =>
+                recipient.district && setIsSubdistrictOpen(!isSubdistrictOpen)
+              }
+              disabled={!recipient.district}
+              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors ${
+                !recipient.district
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+            >
+              <span className={recipient.subdistrict ? "" : ""}>
+                {recipient.subdistrict || ""}
+              </span>
+              <IoIosArrowDown className="w-4 h-4" />
+            </button>
+
+            {isSubdistrictOpen && recipient.district && (
+              <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {subdistricts.map((subdistrict) => (
+                  <button
+                    key={subdistrict.id}
+                    type="button"
+                    onClick={() => handleSubdistrictSelect(subdistrict)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                      recipient.subdistrict === subdistrict.subdistrictNameEn
+                        ? "bg-gray-100"
+                        : ""
+                    }`}
+                  >
+                    {subdistrict.subdistrictNameEn}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-col mb-7">
+          {/* Postal Code */}
+          <div className="flex flex-col mb-7 md:col-span-1">
             <label className="mb-2 font-normal text-sm inter">
               Postal Code
             </label>
@@ -280,7 +557,7 @@ function RecipientInfo() {
           <button
             type="button"
             onClick={handleSelectSavedAddress}
-            className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer"
+            className="text-black font-normal inter text-sm mr-8 bg-transparent border-none cursor-pointer hover:underline"
           >
             Select Saved Address?
           </button>

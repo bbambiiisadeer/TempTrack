@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 
-interface SenderFormData {
+// Consolidated address form type
+interface AddressFormData {
   name: string;
   company: string;
   address: string;
-  city: string;
-  state: string;
+  province: string;
+  district: string;
+  subdistrict: string;
   postalCode: string;
   email: string;
   phoneNumber: string;
@@ -33,10 +35,10 @@ interface ShippingContextType {
   setRecipientAddressId: (id: string) => void;
   resetShippingData: () => void;
 
-  senderFormData: SenderFormData | null;
-  setSenderFormData: (data: SenderFormData | null) => void;
-  recipientFormData: SenderFormData | null;
-  setRecipientFormData: (data: SenderFormData | null) => void;
+  senderFormData: AddressFormData | null;
+  setSenderFormData: (data: AddressFormData | null) => void;
+  recipientFormData: AddressFormData | null;
+  setRecipientFormData: (data: AddressFormData | null) => void;
   parcelFormData: ParcelFormData | null;
   setParcelFormData: (data: ParcelFormData | null) => void;
 }
@@ -59,8 +61,8 @@ export const ShippingProvider: React.FC<ShippingProviderProps> = ({ children }) 
   const [senderAddressId, setSenderAddressId] = useState<string | null>(null);
   const [recipientAddressId, setRecipientAddressId] = useState<string | null>(null);
 
-  const [senderFormData, setSenderFormData] = useState<SenderFormData | null>(null);
-  const [recipientFormData, setRecipientFormData] = useState<SenderFormData | null>(null);
+  const [senderFormData, setSenderFormData] = useState<AddressFormData | null>(null);
+  const [recipientFormData, setRecipientFormData] = useState<AddressFormData | null>(null);
   const [parcelFormData, setParcelFormData] = useState<ParcelFormData | null>(null);
 
   const resetShippingData = () => {
@@ -91,3 +93,5 @@ export const ShippingProvider: React.FC<ShippingProviderProps> = ({ children }) 
     </ShippingContext.Provider>
   );
 };
+
+export type { AddressFormData };

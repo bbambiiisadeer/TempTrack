@@ -188,7 +188,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const isDeleted = (id: string) => deletedNotifications.has(id);
 
   if (loading) {
-    return null; // หรือแสดง loading indicator
+    return null; 
   }
 
   return (

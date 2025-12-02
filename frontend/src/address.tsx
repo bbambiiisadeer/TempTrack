@@ -259,24 +259,24 @@ function AddressPage() {
                   >
                     <div className="flex justify-between items-start py-1.5">
                       <div className="space-y-0.5">
-                        <p className="font-medium text-md inter flex items-center gap-2">
+                        <p className="font-medium text-md  flex items-center gap-2">
                           {addr.name}
                           <span className="border-l-[1.5px] border-gray-400 h-4"></span>
-                          <span className="font-normal text-sm inter text-gray-400">
+                          <span className="font-normal text-sm  text-gray-400">
                             {addr.phoneNumber || "-"}
                           </span>
                         </p>
                         {addr.company && (
-                          <p className="font-normal text-sm inter mt-1">
+                          <p className="font-normal text-sm  mt-1">
                             {addr.company}
                           </p>
                         )}
-                        <p className="font-normal text-sm inter">
-                          {addr.address} {addr.city}, {addr.state}{" "}
-                          {addr.postalCode}
+                        <p className="font-normal text-sm ">
+                          {addr.address} {addr.subdistrict}, {addr.district},{" "}
+                          {addr.province} {addr.postalCode}
                         </p>
                         {addr.email && (
-                          <p className="font-normal text-sm inter">
+                          <p className="font-normal text-sm ">
                             {addr.email}
                           </p>
                         )}
