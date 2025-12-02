@@ -8,6 +8,8 @@ interface NotificationContextType {
   markAsRead: (ids: string[]) => Promise<void>;
   markAsUnread: (ids: string[]) => Promise<void>;
   markAsDeleted: (ids: string[]) => Promise<void>;
+  unreadCount: number;
+  setUnreadCount: (count: number) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
   const [deletedNotifications, setDeletedNotifications] = useState<Set<string>>(new Set());
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // โหลดสถานะจาก backend เมื่อ user login
@@ -24,6 +27,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (!user?.id) {
         setReadNotifications(new Set());
         setDeletedNotifications(new Set());
+        setUnreadCount(0);
         setLoading(false);
         return;
       }
@@ -50,6 +54,47 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
     loadNotificationStatus();
   }, [user?.id]);
+
+  // คำนวณ unreadCount จากการเปลี่ยนแปลงของ readNotifications และ deletedNotifications
+  useEffect(() => {
+    const calculateUnreadCount = async () => {
+      if (!user?.id) {
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        // Fetch sent parcels
+        const sentRes = await fetch(
+          `http://localhost:3000/parcel?userId=${user.id}`,
+          { credentials: 'include' }
+        );
+        if (!sentRes.ok) return;
+        const sentParcels = await sentRes.json();
+
+        const allNotifications: any[] = [];
+        
+        // Process sent parcels
+        sentParcels.forEach((p: any) => {
+          if (p.isDelivered && p.deliveredAt) {
+            allNotifications.push({ id: `${p.id}-delivered` });
+          }
+          if (p.isShipped && p.shippedAt) {
+            allNotifications.push({ id: `${p.id}-shipped` });
+          }
+        });
+
+        // Filter out deleted and count unread
+        const activeNotifications = allNotifications.filter(n => !deletedNotifications.has(n.id));
+        const unread = activeNotifications.filter(n => !readNotifications.has(n.id)).length;
+        setUnreadCount(unread);
+      } catch (err) {
+        console.error('Error calculating unread count:', err);
+      }
+    };
+
+    calculateUnreadCount();
+  }, [user?.id, readNotifications, deletedNotifications]);
 
   const markAsRead = async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
@@ -154,6 +199,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         markAsRead,
         markAsUnread,
         markAsDeleted,
+        unreadCount,
+        setUnreadCount,
       }}
     >
       {children}

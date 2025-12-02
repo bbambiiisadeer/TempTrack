@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { IoIosAdd } from "react-icons/io";
 import { useAuth } from "./AuthContext";
-import { useTracking } from "./TrackingContext";
 import { useNotification } from "./NotificationContext";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
@@ -35,26 +34,9 @@ interface ParcelData {
   driver?: DriverData;
 }
 
-interface NotificationData {
-  id: string;
-  parcelId: string;
-  trackingNo: string;
-  recipientCompany: string;
-  driverName: string;
-  driverRegNumber: string;
-  shippedAt?: string;
-  deliveredAt?: string;
-  type: 'shipped' | 'delivered';
-  isIncoming?: boolean;
-  signature?: string;
-  signedAt?: string;
-  isRead?: boolean;
-}
-
 function SentPage() {
   const { user, logout, updateUser } = useAuth();
-  const { trackingNumbers } = useTracking();
-  const { isRead, isDeleted } = useNotification();
+  const { unreadCount } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
 
@@ -65,7 +47,6 @@ function SentPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -95,144 +76,6 @@ function SentPage() {
 
     fetchParcels();
   }, [user?.id]);
-
-  // Fetch notifications to get unread count
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user?.id) return;
-
-      try {
-        const sentRes = await fetch(
-          `http://localhost:3000/parcel?userId=${user.id}`,
-          {
-            credentials: "include",
-          }
-        );
-
-        if (!sentRes.ok) throw new Error("Failed to fetch parcels");
-
-        const sentParcels = await sentRes.json();
-
-        let incomingParcels: any[] = [];
-        if (trackingNumbers.length > 0) {
-          const promises = trackingNumbers.map(async (trackingNo) => {
-            const formattedTrackingNo = trackingNo.startsWith("#")
-              ? trackingNo
-              : `#${trackingNo}`;
-            try {
-              const res = await fetch(
-                `http://localhost:3000/parcel/track/${encodeURIComponent(
-                  formattedTrackingNo
-                )}`,
-                {
-                  credentials: "include",
-                }
-              );
-
-              if (!res.ok) return null;
-              const data = await res.json();
-              return Array.isArray(data) ? data : [data];
-            } catch {
-              return null;
-            }
-          });
-
-          const results = await Promise.all(promises);
-          incomingParcels = results
-            .filter((result): result is any[] => result !== null)
-            .flat();
-        }
-
-        const allNotifications: NotificationData[] = [];
-
-        sentParcels.forEach((p: any) => {
-          if (p.isDelivered && p.deliveredAt) {
-            allNotifications.push({
-              id: `${p.id}-delivered`,
-              parcelId: p.id,
-              trackingNo: p.trackingNo,
-              recipientCompany:
-                p.recipientAddress?.company ||
-                p.recipientAddress?.name ||
-                "Unknown",
-              driverName: p.driver?.name || "Unknown Driver",
-              driverRegNumber: p.driver?.regNumber || "N/A",
-              deliveredAt: p.deliveredAt,
-              type: "delivered",
-              isIncoming: false,
-              isRead: false,
-            });
-          }
-
-          if (p.isShipped && p.shippedAt) {
-            allNotifications.push({
-              id: `${p.id}-shipped`,
-              parcelId: p.id,
-              trackingNo: p.trackingNo,
-              recipientCompany:
-                p.recipientAddress?.company ||
-                p.recipientAddress?.name ||
-                "Unknown",
-              driverName: p.driver?.name || "Unknown Driver",
-              driverRegNumber: p.driver?.regNumber || "N/A",
-              shippedAt: p.shippedAt,
-              type: "shipped",
-              isIncoming: false,
-              isRead: false,
-            });
-          }
-        });
-
-        incomingParcels.forEach((p: any) => {
-          if (p.isDelivered && p.deliveredAt) {
-            allNotifications.push({
-              id: `${p.id}-delivered-incoming`,
-              parcelId: p.id,
-              trackingNo: p.trackingNo,
-              recipientCompany:
-                p.recipientAddress?.company ||
-                p.recipientAddress?.name ||
-                "Unknown",
-              driverName: p.driver?.name || "Unknown Driver",
-              driverRegNumber: p.driver?.regNumber || "N/A",
-              deliveredAt: p.deliveredAt,
-              type: "delivered",
-              isIncoming: true,
-              signature: p.signature,
-              signedAt: p.signedAt,
-              isRead: false,
-            });
-          }
-
-          if (p.isShipped && p.shippedAt) {
-            allNotifications.push({
-              id: `${p.id}-shipped-incoming`,
-              parcelId: p.id,
-              trackingNo: p.trackingNo,
-              recipientCompany:
-                p.recipientAddress?.company ||
-                p.recipientAddress?.name ||
-                "Unknown",
-              driverName: p.driver?.name || "Unknown Driver",
-              driverRegNumber: p.driver?.regNumber || "N/A",
-              shippedAt: p.shippedAt,
-              type: "shipped",
-              isIncoming: true,
-              isRead: false,
-            });
-          }
-        });
-
-        const activeNotifications = allNotifications.filter(n => !isDeleted(n.id));
-        const unread = activeNotifications.filter(n => !isRead(n.id)).length;
-        setUnreadCount(unread);
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-      }
-    };
-
-    fetchNotifications();
-  }, [user?.id, trackingNumbers, isRead, isDeleted]);
 
   const filteredParcels = parcels
     .filter((p) => {

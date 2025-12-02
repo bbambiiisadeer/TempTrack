@@ -3,15 +3,17 @@ import { PiEyeClosedBold } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import { type User } from "./types";
 import { FaEye } from "react-icons/fa";
+import { useAuth } from "./AuthContext"; // เพิ่มบรรทัดนี้
 
 function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth(); // เพิ่มบรรทัดนี้
   const [signup, setSignup] = useState<User>(() => {
     return {
-    name: "",
-    email: "",
-    password: "",
+      name: "",
+      email: "",
+      password: "",
     };
   });
 
@@ -22,20 +24,46 @@ function Signup() {
 
   const handleSignUp = async () => {
     try {
+      // สร้าง user ใหม่
       const res = await fetch("http://localhost:3000/users", {
-        method: "POST", 
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(signup),
       });
 
       const data = await res.json();
       if (res.ok) {
-        console.log(data);
-        navigate("/address"); 
+        console.log("User created:", data);
+
+        // Login อัตโนมัติหลังจาก signup สำเร็จ
+        const loginRes = await fetch("http://localhost:3000/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: signup.email,
+            password: signup.password,
+          }),
+        });
+
+        const loginData = await loginRes.json();
+        if (loginRes.ok) {
+          // อัพเดท AuthContext (ลำดับคือ token, user)
+          login(loginData.token, loginData.user);
+          
+          // Navigate ไปหน้า sent
+          navigate("/sent");
+        } else {
+          // ถ้า login ไม่สำเร็จ ให้ไปหน้า signin
+          alert("Account created! Please sign in.");
+          navigate("/signin");
+        }
       } else {
+        alert(data.msg || "Signup failed");
       }
     } catch (error) {
       console.error(error);
+      alert("An error occurred during signup");
     }
   };
 
