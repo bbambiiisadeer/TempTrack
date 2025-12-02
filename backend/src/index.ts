@@ -723,6 +723,8 @@ app.get(
         createdAt: p.createdAt,
         shippedAt: p.shippedAt, // เพิ่มบรรทัดนี้
         deliveredAt: p.deliveredAt, // เพิ่มบรรทัดนี้
+        signature: p.signature, 
+        signedAt: p.signedAt,
         parcelName: p.parcelName,
         quantity: p.quantity,
         weight: p.weight,

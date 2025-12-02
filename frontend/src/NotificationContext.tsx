@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { useAuth } from './AuthContext';
+import { useAuth } from "./AuthContext";
 
 interface NotificationContextType {
   isRead: (id: string) => boolean;
@@ -12,12 +12,18 @@ interface NotificationContextType {
   setUnreadCount: (count: number) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
-  const [deletedNotifications, setDeletedNotifications] = useState<Set<string>>(new Set());
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(
+    new Set()
+  );
+  const [deletedNotifications, setDeletedNotifications] = useState<Set<string>>(
+    new Set()
+  );
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +42,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         const res = await fetch(
           `http://localhost:3000/users/${user.id}/notification-status`,
           {
-            credentials: 'include',
+            credentials: "include",
           }
         );
 
@@ -46,7 +52,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           setDeletedNotifications(new Set(data.deleted || []));
         }
       } catch (err) {
-        console.error('Failed to load notification status:', err);
+        console.error("Failed to load notification status:", err);
       } finally {
         setLoading(false);
       }
@@ -67,16 +73,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         // Fetch sent parcels
         const sentRes = await fetch(
           `http://localhost:3000/parcel?userId=${user.id}`,
-          { credentials: 'include' }
+          { credentials: "include" }
         );
         if (!sentRes.ok) return;
         const sentParcels = await sentRes.json();
 
         const allNotifications: any[] = [];
-        
-        // Process sent parcels
+
         sentParcels.forEach((p: any) => {
-          if (p.isDelivered && p.deliveredAt) {
+          if (p.isDelivered && p.deliveredAt && p.signedAt) {
             allNotifications.push({ id: `${p.id}-delivered` });
           }
           if (p.isShipped && p.shippedAt) {
@@ -86,9 +91,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
         // Fetch incoming parcels from TrackingContext
         const trackingNumbers = JSON.parse(
-          sessionStorage.getItem(`trackingNumbers_${user.id}`) || 
-          sessionStorage.getItem('trackingNumbers_guest') || 
-          '[]'
+          sessionStorage.getItem(`trackingNumbers_${user.id}`) ||
+            sessionStorage.getItem("trackingNumbers_guest") ||
+            "[]"
         );
 
         if (trackingNumbers.length > 0) {
@@ -129,11 +134,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         }
 
         // Filter out deleted and count unread
-        const activeNotifications = allNotifications.filter(n => !deletedNotifications.has(n.id));
-        const unread = activeNotifications.filter(n => !readNotifications.has(n.id)).length;
+        const activeNotifications = allNotifications.filter(
+          (n) => !deletedNotifications.has(n.id)
+        );
+        const unread = activeNotifications.filter(
+          (n) => !readNotifications.has(n.id)
+        ).length;
         setUnreadCount(unread);
       } catch (err) {
-        console.error('Error calculating unread count:', err);
+        console.error("Error calculating unread count:", err);
       }
     };
 
@@ -148,62 +157,59 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setReadNotifications(newReadSet);
 
     // อัพเดท unreadCount ทันที
-    setUnreadCount(prev => Math.max(0, prev - ids.length));
+    setUnreadCount((prev) => Math.max(0, prev - ids.length));
 
     // บันทึกไปยัง backend
     try {
       const res = await fetch(
         `http://localhost:3000/users/${user.id}/notification-status`,
         {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ read: Array.from(newReadSet) }),
         }
       );
 
       if (!res.ok) {
-        throw new Error('Failed to save read status');
+        throw new Error("Failed to save read status");
       }
     } catch (err) {
-      console.error('Failed to save read status:', err);
+      console.error("Failed to save read status:", err);
       // Rollback ถ้าเกิด error
       setReadNotifications(readNotifications);
-      setUnreadCount(prev => prev + ids.length);
+      setUnreadCount((prev) => prev + ids.length);
     }
   };
 
   const markAsUnread = async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
 
-    // อัพเดท local state ทันที (Optimistic Update) - ลบ ids ออกจาก readNotifications
     const newReadSet = new Set(readNotifications);
-    ids.forEach(id => newReadSet.delete(id));
+    ids.forEach((id) => newReadSet.delete(id));
     setReadNotifications(newReadSet);
 
-    // อัพเดท unreadCount ทันที
-    setUnreadCount(prev => prev + ids.length);
+    setUnreadCount((prev) => prev + ids.length);
 
-    // บันทึกไปยัง backend
     try {
       const res = await fetch(
         `http://localhost:3000/users/${user.id}/notification-status`,
         {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ read: Array.from(newReadSet) }),
         }
       );
 
       if (!res.ok) {
-        throw new Error('Failed to save unread status');
+        throw new Error("Failed to save unread status");
       }
     } catch (err) {
-      console.error('Failed to save unread status:', err);
+      console.error("Failed to save unread status:", err);
       // Rollback ถ้าเกิด error
       setReadNotifications(readNotifications);
-      setUnreadCount(prev => prev - ids.length);
+      setUnreadCount((prev) => prev - ids.length);
     }
   };
 
@@ -211,35 +217,37 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     if (!user?.id || ids.length === 0) return;
 
     // นับจำนวน unread ที่จะถูกลบ
-    const unreadBeingDeleted = ids.filter(id => !readNotifications.has(id)).length;
+    const unreadBeingDeleted = ids.filter(
+      (id) => !readNotifications.has(id)
+    ).length;
 
     // อัพเดท local state ทันที (Optimistic Update)
     const newDeletedSet = new Set([...deletedNotifications, ...ids]);
     setDeletedNotifications(newDeletedSet);
 
     // อัพเดท unreadCount ทันที
-    setUnreadCount(prev => Math.max(0, prev - unreadBeingDeleted));
+    setUnreadCount((prev) => Math.max(0, prev - unreadBeingDeleted));
 
     // บันทึกไปยัง backend
     try {
       const res = await fetch(
         `http://localhost:3000/users/${user.id}/notification-status`,
         {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ deleted: Array.from(newDeletedSet) }),
         }
       );
 
       if (!res.ok) {
-        throw new Error('Failed to save deleted status');
+        throw new Error("Failed to save deleted status");
       }
     } catch (err) {
-      console.error('Failed to save deleted status:', err);
+      console.error("Failed to save deleted status:", err);
       // Rollback ถ้าเกิด error
       setDeletedNotifications(deletedNotifications);
-      setUnreadCount(prev => prev + unreadBeingDeleted);
+      setUnreadCount((prev) => prev + unreadBeingDeleted);
     }
   };
 
@@ -247,7 +255,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const isDeleted = (id: string) => deletedNotifications.has(id);
 
   if (loading) {
-    return null; 
+    return null;
   }
 
   return (
@@ -270,7 +278,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 export const useNotification = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error('useNotification must be used within NotificationProvider');
+    throw new Error("useNotification must be used within NotificationProvider");
   }
   return context;
 };

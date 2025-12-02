@@ -119,7 +119,7 @@ function Notification() {
 
         // Process sent parcels
         sentParcels.forEach((p: any) => {
-          if (p.isDelivered && p.deliveredAt) {
+          if (p.isDelivered && p.deliveredAt && p.signedAt) {
             allNotifications.push({
               id: `${p.id}-delivered`,
               parcelId: p.id,
@@ -130,9 +130,11 @@ function Notification() {
                 "Unknown",
               driverName: p.driver?.name || "Unknown Driver",
               driverRegNumber: p.driver?.regNumber || "N/A",
-              deliveredAt: p.deliveredAt,
+              deliveredAt: p.signedAt,
               type: "delivered",
               isIncoming: false,
+              signature: p.signature,
+              signedAt: p.signedAt,
               isRead: false,
             });
           }
@@ -819,8 +821,11 @@ function Notification() {
                             </p>
                             <p className="text-sm text-gray-600 mb-2">
                               {notification.type === "delivered"
-                                ? `Your parcel was successfully delivered to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})`
-                                : `Your parcel is on the way to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})`}
+  ? notification.isIncoming
+    ? `Your parcel was successfully delivered to ${notification.recipientCompany} by ${notification.driverName}` // Recipient
+    : `Your parcel to ${notification.recipientCompany} has been signed and accepted by the recipient` // Sender
+  : `Your parcel is on the way to ${notification.recipientCompany} by ${notification.driverName}`
+}
                             </p>
                             {notification.type === "delivered" &&
                               notification.isIncoming && (
