@@ -822,9 +822,9 @@ function Notification() {
                             <p className="text-sm text-gray-600 mb-2">
                               {notification.type === "delivered"
   ? notification.isIncoming
-    ? `Your parcel was successfully delivered to ${notification.recipientCompany} by ${notification.driverName}` // Recipient
+    ? `Your parcel was successfully delivered to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})` // Recipient
     : `Your parcel to ${notification.recipientCompany} has been signed and accepted by the recipient` // Sender
-  : `Your parcel is on the way to ${notification.recipientCompany} by ${notification.driverName}`
+  : `Your parcel is on the way to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})`
 }
                             </p>
                             {notification.type === "delivered" &&
