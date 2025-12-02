@@ -7,6 +7,7 @@ import { IoSearch } from "react-icons/io5";
 import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
+import { BsCheckLg } from "react-icons/bs"; // <--- 1. นำเข้าไอคอน BsCheckLg
 
 interface DriverData {
   id: string;
@@ -45,6 +46,7 @@ function IncomingPage() {
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); // <--- 2. เพิ่ม State สำหรับ Tracking No ที่ถูกคัดลอก
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -175,12 +177,19 @@ function IncomingPage() {
     }
   };
 
-  const handleCopyTracking = async (trackingNo: string) => {
+  const handleCopyTracking = async (trackingNo: string) => { // <--- 3. อัปเดตฟังก์ชัน Copy
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
+      
+      setCopiedTrackingNo(trackingNo); // ตั้งค่า trackingNo ที่ถูกคัดลอก
+
+      setTimeout(() => {
+        setCopiedTrackingNo(null); // ล้างค่าหลังจาก 800ms
+      }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
+      setCopiedTrackingNo(null); // ล้างค่าในกรณีที่เกิดข้อผิดพลาด
     }
   };
 
@@ -391,7 +400,12 @@ function IncomingPage() {
                           }}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
-                          <MdContentCopy className="w-4 h-4 text-black" />
+                          {/* <--- 4. เงื่อนไขการสลับไอคอน */}
+                          {copiedTrackingNo === parcel.trackingNo ? (
+                            <BsCheckLg className="w-4 h-4 text-black" />
+                          ) : (
+                            <MdContentCopy className="w-4 h-4 text-black" />
+                          )}
                         </button>
                       </div>
                       <div className="text-sm pl-4">

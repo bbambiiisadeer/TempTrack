@@ -297,7 +297,7 @@ function CreateAddress() {
             <button
               type="button"
               onClick={() => setIsProvinceOpen(!isProvinceOpen)}
-              className="border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors"
+              className="border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors h-11"
             >
               <span className={addressData.province ? "" : "text-gray-400"}>
                 {addressData.province || ""}
@@ -326,7 +326,7 @@ function CreateAddress() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 -mt-3">
           {/* District Dropdown */}
           <div
             className="flex flex-col mb-7 relative md:col-span-1"
@@ -339,11 +339,15 @@ function CreateAddress() {
                 addressData.province && setIsDistrictOpen(!isDistrictOpen)
               }
               disabled={!addressData.province}
-              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors ${
+              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors h-11.5 ${
                 !addressData.province ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              <span className={addressData.district ? "" : ""}>
+              <span
+                className={`block truncate max-w-full ${
+                  addressData.district ? "" : ""
+                }`}
+              >
                 {addressData.district || ""}
               </span>
               <IoIosArrowDown className="w-4 h-4" />
@@ -381,11 +385,15 @@ function CreateAddress() {
                 addressData.district && setIsSubdistrictOpen(!isSubdistrictOpen)
               }
               disabled={!addressData.district}
-              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors ${
+              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors h-11.5 ${
                 !addressData.district ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              <span className={addressData.subdistrict ? "" : ""}>
+              <span
+                className={`block truncate max-w-full ${
+                  addressData.subdistrict ? "" : ""
+                }`}
+              >
                 {addressData.subdistrict || ""}
               </span>
               <IoIosArrowDown className="w-4 h-4" />
@@ -425,7 +433,7 @@ function CreateAddress() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 mt-4">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 -mt-2">
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm">Email</label>
             <input

@@ -67,9 +67,9 @@ function Homepage() {
         </p>
         <button
           className="relative bg-black text-sm text-white py-2 px-6 rounded-full w-36 h-12 flex items-center justify-between"
-          onClick={() => navigate(isAuthenticated ? "/address" : "/signin")}
+          onClick={() => navigate(isAuthenticated ? "/sent" : "/signin")}
         >
-          <span className="mr-2">{isAuthenticated ? "abc" : "Sign in"}</span>
+          <span className="mr-2">{isAuthenticated ? "Home" : "Sign in"}</span>
           <span className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-white rounded-full flex items-center justify-center overflow-visible">
             <FaArrowRightLong className="text-black text-2xl relative -left-2" />
           </span>
