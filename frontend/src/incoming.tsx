@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; 
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
 import { useNotification } from "./NotificationContext";
+import { IoIosArrowDown } from "react-icons/io"; // <-- นำเข้าสำหรับ Dropdown
 import { IoSearch } from "react-icons/io5";
 import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
-import { BsCheckLg } from "react-icons/bs"; // <--- 1. นำเข้าไอคอน BsCheckLg
+import { BsCheckLg } from "react-icons/bs";
 
 interface DriverData {
   id: string;
@@ -23,6 +24,7 @@ interface ParcelData {
   isDelivered: boolean;
   isShipped: boolean;
   createdAt: string;
+  signedAt?: string; // จำเป็นสำหรับ getStatusKey
   senderAddress?: {
     company?: string;
     name: string;
@@ -34,26 +36,39 @@ interface ParcelData {
   driver?: DriverData;
 }
 
+// 1. นำเข้า STATUS_OPTIONS
+const STATUS_OPTIONS = [
+    { label: "All Status", value: "all" },
+    { label: "Pending", value: "pending" },
+    { label: "In transit", value: "in_transit" },
+    { label: "Delivered", value: "delivered" },
+];
+
 function IncomingPage() {
   const { user, logout, updateUser } = useAuth();
   const { trackingNumbers } = useTracking();
   const { unreadCount } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
+  const location = useLocation(); 
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
-  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); // <--- 2. เพิ่ม State สำหรับ Tracking No ที่ถูกคัดลอก
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); 
 
+  // 2. States สำหรับ Status Filter
+  const [filterStatus, setFilterStatus] = useState("all"); 
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const sortMenuRef = useRef<HTMLDivElement>(null); // Ref สำหรับ Dropdown Status
 
   useEffect(() => {
-    console.log("trackingNumbers:", trackingNumbers);
-
+    // ... (fetchParcels คงเดิม)
     const fetchParcels = async () => {
       if (trackingNumbers.length === 0) {
         console.log("No tracking numbers, skipping fetch");
@@ -113,11 +128,27 @@ function IncomingPage() {
     fetchParcels();
   }, [trackingNumbers]);
 
+  // 3. ฟังก์ชันสำหรับกำหนดสถานะพัสดุ (คัดลอกมาจาก SentPage)
+  const getStatusKey = (parcel: ParcelData): string => {
+    if (parcel.isDelivered && parcel.signedAt) return "delivered";
+    if (parcel.isShipped && !parcel.isDelivered) return "in_transit";
+    if (!parcel.isShipped && !parcel.isDelivered) return "pending";
+    if (parcel.isDelivered && !parcel.signedAt) return "in_transit";
+    return "unknown";
+  };
+
   const filteredParcels = parcels.filter((p) => {
+    const statusKey = getStatusKey(p); // 4. ใช้ getStatusKey
+
+    if (filterStatus !== 'all' && statusKey !== filterStatus) { // 5. เพิ่ม Logic การกรองสถานะ
+        return false;
+    }
+    
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
-    const statusStr = p.isDelivered ? "delivered" : "in transit";
+    const statusStr = statusKey.replace('_', ' '); // ใช้ statusKey สำหรับการค้นหา
+
     return (
       p.trackingNo.toLowerCase().includes(query) ||
       p.senderAddress?.company?.toLowerCase().includes(query) ||
@@ -139,6 +170,10 @@ function IncomingPage() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
         setIsEditingName(false);
+      }
+      // 6. จัดการคลิกนอก Dropdown Status
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setIsStatusMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -177,19 +212,19 @@ function IncomingPage() {
     }
   };
 
-  const handleCopyTracking = async (trackingNo: string) => { // <--- 3. อัปเดตฟังก์ชัน Copy
+  const handleCopyTracking = async (trackingNo: string) => { 
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
       
-      setCopiedTrackingNo(trackingNo); // ตั้งค่า trackingNo ที่ถูกคัดลอก
+      setCopiedTrackingNo(trackingNo); 
 
       setTimeout(() => {
-        setCopiedTrackingNo(null); // ล้างค่าหลังจาก 800ms
+        setCopiedTrackingNo(null); 
       }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
-      setCopiedTrackingNo(null); // ล้างค่าในกรณีที่เกิดข้อผิดพลาด
+      setCopiedTrackingNo(null); 
     }
   };
 
@@ -321,13 +356,46 @@ function IncomingPage() {
               Incoming Parcels
             </h2>
             <div className="flex items-center gap-2 ml-auto">
+              {/* 7. Dropdown Status (คัดลอกมาจาก SentPage) */}
+              <span className="text-sm text-black mr-2">Status</span> 
+              
+              <div className="relative inline-block w-34" ref={sortMenuRef}>
+                <button
+                  onClick={() => setIsStatusMenuOpen((prev) => !prev)}
+                  className="appearance-none w-full bg-white border h-12 border-black text-black text-sm rounded-l-full px-4 pr-2.5 focus:outline-none flex items-center justify-between"
+                >
+                  {STATUS_OPTIONS.find(opt => opt.value === filterStatus)?.label || "All Status"}
+                  <IoIosArrowDown className={`text-black w-4 h-4 ${isStatusMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+                </button>
+                
+                {isStatusMenuOpen && (
+                  <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {STATUS_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setFilterStatus(option.value); 
+                          setIsStatusMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                          filterStatus === option.value ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Search Input (คัดลอกมาจาก SentPage และปรับ rounded-r-full) */}
               <div className="relative w-58">
                 <input
                   type="text"
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
+                  className="bg-white border border-black rounded-r-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
                 />
                 {searchQuery ? (
                   <button
@@ -340,13 +408,6 @@ function IncomingPage() {
                   <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 )}
               </div>
-
-              <button
-                className="ml-4 flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
-                onClick={() => navigate("/trackstatus")}
-              >
-                <span className="text-sm text-white">Check Track Status</span>
-              </button>
             </div>
           </div>
 
@@ -386,7 +447,12 @@ function IncomingPage() {
                     <div
                       key={parcel.id}
                       className="grid border-b border-gray-200 py-3 px-6 items-center hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate("/report", { state: { parcel } })}
+                      onClick={() => navigate("/report", { 
+                        state: { 
+                          parcel, 
+                          previousPath: location.pathname 
+                        } 
+                      })}
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}
@@ -400,7 +466,6 @@ function IncomingPage() {
                           }}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
-                          {/* <--- 4. เงื่อนไขการสลับไอคอน */}
                           {copiedTrackingNo === parcel.trackingNo ? (
                             <BsCheckLg className="w-4 h-4 text-black" />
                           ) : (
@@ -411,18 +476,19 @@ function IncomingPage() {
                       <div className="text-sm pl-4">
                         {formatDate(parcel.createdAt)}
                       </div>
-                      <div className="text-sm pl-4">
+                      <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
                         {parcel.senderAddress?.company ||
                           parcel.senderAddress?.name ||
                           "-"}
                       </div>
-                      <div className="text-sm pl-4">
+                      <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
                         {parcel.recipientAddress?.company ||
                           parcel.recipientAddress?.name ||
                           "-"}
                       </div>
                       <div className="pl-4">-</div>
                       <div className="pl-4">-</div>
+                      {/* 8. Logic การแสดงสถานะ */}
                       {!parcel.isShipped && !parcel.isDelivered ? (
                         <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
                           <FaRegCircle className="text-black w-4 h-4 mr-3" />

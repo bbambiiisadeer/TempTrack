@@ -24,17 +24,15 @@ interface ParcelData {
     name: string;
   };
   shippedAt?: string;
-  // เพิ่ม signedAt เข้ามาใน Interface
   signedAt?: string; 
 }
 
-// เพิ่ม helper function
 const formatThaiDateTime = (dateString: string | null | undefined): string => {
   if (!dateString) return "-";
 
   const date = new Date(dateString);
 
-  // แปลงเป็นเวลาไทย
+  // การตั้งค่า TimeZone ใน local machine/environment
   const thaiDate = new Date(
     date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
   );
@@ -53,22 +51,48 @@ function Report() {
   const location = useLocation();
   const { user } = useAuth();
   const [parcelData, setParcelData] = useState<ParcelData | null>(null);
+  
+  // 1. เก็บค่าสถานะตัวกรองเดิม (ใช้เฉพาะ SentPage)
+  const [previousFilterStatus, setPreviousFilterStatus] = useState("all"); 
+  
+  // 2. เก็บเส้นทางที่เรียกใช้เดิม (Pathname: /sent หรือ /incoming)
+  const [previousPath, setPreviousPath] = useState('/sent'); 
 
   useEffect(() => {
-    // รับข้อมูล parcel จาก navigation state
     if (location.state?.parcel) {
       setParcelData(location.state.parcel);
     }
+    
+    // 3. รับค่าสถานะตัวกรองเดิม (ถ้ามี)
+    if (location.state?.previousStatus) {
+        setPreviousFilterStatus(location.state.previousStatus);
+    }
+    
+    // 4. รับค่า Pathname เดิมที่ส่งมา
+    if (location.state?.previousPath) {
+        setPreviousPath(location.state.previousPath);
+    }
   }, [location]);
 
-  // Logic การกำหนดสถานะและเวลาที่จะแสดงผล
+  // 5. ฟังก์ชันสำหรับกดปุ่ม Back ที่ Context-Aware
+  const handleBack = () => {
+      // ตรวจสอบว่าเป็น SentPage หรือไม่
+      if (previousPath === '/sent' && previousFilterStatus !== 'all') {
+          // ถ้ามาจาก SentPage และมีการกรองสถานะอยู่ ให้กลับไปพร้อม Query Parameter
+          navigate(`${previousPath}?status=${previousFilterStatus}`);
+      } else {
+          // ถ้ามาจาก IncomingPage หรือ SentPage (All Status) ให้กลับไปที่ Path เดิม
+          navigate(previousPath);
+      }
+  };
+
   const displayStatus = parcelData?.signedAt
-    ? "Delivered At" // ถ้ามี signedAt ให้แสดง Delivered At
-    : "Shipped At";  // ถ้าไม่มี ให้แสดง Shipped At
+    ? "Delivered At" 
+    : "Shipped At";  
 
   const displayTime = parcelData?.signedAt
-    ? formatThaiDateTime(parcelData.signedAt) // ใช้เวลา signedAt
-    : formatThaiDateTime(parcelData?.shippedAt); // ใช้เวลา shippedAt
+    ? formatThaiDateTime(parcelData.signedAt) 
+    : formatThaiDateTime(parcelData?.shippedAt); 
 
   return (
     <div
@@ -82,7 +106,8 @@ function Report() {
             {user && (
               <div
                 className="bg-white rounded-l-full  p-6 flex items-center justify-center w-20 hover:bg-gray-50 transition-colors"
-                onClick={() => navigate(-1)}
+                // 6. เรียกใช้ handleBack
+                onClick={handleBack} 
               >
                 <button className="flex items-center justify-center w-12 h-12 rounded-full">
                   <IoArrowBackOutline className="w-6 h-6 text-black" />
@@ -112,13 +137,13 @@ function Report() {
                 </div>
               </div>
               
-              {/* ส่วนที่แสดงสถานะและเวลา (มีการแก้ไข) */}
+              {/* ส่วนที่แสดงสถานะและเวลา */}
               <div className="flex flex-col h-full py-3 justify-between">
                 <div className="text-sm text-gray-400">
-                  {displayStatus} {/* แสดง Shipped At หรือ Delivered At */}
+                  {displayStatus} 
                 </div>
                 <div className="text-lg text-black font-medium">
-                  {displayTime} {/* แสดงเวลา shippedAt หรือ signedAt */}
+                  {displayTime} 
                 </div>
               </div>
               {/* สิ้นสุดส่วนที่แสดงสถานะและเวลา */}

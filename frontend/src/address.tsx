@@ -106,6 +106,10 @@ function AddressPage() {
     }
   };
 
+  const sortedAddresses = addresses.slice().sort((a, b) => {
+    return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
+  });
+
   return (
     <div
       className="relative min-h-screen overflow-x-hidden flex flex-col"
@@ -252,7 +256,7 @@ function AddressPage() {
                   <p className="text-gray-500 text-md">No addresses found</p>
                 </div>
               ) : (
-                addresses.map((addr) => (
+                sortedAddresses.map((addr) => (
                   <div
                     key={addr.id}
                     className="border-b space-y-0.5 border-gray-200 py-4 transition cursor-pointer px-12"

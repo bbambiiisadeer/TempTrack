@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom"; // <-- เพิ่ม useSearchParams
 import { IoIosAdd } from "react-icons/io";
 import { useAuth } from "./AuthContext";
 import { useNotification } from "./NotificationContext";
@@ -24,6 +24,7 @@ interface ParcelData {
   isDelivered: boolean;
   isShipped: boolean;
   createdAt: string;
+  signedAt?: string; 
   senderAddress?: {
     company?: string;
     name: string;
@@ -35,12 +36,11 @@ interface ParcelData {
   driver?: DriverData;
 }
 
-const SORT_OPTIONS = [
-  { label: "Select", value: "" },
-  { label: "Date", value: "date" },
-  { label: "Duration", value: "duration" },
-  { label: "High Temp", value: "hightemp" },
-  { label: "Low Temp", value: "lowtemp" },
+const STATUS_OPTIONS = [
+  { label: "All Status", value: "all" },
+  { label: "Pending", value: "pending" },
+  { label: "In transit", value: "in_transit" },
+  { label: "Delivered", value: "delivered" },
 ];
 
 function SentPage() {
@@ -48,19 +48,34 @@ function SentPage() {
   const { unreadCount } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
+  // 1.1. ใช้ useSearchParams
+  const [searchParams, setSearchParams] = useSearchParams(); 
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  
+  // 1.2. ตั้งค่า State จาก URL Search Params
+  const initialFilterStatus = searchParams.get("status") || "all";
+  const [filterStatus, setFilterStatus] = useState(initialFilterStatus); 
+
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
-  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false); 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null)
+
+  // 1.3. Sync state กับ URL เมื่อ filterStatus เปลี่ยน
+  useEffect(() => {
+    if (filterStatus && filterStatus !== 'all') {
+        setSearchParams({ status: filterStatus });
+    } else {
+        setSearchParams({}); 
+    }
+  }, [filterStatus, setSearchParams]);
 
   useEffect(() => {
     const fetchParcels = async () => {
@@ -88,12 +103,27 @@ function SentPage() {
     fetchParcels();
   }, [user?.id]);
 
+  const getStatusKey = (parcel: ParcelData): string => {
+    if (parcel.isDelivered && parcel.signedAt) return "delivered";
+    if (parcel.isShipped && !parcel.isDelivered) return "in_transit";
+    if (!parcel.isShipped && !parcel.isDelivered) return "pending";
+    if (parcel.isDelivered && !parcel.signedAt) return "in_transit";
+    return "unknown";
+  };
+
   const filteredParcels = parcels
     .filter((p) => {
+      const statusKey = getStatusKey(p);
+      
+      if (filterStatus !== 'all' && statusKey !== filterStatus) {
+          return false;
+      }
+      
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
-      const statusStr = p.isDelivered ? "delivered" : "in transit";
+      const statusStr = statusKey.replace('_', ' ');
+      
       return (
         p.trackingNo.toLowerCase().includes(query) ||
         p.senderAddress?.company?.toLowerCase().includes(query) ||
@@ -105,12 +135,9 @@ function SentPage() {
       );
     })
     .sort((a, b) => {
-      if (sortBy === "date") {
-        return (
+      return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
-      return 0;
+      );
     });
 
   const formatDate = (dateString: string) => {
@@ -125,7 +152,7 @@ function SentPage() {
         setIsEditingName(false);
       }
       if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
-        setIsSortMenuOpen(false);
+        setIsStatusMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -306,27 +333,29 @@ function SentPage() {
           <div className="flex justify-between items-center px-8 py-6">
             <h2 className="text-2xl font-semibold text-black">Sent Parcels</h2>
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm text-black mr-2">Sort by</span>
+              {/* เปลี่ยนจาก Sort by เป็น Status */}
+              <span className="text-sm text-black mr-2">Status</span> 
+              
               <div className="relative inline-block w-34" ref={sortMenuRef}>
                 <button
-                  onClick={() => setIsSortMenuOpen((prev) => !prev)}
+                  onClick={() => setIsStatusMenuOpen((prev) => !prev)}
                   className="appearance-none w-full bg-white border h-12 border-black text-black text-sm rounded-l-full px-4 pr-2.5 focus:outline-none flex items-center justify-between"
                 >
-                  {SORT_OPTIONS.find(opt => opt.value === sortBy)?.label || "Select"}
-                  <IoIosArrowDown className={`text-black w-4 h-4 ${isSortMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+                  {STATUS_OPTIONS.find(opt => opt.value === filterStatus)?.label || "All Status"}
+                  <IoIosArrowDown className={`text-black w-4 h-4 ${isStatusMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
                 </button>
                 
-                {isSortMenuOpen && (
+                {isStatusMenuOpen && (
                   <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
-                    {SORT_OPTIONS.map((option) => (
+                    {STATUS_OPTIONS.map((option) => (
                       <button
                         key={option.value}
                         onClick={() => {
-                          setSortBy(option.value);
-                          setIsSortMenuOpen(false);
+                          setFilterStatus(option.value); // <-- อัปเดต filterStatus
+                          setIsStatusMenuOpen(false);
                         }}
                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                          sortBy === option.value ? "bg-gray-100" : ""
+                          filterStatus === option.value ? "bg-gray-100" : ""
                         }`}
                       >
                         {option.label}
@@ -400,7 +429,8 @@ function SentPage() {
                     <div
                       key={parcel.id}
                       className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => navigate("/report", { state: { parcel } })}
+                      // 1.4. ส่งสถานะ filterStatus ไป Report
+                      onClick={() => navigate("/report", { state: { parcel, previousStatus: filterStatus } })}
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}
@@ -424,12 +454,12 @@ function SentPage() {
                       <div className="text-sm pl-4">
                         {formatDate(parcel.createdAt)}
                       </div>
-                      <div className="text-sm pl-4">
+                      <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
                         {parcel.senderAddress?.company ||
                           parcel.senderAddress?.name ||
                           "-"}
                       </div>
-                      <div className="text-sm pl-4">
+                      <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
                         {parcel.recipientAddress?.company ||
                           parcel.recipientAddress?.name ||
                           "-"}
@@ -441,15 +471,15 @@ function SentPage() {
                           <FaRegCircle className="text-black w-4 h-4 mr-3" />
                           Pending
                         </div>
-                      ) : parcel.isShipped && !parcel.isDelivered ? (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
-                          In transit
-                        </div>
-                      ) : (
+                      ) : parcel.isDelivered && parcel.signedAt ? (
                         <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
                           <FaRegCheckCircle className="text-black w-4 h-4 mr-3" />
                           Delivered
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
+                          In transit
                         </div>
                       )}
                     </div>

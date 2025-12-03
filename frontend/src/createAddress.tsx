@@ -400,7 +400,7 @@ function CreateAddress() {
             </button>
 
             {isSubdistrictOpen && addressData.district && (
-              <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div className="absolute top-full mt-1  w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                 {subdistricts.map((subdistrict) => (
                   <button
                     key={subdistrict.id}

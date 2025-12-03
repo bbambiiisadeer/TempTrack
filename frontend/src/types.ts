@@ -23,6 +23,7 @@ export interface Parcel {
   temperatureRangeMax?: number;
   allowedDeviation?: number;
   specialNotes?: string;
+  signedAt?: string;
 }
 
 export type Address = {
