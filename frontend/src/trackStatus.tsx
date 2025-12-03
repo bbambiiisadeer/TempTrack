@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
+// 💡 เพิ่ม FaPaste
+import { FaPaste } from "react-icons/fa"; 
 import "./index.css";
 
 function TrackStatus() {
@@ -9,6 +11,20 @@ function TrackStatus() {
   const { user } = useAuth();
   const { addTrackingNo } = useTracking();
   const [trackingNo, setTrackingNo] = useState("");
+
+  // 💡 ฟังก์ชันจัดการการวาง (Paste)
+  const handlePaste = async () => {
+    try {
+      // ดึงข้อความจากคลิปบอร์ด
+      const text = await navigator.clipboard.readText();
+      // ลบช่องว่างหรือเครื่องหมายที่ไม่จำเป็นออกก่อนตั้งค่า
+      setTrackingNo(text.trim().replace(/[^a-zA-Z0-9#]/g, '')); 
+    } catch (err) {
+      console.error("Failed to read clipboard contents:", err);
+      // alert("Unable to paste. Please ensure clipboard access is allowed.");
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -71,15 +87,31 @@ function TrackStatus() {
         className="bg-white rounded-2xl h-25 shadow-md w-full max-w-[860px] py-5.5 px-10"
       >
         <div className="flex items-center justify-center mb-6 space-x-4">
-          <input
-            type="text"
-            name="trackingNo"
-            value={trackingNo}
-            onChange={(e) => setTrackingNo(e.target.value)}
-            placeholder="Enter your tracking number"
-            className="border-b border-black px-3 py-3 text-sm focus:outline-none focus:ring-0 focus:border-black flex-1"
-            required
-          />
+          
+          {/* 💡 Container สำหรับ Input และ Paste Button */}
+          <div className="relative flex-1 flex items-center"> 
+            <input
+              type="text"
+              name="trackingNo"
+              value={trackingNo}
+              onChange={(e) => setTrackingNo(e.target.value)}
+              placeholder="Enter your tracking number"
+              // ปรับ padding ด้านขวาให้มีที่ว่างสำหรับปุ่ม Paste
+              className="border-b border-black pl-3 pr-10 py-3 text-sm focus:outline-none focus:ring-0 focus:border-black flex-1"
+              required
+            />
+            
+            {/* 💡 ปุ่ม Paste */}
+            <button
+              type="button"
+              onClick={handlePaste}
+              className="absolute right-0 p-2 rounded-full hover:bg-gray-200 transition-colors"
+              aria-label="Paste tracking number"
+            >
+              <FaPaste className="w-4 h-4 text-black" />
+            </button>
+          </div>
+
           <button
             type="submit"
             className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full h-12"
