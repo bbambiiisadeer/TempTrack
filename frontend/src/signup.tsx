@@ -85,6 +85,7 @@ function Signup() {
           src="/images/logo.png"
           alt="Logo"
           className="absolute -top-13 left-1/2 transform -translate-x-1/2 h-7 w-auto"
+          onClick={() => navigate("/")}
         />
 
         <div className="flex flex-col mb-10 w-full">
