@@ -154,7 +154,7 @@ function AMadddriver() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                <span className="text-gray-400 text-sm mt-2">Add Photo</span>
+                <span className="text-gray-400 text-sm font-medium mt-2">Add Photo</span>
               </div>
             )}
           </div>
@@ -231,7 +231,7 @@ function AMadddriver() {
           </button>
           <button
             type="submit"
-            className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
+            className="bg-black text-sm font-medium hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
           >
             Done
           </button>

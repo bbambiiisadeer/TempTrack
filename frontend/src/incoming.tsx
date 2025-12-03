@@ -320,7 +320,7 @@ function IncomingPage() {
                   </p>
                 </div>
               </div>
-              <div className="px-1 py-1">
+              <div className="">
                 <button
                   onClick={() => {
                     if (isEditingName) {
@@ -330,7 +330,7 @@ function IncomingPage() {
                       setEditedName(user?.name || "");
                     }
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100"
                 >
                   {isEditingName ? "Save" : "Change Name"}
                 </button>
@@ -339,7 +339,7 @@ function IncomingPage() {
                     logout();
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 "
                 >
                   Logout
                 </button>
@@ -377,7 +377,7 @@ function IncomingPage() {
                           setFilterStatus(option.value); 
                           setIsStatusMenuOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
                           filterStatus === option.value ? "bg-gray-100" : ""
                         }`}
                       >
@@ -411,10 +411,10 @@ function IncomingPage() {
 
               {/* ปุ่ม Check Track Status ที่เพิ่มกลับมา */}
               <button
-                className="ml-4 flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
+                className="ml-4 flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
                 onClick={() => navigate("/trackstatus")}
               >
-                <span className="text-sm text-white">Check Track Status</span>
+                <span className="text-sm font-medium text-white">Check Track Status</span>
               </button>
 
             </div>

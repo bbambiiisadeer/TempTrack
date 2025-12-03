@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom"; // <-- เพิ่ม useSearchParams
-import { IoIosAdd } from "react-icons/io";
+import { FiPlus } from "react-icons/fi";
 import { useAuth } from "./AuthContext";
 import { useNotification } from "./NotificationContext";
 import { IoIosArrowDown } from "react-icons/io";
@@ -299,7 +299,7 @@ function SentPage() {
                   </p>
                 </div>
               </div>
-              <div className="px-1 py-1">
+              <div className="">
                 <button
                   onClick={() => {
                     if (isEditingName) {
@@ -309,7 +309,7 @@ function SentPage() {
                       setEditedName(user?.name || "");
                     }
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100"
                 >
                   {isEditingName ? "Save" : "Change Name"}
                 </button>
@@ -318,7 +318,7 @@ function SentPage() {
                     logout();
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 "
                 >
                   Logout
                 </button>
@@ -354,7 +354,7 @@ function SentPage() {
                           setFilterStatus(option.value); // <-- อัปเดต filterStatus
                           setIsStatusMenuOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
                           filterStatus === option.value ? "bg-gray-100" : ""
                         }`}
                       >
@@ -389,8 +389,8 @@ function SentPage() {
                 className="ml-4 flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
                 onClick={() => navigate("/senderinfo")}
               >
-                <IoIosAdd className="text-2xl font-black -ml-1" />
-                <span className="text-sm text-white">Add New Shipment</span>
+                <FiPlus className="text-lg font-black -ml-1" />
+                <span className="text-sm font-medium text-white ml-0.5">Add New Shipment</span>
               </button>
             </div>
           </div>

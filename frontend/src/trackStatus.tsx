@@ -114,7 +114,7 @@ function TrackStatus() {
 
           <button
             type="submit"
-            className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full h-12"
+            className="bg-black text-sm hover:bg-gray-800 font-medium text-white py-2 px-6 rounded-full h-12"
           >
             Check
           </button>

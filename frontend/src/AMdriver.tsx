@@ -6,7 +6,7 @@ import { IoSearch } from "react-icons/io5";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdContentCopy, MdPersonAdd } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
-import { BsCheckLg } from "react-icons/bs"; // <-- 1. นำเข้าไอคอน BsCheckLg
+import { BsCheckLg } from "react-icons/bs";
 
 function AMdriver() {
   const { user, logout, updateUser } = useAuth();
@@ -19,7 +19,6 @@ function AMdriver() {
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDriverId, setExpandedDriverId] = useState<string | null>(null);
-  // 2. เพิ่ม State สำหรับ Tracking No. ที่ถูกคัดลอก
   const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,16 +56,15 @@ function AMdriver() {
     }
   };
 
-  // 3. อัปเดตฟังก์ชัน handleCopyTracking
   const handleCopyTracking = async (trackingNo: string) => {
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
 
-      setCopiedTrackingNo(trackingNo); // ตั้งค่า trackingNo ที่ถูกคัดลอก
+      setCopiedTrackingNo(trackingNo);
 
       setTimeout(() => {
-        setCopiedTrackingNo(null); // ล้างค่าหลังจาก 800ms
+        setCopiedTrackingNo(null);
       }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
@@ -85,37 +83,38 @@ function AMdriver() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Get parcels for a specific driver
   const getDriverParcels = (driverId: string) => {
     return parcels.filter((p) => p.driverId === driverId);
   };
 
   const filteredDrivers = drivers.filter((driver) => {
-  if (!searchQuery) return true;
-  const query = searchQuery.toLowerCase();
-  
-  // ค้นหาจากข้อมูลคนขับ
-  const matchDriver = 
-    driver.name.toLowerCase().includes(query) ||
-    driver.regNumber?.toLowerCase().includes(query) ||
-    driver.phoneNumber?.toLowerCase().includes(query) ||
-    driver.email?.toLowerCase().includes(query);
-  
-  // ค้นหาจาก tracking number ของ parcel ที่คนขับนี้รับผิดชอบ
-  const driverParcels = parcels.filter((p) => p.driverId === driver.id);
-  const matchTrackingNo = driverParcels.some((parcel) =>
-    parcel.trackingNo.toLowerCase().includes(query)
-  );
-  
-  return matchDriver || matchTrackingNo;
-});
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    
+    const matchDriver = 
+      driver.name.toLowerCase().includes(query) ||
+      driver.regNumber?.toLowerCase().includes(query) ||
+      driver.phoneNumber?.toLowerCase().includes(query) ||
+      driver.email?.toLowerCase().includes(query);
+    
+    const driverParcels = parcels.filter((p) => p.driverId === driver.id);
+    const matchTrackingNo = driverParcels.some((parcel) =>
+      parcel.trackingNo.toLowerCase().includes(query)
+    );
+    
+    return matchDriver || matchTrackingNo;
+  })
+  .sort((a, b) => {
+    const nameA = a.name.toLowerCase();
+    const nameB = b.name.toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
 
   return (
     <div
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      {/* Header */}
       <div className="flex justify-between items-center px-8 py-5">
         <h2 className="text-2xl font-semibold text-black">Dashboard</h2>
         <div className="relative" ref={menuRef}>
@@ -196,7 +195,6 @@ function AMdriver() {
         </div>
       </div>
 
-      {/* White boxes */}
       <div className="flex justify-start gap-6 px-8">
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Total pending</span>
@@ -262,7 +260,6 @@ function AMdriver() {
             </div>
             <div className="w-full h-[1px] bg-gray-400"></div>
             
-            {/* Search and Add Driver Button */}
             <div className="flex items-center gap-4 mt-6 px-6">
               <div className="relative w-76">
                 <input
@@ -291,7 +288,6 @@ function AMdriver() {
               </button>
             </div>
 
-            {/* Table Header */}
             <div
               className="grid border-b border-black font-medium py-6 text-base text-black mt-2"
               style={{
@@ -304,7 +300,6 @@ function AMdriver() {
               <div></div>
             </div>
 
-            {/* Table Rows */}
             <div className="flex-1 overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-12">

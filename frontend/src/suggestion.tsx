@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { FaCircle } from "react-icons/fa";
 import { RiEdit2Line } from "react-icons/ri";
@@ -174,6 +175,7 @@ const BOX_DATA: BoxItem[] = [
 
 function Suggestion() {
   const [activeBoxId, setActiveBoxId] = useState<number>(1);
+  const navigate = useNavigate();
 
   const getBoxWidthClass = (id: number) => {
     if (id === activeBoxId) {
@@ -188,7 +190,7 @@ function Suggestion() {
       style={{ backgroundColor: "#F1ECE6" }}
     >
       <div className="mb-8">
-        <img src="/images/logo.png" alt="logo" className="h-7 object-contain" />
+        <img src="/images/logo.png" alt="logo" className="h-7 object-contain" onClick={() => navigate("/")} />
       </div>
 
       <h1 className="text-3xl font-semibold text-black mb-2">User Guide</h1>
@@ -226,7 +228,7 @@ function Suggestion() {
               </div>
 
               <div
-                className={`min-w-120 mt-18 text-left ${
+                className={`w-120 mt-18 text-left ${
                   isActive ? "opacity-100" : "opacity-0"
                 }`}
                 style={{

@@ -573,7 +573,7 @@ function Notification() {
                   </p>
                 </div>
               </div>
-              <div className="px-1 py-1">
+              <div className="">
                 <button
                   onClick={() => {
                     if (isEditingName) {
@@ -583,7 +583,7 @@ function Notification() {
                       setEditedName(user?.name || "");
                     }
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100"
                 >
                   {isEditingName ? "Save" : "Change Name"}
                 </button>
@@ -592,7 +592,7 @@ function Notification() {
                     logout();
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 "
                 >
                   Logout
                 </button>
@@ -929,7 +929,7 @@ function Notification() {
               </button>
               <button
                 onClick={handleSignatureDone}
-                className="bg-black text-sm hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
+                className="bg-black text-sm font-medium hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
               >
                 Done
               </button>

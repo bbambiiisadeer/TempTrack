@@ -128,7 +128,7 @@ function Signin() {
               type="button"
               onClick={handleSignIn}
               disabled={isLoading}
-              className={`text-sm text-white py-2 px-6 rounded-full w-32 h-12 transition-colors ${
+              className={`text-sm font-medium text-white py-2 px-6 rounded-full w-32 h-12 transition-colors ${
                 isLoading 
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-black hover:bg-gray-800'
