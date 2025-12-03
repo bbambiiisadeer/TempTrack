@@ -199,7 +199,7 @@ function AMdelivered() {
                   </p>
                 </div>
               </div>
-              <div className="px-1 py-1">
+             <div className="">
                 <button
                   onClick={() => {
                     if (isEditingName) {
@@ -209,7 +209,7 @@ function AMdelivered() {
                       setEditedName(user?.name || "");
                     }
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100"
                 >
                   {isEditingName ? "Save" : "Change Name"}
                 </button>
@@ -218,7 +218,7 @@ function AMdelivered() {
                     logout();
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 "
                 >
                   Logout
                 </button>

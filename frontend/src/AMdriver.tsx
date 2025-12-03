@@ -167,7 +167,7 @@ function AMdriver() {
                   </p>
                 </div>
               </div>
-              <div className="px-1 py-1">
+              <div className="">
                 <button
                   onClick={() => {
                     if (isEditingName) {
@@ -177,7 +177,7 @@ function AMdriver() {
                       setEditedName(user?.name || "");
                     }
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100"
                 >
                   {isEditingName ? "Save" : "Change Name"}
                 </button>
@@ -186,7 +186,7 @@ function AMdriver() {
                     logout();
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 rounded-lg"
+                  className="w-full text-left px-4 py-3 text-sm text-black hover:bg-gray-100 "
                 >
                   Logout
                 </button>
@@ -394,7 +394,7 @@ function AMdriver() {
                                     </div>
                                     <span className={`text-sm px-2 py-1 rounded ${
                                       parcel.isDelivered 
-                                        ? 'bg-[#16A34A]/20 text-[#16A34A]' 
+                                        ? 'bg-[#16A34A]/20 text-[#11833b]' 
                                         : parcel.isShipped 
                                         ? 'bg-blue-100 text-blue-700' 
                                         : 'bg-yellow-100 text-yellow-700'
