@@ -19,12 +19,25 @@ function ActionBox() {
     return () => clearInterval(interval); 
   }, []);
 
+  const getTranslateClass = (index: number) => { 
+    if (index === 0 || index === 1) {
+      return "translate-y-1";
+    } else if (index === 3 || index === 4) {
+      return "-translate-y-1";
+    }else if (index === 2) {
+      return "-translate-y-0.5";
+    }
+   
+  };
+
+  const translateClass = getTranslateClass(currentIndex);
+
   return (
-    <div className="h-[30.0625rem] flex items-center justify-center ">
+    <div className="h-121 flex items-center justify-center ">
       <img
         src={images[currentIndex]}
         alt={`action${currentIndex + 1}`}
-        className="w-full h-full object-contain"
+        className={`w-full h-full object-contain  transform ${translateClass}`}
       />
     </div>
   );
