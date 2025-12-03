@@ -11,7 +11,7 @@ interface BoxItem {
   imagePath: string;
   icon: React.ElementType;
   content: React.ReactNode;
-  imageWidthClass: string; 
+  imageWidthClass: string;
 }
 
 const BOX_DATA: BoxItem[] = [
@@ -25,7 +25,6 @@ const BOX_DATA: BoxItem[] = [
     content: (
       <div className="space-y-2">
         <div className="flex flex-col space-y-2 mt-2">
-          
           <div className="bg-transparent rounded-lg grid grid-cols-[1fr_1.5fr_2fr] items-center py-4 pr-8">
             <div className="flex justify-center mr-4">
               <img
@@ -89,7 +88,7 @@ const BOX_DATA: BoxItem[] = [
     statusTitle: "Meaning",
     imagePath: "/images/guidebox2.png",
     icon: FaRegDotCircle,
-    imageWidthClass: "h-10 mb-2.5", 
+    imageWidthClass: "h-10 mb-2.5",
     content: (
       <div className="space-y-4 mt-5 w-120">
         <div className="bg-white rounded-lg flex justify-between items-start">
@@ -143,6 +142,8 @@ const BOX_DATA: BoxItem[] = [
           <div className="flex items-center w-9/10">
             <p className="text-sm text-black">
               The recipient must sign to complete the delivery
+              <br />
+              <span className="text-black">Click this button to sign</span>
             </p>
           </div>
         </div>
@@ -154,22 +155,17 @@ const BOX_DATA: BoxItem[] = [
           </div>
 
           <div className="flex items-center w-9/10">
-            <p className="text-sm text-black">
-              The recipient has signed
-            </p>
+            <p className="text-sm text-black">The recipient has signed</p>
           </div>
         </div>
         <div className="flex items-stretch h-8 w-120 mt-6">
-            <p className="text-md font-medium text-black">
-              To sign
-            </p>
-
+          <p className="text-md font-medium text-black">To sign</p>
         </div>
         <div className="flex items-stretch  h-8 w-120 -mt-4.5">
-            <p className="text-sm text-black">
-              Click once on the canvas to start drawing your signature. Click again to stop
-            </p>
-
+          <p className="text-sm text-black">
+            Click once on the canvas to start drawing your signature. Click
+            again to stop
+          </p>
         </div>
       </div>
     ),
@@ -177,7 +173,7 @@ const BOX_DATA: BoxItem[] = [
 ];
 
 function Suggestion() {
-  const [activeBoxId, setActiveBoxId] = useState<number>(1); 
+  const [activeBoxId, setActiveBoxId] = useState<number>(1);
 
   const getBoxWidthClass = (id: number) => {
     if (id === activeBoxId) {
@@ -212,7 +208,7 @@ function Suggestion() {
             <div
               key={item.id}
               onMouseEnter={() => setActiveBoxId(item.id)}
-              onMouseLeave={() => setActiveBoxId(1)} 
+              onMouseLeave={() => setActiveBoxId(1)}
               className={`bg-white rounded-xl shadow-lg p-6 flex flex-col justify-start transition-all duration-300 ease-in-out cursor-pointer h-95 relative overflow-hidden ${getBoxWidthClass(
                 item.id
               )}`}
@@ -224,7 +220,9 @@ function Suggestion() {
                 <p className="text-2xl font-semibold text-black whitespace-nowrap">
                   {item.statusSubtitle}
                 </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">{item.statusTitle}</p>
+                <p className="text-2xl font-semibold whitespace-nowrap">
+                  {item.statusTitle}
+                </p>
               </div>
 
               <div
@@ -232,13 +230,13 @@ function Suggestion() {
                   isActive ? "opacity-100" : "opacity-0"
                 }`}
                 style={{
-                  transition: isActive ? 'opacity 0.1s ease-in-out' : 'none'
+                  transition: isActive ? "opacity 0.1s ease-in-out" : "none",
                 }}
               >
                 {isActive ? item.content : null}
               </div>
 
-             <button
+              <button
                 className={`flex items-end justify-end absolute right-4 bottom-4 
                   transition-opacity duration-10 
                   ${
@@ -247,13 +245,13 @@ function Suggestion() {
                       : "opacity-100 pointer-events-auto"
                   }
                 `}
-            >
-                <img 
-                  src={item.imagePath} 
-                  alt={`Box ${item.id} Icon`} 
-                  className={`${item.imageWidthClass} w-auto object-contain`} 
+              >
+                <img
+                  src={item.imagePath}
+                  alt={`Box ${item.id} Icon`}
+                  className={`${item.imageWidthClass} w-auto object-contain`}
                 />
-            </button>
+              </button>
             </div>
           );
         })}
