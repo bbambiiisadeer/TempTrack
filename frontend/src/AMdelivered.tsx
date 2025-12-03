@@ -27,7 +27,7 @@ function AMdelivered() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedParcelId, setExpandedParcelId] = useState<string | null>(null);
   const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
-  const [showUnsignedOnly, setShowUnsignedOnly] = useState(false); 
+  const [showUnsignedOnly, setShowUnsignedOnly] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -119,19 +119,15 @@ function AMdelivered() {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
 
-  // 2. ปรับปรุง filteredParcels เพื่อใช้การกรอง Unsigned
   const filteredParcels = parcels
     .filter((p) => p.isDelivered)
     .filter((p) => {
-      // 2.1. กรองตามสถานะ Unsigned ก่อน
       if (showUnsignedOnly && p.signedAt) {
         return false;
       }
       if (showUnsignedOnly && !p.signedAt) {
-        // ถ้าต้องการดูเฉพาะ Unsigned และ signedAt เป็น null ให้ไปขั้นตอน Search
       }
 
-      // 2.2. กรองตาม Search Query
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
@@ -152,7 +148,6 @@ function AMdelivered() {
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      {/* Header */}
       <div className="flex justify-between items-center px-8 py-5">
         <h2 className="text-2xl font-semibold text-black">Dashboard</h2>
         <div className="relative" ref={menuRef}>
@@ -233,7 +228,6 @@ function AMdelivered() {
         </div>
       </div>
 
-      {/* White boxes */}
       <div className="flex justify-start gap-6 px-8">
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Total pending</span>
@@ -304,52 +298,51 @@ function AMdelivered() {
               </div>
             </div>
             <div className="w-full h-[1px] bg-gray-400"></div>
-            
-            {/* Search and Unsigned Toggle Bar */}
-            <div className="flex items-center justify-between mt-6 px-6">
-              <div className="relative w-88">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
-                />
-                {searchQuery ? (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
-                  >
-                    <RxCross2 className="w-5 h-5" />
-                  </button>
-                ) : (
-                  <IoSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                )}
-              </div>
 
-             
-              <div className="flex items-center gap-3 mr-4">
-                <span className="text-sm text-black whitespace-nowrap">Unsigned</span>
-                <button
-                  onClick={() => setShowUnsignedOnly((prev) => !prev)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    showUnsignedOnly
-                      ? "bg-black"
-                      : "bg-gray-300 hover:bg-gray-400"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      showUnsignedOnly
-                        ? "translate-x-6"
-                        : "translate-x-1"
-                    }`}
+            <div className="flex items-center justify-between mt-6 px-6">
+              <div className="flex items-center gap-6">
+                <div className="relative w-76">
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
                   />
-                </button>
+                  {searchQuery ? (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                    >
+                      <RxCross2 className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowUnsignedOnly((prev) => !prev)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      showUnsignedOnly
+                        ? "bg-black"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        showUnsignedOnly ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-black whitespace-nowrap">
+                    Unsigned
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Table Header */}
             <div
               className="grid border-b border-black font-medium py-6 text-base text-black mt-2"
               style={{
@@ -364,7 +357,6 @@ function AMdelivered() {
               <div></div>
             </div>
 
-            {/* Table Rows */}
             <div className="flex-1 overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -450,7 +442,6 @@ function AMdelivered() {
                         </div>
                       </div>
 
-                      {/* Expanded Details */}
                       {isExpanded && (
                         <div className="bg-gray-100 px-10 py-4 border-b border-gray-200">
                           <div className="bg-white rounded-lg p-4 shadow-sm">
