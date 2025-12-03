@@ -354,7 +354,7 @@ function SenderInfo() {
           </div>
         </div>
 
-        <div className="flex flex-col mb-7">
+        <div className="flex flex-col mb-7 mt-2">
           <label className="mb-2 font-normal text-sm inter">Full Name</label>
           <input
             type="text"
@@ -390,15 +390,15 @@ function SenderInfo() {
             />
           </div>
 
-          {/* Province Dropdown */}
+          {/* Province Dropdown - ปรับความสูงเป็น h-11 */}
           <div className="flex flex-col mb-7 relative md:col-span-1" ref={provinceRef}>
             <label className="mb-2 font-normal text-sm">Province</label>
             <button
               type="button"
               onClick={() => setIsProvinceOpen(!isProvinceOpen)}
-              className="border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors"
+              className="border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors h-11"
             >
-              <span className={sender.province ? "" : "text-gray-400"}>
+              <span className={`block truncate max-w-full ${sender.province ? "" : "text-gray-400"}`}>
                 {sender.province || ""}
               </span>
               <IoIosArrowDown className="w-4 h-4" />
@@ -425,8 +425,9 @@ function SenderInfo() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-          {/* District Dropdown */}
+        {/* ปรับ margin ด้านบนให้ชิดขึ้น (-mt-3) */}
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 -mt-3">
+          {/* District Dropdown - ปรับความสูงเป็น h-11.5 และใช้ truncate */}
           <div className="flex flex-col mb-7 relative md:col-span-1" ref={districtRef}>
             <label className="mb-2 font-normal text-sm inter">District</label>
             <button
@@ -435,13 +436,13 @@ function SenderInfo() {
                 sender.province && setIsDistrictOpen(!isDistrictOpen)
               }
               disabled={!sender.province}
-              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors ${
+              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors h-11.5 ${
                 !sender.province
                   ? "opacity-50 cursor-not-allowed"
                   : ""
               }`}
             >
-              <span className={sender.district ? "" : ""}>
+              <span className={`block truncate max-w-full ${sender.district ? "" : ""}`}>
                 {sender.district || ""}
               </span>
               <IoIosArrowDown className="w-4 h-4" />
@@ -467,7 +468,7 @@ function SenderInfo() {
             )}
           </div>
 
-          {/* Subdistrict Dropdown */}
+          {/* Subdistrict Dropdown - ปรับความสูงเป็น h-11.5 และใช้ truncate */}
           <div className="flex flex-col mb-7 relative md:col-span-1" ref={subdistrictRef}>
             <label className="mb-2 font-normal text-sm inter">
               Subdistrict
@@ -478,13 +479,13 @@ function SenderInfo() {
                 sender.district && setIsSubdistrictOpen(!isSubdistrictOpen)
               }
               disabled={!sender.district}
-              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors ${
+              className={`border-b border-black px-3 py-3 text-sm text-left flex items-center justify-between transition-colors h-11.5 ${
                 !sender.district
                   ? "opacity-50 cursor-not-allowed"
                   : ""
               }`}
             >
-              <span className={sender.subdistrict ? "" : ""}>
+              <span className={`block truncate max-w-full ${sender.subdistrict ? "" : ""}`}>
                 {sender.subdistrict || ""}
               </span>
               <IoIosArrowDown className="w-4 h-4" />
@@ -526,7 +527,8 @@ function SenderInfo() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 mt-4">
+        {/* ปรับ margin ด้านบนให้ชิดขึ้น (-mt-2) */}
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 -mt-2">
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm inter">Email</label>
             <input

@@ -13,6 +13,7 @@ import { LuMailOpen } from "react-icons/lu";
 import { FaRegEnvelope } from "react-icons/fa6";
 import { TiMinus } from "react-icons/ti";
 import { FaChevronDown } from "react-icons/fa6";
+import { FaPenNib } from "react-icons/fa";
 
 interface NotificationData {
   id: string;
@@ -71,7 +72,6 @@ function Notification() {
       if (!user?.id) return;
 
       try {
-        // Fetch sent parcels
         const sentRes = await fetch(
           `http://localhost:3000/parcel?userId=${user.id}`,
           {
@@ -83,7 +83,6 @@ function Notification() {
 
         const sentParcels = await sentRes.json();
 
-        // Fetch incoming parcels
         let incomingParcels: any[] = [];
         if (trackingNumbers.length > 0) {
           const promises = trackingNumbers.map(async (trackingNo) => {
@@ -114,10 +113,8 @@ function Notification() {
             .flat();
         }
 
-        // Map all parcels to notifications
         const allNotifications: NotificationData[] = [];
 
-        // Process sent parcels
         sentParcels.forEach((p: any) => {
           if (p.isDelivered && p.deliveredAt && p.signedAt) {
             allNotifications.push({
@@ -158,7 +155,6 @@ function Notification() {
           }
         });
 
-        // Process incoming parcels
         incomingParcels.forEach((p: any) => {
           if (p.isDelivered && p.deliveredAt) {
             allNotifications.push({
@@ -199,7 +195,6 @@ function Notification() {
           }
         });
 
-        // Sort by date (most recent first)
         allNotifications.sort((a, b) => {
           const dateA = new Date(a.deliveredAt || a.shippedAt || 0);
           const dateB = new Date(b.deliveredAt || b.shippedAt || 0);
@@ -217,7 +212,6 @@ function Notification() {
     fetchNotifications();
   }, [user?.id, trackingNumbers]);
 
-  // Filter out deleted notifications and apply read status from context
   const activeNotifications = notifications
     .filter((n) => !isDeleted(n.id))
     .map((n) => ({
@@ -252,11 +246,9 @@ function Notification() {
 
   const toggleSelectAll = () => {
     if (selectedNotifications.size > 0) {
-      // If any selected (including all or some), deselect all
       setSelectedNotifications(new Set());
       setFilterType("all");
     } else {
-      // If none selected, select all
       setSelectedNotifications(new Set(filteredNotifications.map((n) => n.id)));
     }
   };
@@ -316,17 +308,22 @@ function Notification() {
   };
 
   // Signature canvas functions
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  
+  const toggleDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    setIsDrawing(true);
-    const rect = canvas.getBoundingClientRect();
+    
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
 
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    if (isDrawing) {
+      setIsDrawing(false);
+    } else {
+      setIsDrawing(true);
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -339,15 +336,14 @@ function Notification() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    const clientX = (e as React.MouseEvent).clientX;
+    const clientY = (e as React.MouseEvent).clientY;
+
+    ctx.lineTo(clientX - rect.left, clientY - rect.top);
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.stroke();
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
   };
 
   const clearCanvas = () => {
@@ -358,6 +354,7 @@ function Notification() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setIsDrawing(false);
   };
 
   const handleSignatureDone = async () => {
@@ -367,7 +364,6 @@ function Notification() {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      // Check if canvas is empty
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
@@ -379,10 +375,10 @@ function Notification() {
         return;
       }
 
-      // Convert canvas to base64 image data
+      setIsDrawing(false); 
+
       const signatureData = canvas.toDataURL("image/png");
 
-      // Save signature to backend
       const response = await fetch(
         `http://localhost:3000/parcel/${selectedNotification.parcelId}/signature`,
         {
@@ -397,7 +393,6 @@ function Notification() {
         throw new Error("Failed to save signature");
       }
 
-      // Update the notification in the local state
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === selectedNotification.id
@@ -422,6 +417,7 @@ function Notification() {
   const openSignatureModal = (notification: NotificationData) => {
     setSelectedNotification(notification);
     setShowSignature(true);
+    setIsDrawing(false);
   };
 
   useEffect(() => {
@@ -822,8 +818,8 @@ function Notification() {
                             <p className="text-sm text-gray-600 mb-2">
                               {notification.type === "delivered"
   ? notification.isIncoming
-    ? `Your parcel was successfully delivered to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})` // Recipient
-    : `Your parcel to ${notification.recipientCompany} has been signed and accepted by the recipient` // Sender
+    ? `Your parcel was successfully delivered to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})`
+    : `Your parcel to ${notification.recipientCompany} has been signed and accepted by the recipient`
   : `Your parcel is on the way to ${notification.recipientCompany} by ${notification.driverName} (${notification.driverRegNumber})`
 }
                             </p>
@@ -914,12 +910,15 @@ function Notification() {
                 width={552}
                 height={300}
                 className="cursor-crosshair"
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
+                onClick={toggleDrawing} 
+                onMouseMove={draw} 
               />
             </div>
+            
+            <p className="text-sm text-gray-500 mb-6 flex  gap-2">
+              <FaPenNib size={16} className="text-gray-500" />
+              Click to start, Draw by moving, Click again to stop
+            </p>
 
             <div className="flex items-center justify-end mt-4">
               <button
