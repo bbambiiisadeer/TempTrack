@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
 import { useNotification } from "./NotificationContext";
-import { IoIosArrowDown } from "react-icons/io"; // <-- นำเข้าสำหรับ Dropdown
+import { IoIosArrowDown } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
 import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
@@ -24,7 +24,7 @@ interface ParcelData {
   isDelivered: boolean;
   isShipped: boolean;
   createdAt: string;
-  signedAt?: string; // จำเป็นสำหรับ getStatusKey
+  signedAt?: string;
   senderAddress?: {
     company?: string;
     name: string;
@@ -36,7 +36,6 @@ interface ParcelData {
   driver?: DriverData;
 }
 
-// 1. นำเข้า STATUS_OPTIONS
 const STATUS_OPTIONS = [
     { label: "All Status", value: "all" },
     { label: "Pending", value: "pending" },
@@ -59,16 +58,14 @@ function IncomingPage() {
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); 
 
-  // 2. States สำหรับ Status Filter
   const [filterStatus, setFilterStatus] = useState("all"); 
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const sortMenuRef = useRef<HTMLDivElement>(null); // Ref สำหรับ Dropdown Status
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // ... (fetchParcels คงเดิม)
     const fetchParcels = async () => {
       if (trackingNumbers.length === 0) {
         console.log("No tracking numbers, skipping fetch");
@@ -116,8 +113,13 @@ function IncomingPage() {
           .filter((result): result is ParcelData[] => result !== null)
           .flat();
 
-        console.log("All parcels:", allParcels);
-        setParcels(allParcels);
+        // 🚀 โค้ดที่แก้ไขล่าสุด: ใช้ .reverse() เพื่อกลับลำดับของอาร์เรย์ 
+        // (รายการที่ถูกเพิ่มล่าสุดจาก /trackstatus จะถูกดึงมาเป็นรายการสุดท้ายใน allParcels 
+        // เมื่อ reverse() จะถูกดันขึ้นมาอยู่บนสุด)
+        const reversedParcels = allParcels.reverse();
+
+        console.log("All parcels:", reversedParcels);
+        setParcels(reversedParcels);
       } catch (err) {
         console.error("Error fetching parcels:", err);
         setParcels([]);
@@ -128,7 +130,6 @@ function IncomingPage() {
     fetchParcels();
   }, [trackingNumbers]);
 
-  // 3. ฟังก์ชันสำหรับกำหนดสถานะพัสดุ (คัดลอกมาจาก SentPage)
   const getStatusKey = (parcel: ParcelData): string => {
     if (parcel.isDelivered && parcel.signedAt) return "delivered";
     if (parcel.isShipped && !parcel.isDelivered) return "in_transit";
@@ -138,16 +139,16 @@ function IncomingPage() {
   };
 
   const filteredParcels = parcels.filter((p) => {
-    const statusKey = getStatusKey(p); // 4. ใช้ getStatusKey
+    const statusKey = getStatusKey(p);
 
-    if (filterStatus !== 'all' && statusKey !== filterStatus) { // 5. เพิ่ม Logic การกรองสถานะ
+    if (filterStatus !== 'all' && statusKey !== filterStatus) {
         return false;
     }
     
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
-    const statusStr = statusKey.replace('_', ' '); // ใช้ statusKey สำหรับการค้นหา
+    const statusStr = statusKey.replace('_', ' ');
 
     return (
       p.trackingNo.toLowerCase().includes(query) ||
@@ -171,7 +172,6 @@ function IncomingPage() {
         setIsMenuOpen(false);
         setIsEditingName(false);
       }
-      // 6. จัดการคลิกนอก Dropdown Status
       if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
         setIsStatusMenuOpen(false);
       }
@@ -356,7 +356,7 @@ function IncomingPage() {
               Incoming Parcels
             </h2>
             <div className="flex items-center gap-2 ml-auto">
-              {/* 7. Dropdown Status (คัดลอกมาจาก SentPage) */}
+              {/* Dropdown Status */}
               <span className="text-sm text-black mr-2">Status</span> 
               
               <div className="relative inline-block w-34" ref={sortMenuRef}>
@@ -388,7 +388,7 @@ function IncomingPage() {
                 )}
               </div>
               
-              {/* Search Input (คัดลอกมาจาก SentPage และปรับ rounded-r-full) */}
+              {/* Search Input */}
               <div className="relative w-58">
                 <input
                   type="text"
@@ -408,6 +408,15 @@ function IncomingPage() {
                   <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 )}
               </div>
+
+              {/* ปุ่ม Check Track Status ที่เพิ่มกลับมา */}
+              <button
+                className="ml-4 flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
+                onClick={() => navigate("/trackstatus")}
+              >
+                <span className="text-sm text-white">Check Track Status</span>
+              </button>
+
             </div>
           </div>
 
@@ -488,7 +497,6 @@ function IncomingPage() {
                       </div>
                       <div className="pl-4">-</div>
                       <div className="pl-4">-</div>
-                      {/* 8. Logic การแสดงสถานะ */}
                       {!parcel.isShipped && !parcel.isDelivered ? (
                         <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
                           <FaRegCircle className="text-black w-4 h-4 mr-3" />
