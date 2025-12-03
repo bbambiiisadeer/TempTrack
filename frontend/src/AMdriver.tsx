@@ -6,6 +6,7 @@ import { IoSearch } from "react-icons/io5";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdContentCopy, MdPersonAdd } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
+import { BsCheckLg } from "react-icons/bs"; // <-- 1. นำเข้าไอคอน BsCheckLg
 
 function AMdriver() {
   const { user, logout, updateUser } = useAuth();
@@ -18,6 +19,8 @@ function AMdriver() {
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDriverId, setExpandedDriverId] = useState<string | null>(null);
+  // 2. เพิ่ม State สำหรับ Tracking No. ที่ถูกคัดลอก
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -54,12 +57,20 @@ function AMdriver() {
     }
   };
 
+  // 3. อัปเดตฟังก์ชัน handleCopyTracking
   const handleCopyTracking = async (trackingNo: string) => {
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
+
+      setCopiedTrackingNo(trackingNo); // ตั้งค่า trackingNo ที่ถูกคัดลอก
+
+      setTimeout(() => {
+        setCopiedTrackingNo(null); // ล้างค่าหลังจาก 800ms
+      }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
+      setCopiedTrackingNo(null);
     }
   };
 
@@ -252,34 +263,33 @@ function AMdriver() {
             <div className="w-full h-[1px] bg-gray-400"></div>
             
             {/* Search and Add Driver Button */}
-            {/* Search and Add Driver Button */}
-<div className="flex items-center gap-4 mt-6 px-6">
-  <div className="relative w-76">
-    <input
-      type="text"
-      placeholder="Search"
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
-    />
-    {searchQuery ? (
-      <button
-        onClick={() => setSearchQuery("")}
-        className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
-      >
-        <RxCross2 className="w-5 h-5" />
-      </button>
-    ) : (
-      <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-    )}
-  </div>
-  <button
-    onClick={() => navigate("/amadddriver")}
-    className="w-12 h-12 flex items-center justify-center rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0"
-  >
-    <MdPersonAdd className="w-6 h-6 mr-1" />
-  </button>
-</div>
+            <div className="flex items-center gap-4 mt-6 px-6">
+              <div className="relative w-76">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
+                />
+                {searchQuery ? (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <RxCross2 className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                )}
+              </div>
+              <button
+                onClick={() => navigate("/amadddriver")}
+                className="w-12 h-12 flex items-center justify-center rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0"
+              >
+                <MdPersonAdd className="w-6 h-6 mr-1" />
+              </button>
+            </div>
 
             {/* Table Header */}
             <div
@@ -369,15 +379,22 @@ function AMdriver() {
                                         {parcel.trackingNo}
                                       </span>
                                       <button
-                                        onClick={() => handleCopyTracking(parcel.trackingNo)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCopyTracking(parcel.trackingNo);
+                                        }}
                                         className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
                                       >
-                                        <MdContentCopy className="w-4 h-4 text-black" />
+                                        {copiedTrackingNo === parcel.trackingNo ? (
+                                          <BsCheckLg className="w-4 h-4 text-black" />
+                                        ) : (
+                                          <MdContentCopy className="w-4 h-4 text-black" />
+                                        )}
                                       </button>
                                     </div>
                                     <span className={`text-sm px-2 py-1 rounded ${
                                       parcel.isDelivered 
-                                        ? 'bg-green-100 text-green-700' 
+                                        ? 'bg-[#16A34A]/20 text-[#16A34A]' 
                                         : parcel.isShipped 
                                         ? 'bg-blue-100 text-blue-700' 
                                         : 'bg-yellow-100 text-yellow-700'

@@ -6,6 +6,7 @@ import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
 import { RxCross2 } from "react-icons/rx";
+import { BsCheckLg } from "react-icons/bs";
 
 function AMdelivered() {
   const { user, logout, updateUser } = useAuth();
@@ -25,6 +26,8 @@ function AMdelivered() {
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedParcelId, setExpandedParcelId] = useState<string | null>(null);
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
+  const [showUnsignedOnly, setShowUnsignedOnly] = useState(false); 
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -76,8 +79,15 @@ function AMdelivered() {
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
+
+      setCopiedTrackingNo(trackingNo);
+
+      setTimeout(() => {
+        setCopiedTrackingNo(null);
+      }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
+      setCopiedTrackingNo(null);
     }
   };
 
@@ -86,9 +96,42 @@ function AMdelivered() {
     return date.toLocaleDateString("en-CA");
   };
 
+  const formatDateTime = (
+    dateString: string | undefined | null,
+    field: "shipped" | "signed"
+  ) => {
+    if (!dateString) {
+      if (field === "signed") {
+        return (
+          <span className="text-gray-400">Waiting for recipient to sign</span>
+        );
+      }
+      return "N/A";
+    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
+  // 2. ปรับปรุง filteredParcels เพื่อใช้การกรอง Unsigned
   const filteredParcels = parcels
     .filter((p) => p.isDelivered)
     .filter((p) => {
+      // 2.1. กรองตามสถานะ Unsigned ก่อน
+      if (showUnsignedOnly && p.signedAt) {
+        return false;
+      }
+      if (showUnsignedOnly && !p.signedAt) {
+        // ถ้าต้องการดูเฉพาะ Unsigned และ signedAt เป็น null ให้ไปขั้นตอน Search
+      }
+
+      // 2.2. กรองตาม Search Query
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
       const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
@@ -261,24 +304,49 @@ function AMdelivered() {
               </div>
             </div>
             <div className="w-full h-[1px] bg-gray-400"></div>
-            <div className="relative w-88 mt-6 px-6">
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
-              />
-              {searchQuery ? (
+            
+            {/* Search and Unsigned Toggle Bar */}
+            <div className="flex items-center justify-between mt-6 px-6">
+              <div className="relative w-88">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white border border-black rounded-full text-black text-sm px-4 py-2 h-12 w-full pr-10 focus:outline-none"
+                />
+                {searchQuery ? (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <RxCross2 className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <IoSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                )}
+              </div>
+
+             
+              <div className="flex items-center gap-3 mr-4">
+                <span className="text-sm text-black whitespace-nowrap">Unsigned</span>
                 <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                  onClick={() => setShowUnsignedOnly((prev) => !prev)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    showUnsignedOnly
+                      ? "bg-black"
+                      : "bg-gray-300 hover:bg-gray-400"
+                  }`}
                 >
-                  <RxCross2 className="w-5 h-5" />
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      showUnsignedOnly
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                    }`}
+                  />
                 </button>
-              ) : (
-                <IoSearch className="absolute right-11 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              )}
+              </div>
             </div>
 
             {/* Table Header */}
@@ -325,7 +393,11 @@ function AMdelivered() {
                             }
                             className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                           >
-                            <MdContentCopy className="w-4 h-4 text-black" />
+                            {copiedTrackingNo === parcel.trackingNo ? (
+                              <BsCheckLg className="w-4 h-4 text-black" />
+                            ) : (
+                              <MdContentCopy className="w-4 h-4 text-black" />
+                            )}
                           </button>
                         </div>
                         <div className="text-sm pl-4">
@@ -378,23 +450,24 @@ function AMdelivered() {
                         </div>
                       </div>
 
+                      {/* Expanded Details */}
                       {isExpanded && (
                         <div className="bg-gray-100 px-10 py-4 border-b border-gray-200">
                           <div className="bg-white rounded-lg p-4 shadow-sm">
                             <h3 className="font-semibold text-sm mb-3">
-                              Sender Information
+                              Shipping Information
                             </h3>
                             <div className="space-y-2 text-sm">
                               <p>
-                                <span className="font-medium">Name:</span>{" "}
-                                {parcel.senderAddress?.name || "-"}
+                                <span className="font-medium">Ship at:</span>{" "}
+                                {formatDateTime(parcel.shippedAt, "shipped")}
                               </p>
-                              {parcel.senderAddress?.company && (
-                                <p>
-                                  <span className="font-medium">Company:</span>{" "}
-                                  {parcel.senderAddress.company}
-                                </p>
-                              )}
+                              <p>
+                                <span className="font-medium">
+                                  Delivered at:
+                                </span>{" "}
+                                {formatDateTime(parcel.signedAt, "signed")}
+                              </p>
                             </div>
                           </div>
                         </div>

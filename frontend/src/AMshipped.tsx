@@ -5,6 +5,7 @@ import { useParcel } from "./ParcelContext";
 import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
+import { BsCheckLg } from "react-icons/bs"; // <-- 1. นำเข้าไอคอน BsCheckLg
 
 function AMshipped() {
   const { user, logout, updateUser } = useAuth();
@@ -24,6 +25,7 @@ function AMshipped() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); // <-- 2. เพิ่ม State สำหรับ Tracking No. ที่ถูกคัดลอก
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -71,12 +73,20 @@ function AMshipped() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // <-- 3. อัปเดตฟังก์ชัน handleCopyTracking
   const handleCopyTracking = async (trackingNo: string) => {
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
+      
+      setCopiedTrackingNo(trackingNo); 
+
+      setTimeout(() => {
+        setCopiedTrackingNo(null); 
+      }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
+      setCopiedTrackingNo(null);
     }
   };
 
@@ -361,7 +371,12 @@ function AMshipped() {
                           onClick={() => handleCopyTracking(parcel.trackingNo)}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
-                          <MdContentCopy className="w-4 h-4 text-black" />
+                          {/* <-- 4. ใช้เงื่อนไขการสลับไอคอน */}
+                          {copiedTrackingNo === parcel.trackingNo ? (
+                            <BsCheckLg className="w-4 h-4 text-black" />
+                          ) : (
+                            <MdContentCopy className="w-4 h-4 text-black" />
+                          )}
                         </button>
                       </div>
                       <div className="text-sm pl-4">

@@ -797,8 +797,9 @@ app.get(
         isShipped: p.isShipped,
         driverId: p.driverId,
         createdAt: p.createdAt,
-        shippedAt: p.shippedAt, // เพิ่มบรรทัดนี้
-        deliveredAt: p.deliveredAt, // เพิ่มบรรทัดนี้
+        shippedAt: p.shippedAt, 
+        deliveredAt: p.deliveredAt,
+        signedAt: p.signedAt,
         parcelName: p.parcelName,
         quantity: p.quantity,
         weight: p.weight,
@@ -816,6 +817,7 @@ app.get(
               company: addressMap.get(p.recipientAddressId)?.company,
             }
           : null,
+        
       }));
 
       res.json(results);

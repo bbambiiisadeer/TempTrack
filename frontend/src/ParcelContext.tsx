@@ -26,6 +26,9 @@ interface ParcelData {
     company?: string;
     name: string;
   };
+  shippedAt?: string;
+  deliveredAt?: string;
+  signedAt?: string;
 }
 
 interface ParcelContextType {
