@@ -28,6 +28,7 @@ import { ParcelProvider } from "./ParcelContext";
 import Report from "./report";
 import Notification from "./notification";
 import { NotificationProvider } from "./NotificationContext";
+import Suggestion from "./suggestion";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -59,6 +60,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/amdriver" element={<AMdriver />} />
               <Route path="/report" element={<Report />} />
               <Route path="/notification" element={<Notification />} />
+              <Route path="/suggestion" element={<Suggestion />} />
             </Routes>
           </BrowserRouter>
           </NotificationProvider>

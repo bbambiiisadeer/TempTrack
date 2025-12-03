@@ -33,7 +33,7 @@ function Homepage() {
               Track status
             </Link>
             <Link to="/suggestion" className="hover:underline">
-              Suggestion
+              User guide
             </Link>
             <Link to="/signin" className="hover:underline">
               Sign in
