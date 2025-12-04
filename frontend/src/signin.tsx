@@ -40,11 +40,10 @@ function Signin() {
         login(data.token, data.user);
         console.log("Login success:", data);
 
-        // ตรวจสอบ isAdmin
         if (data.user.isAdmin) {
-          navigate("/amdashboard"); // สำหรับ admin
+          navigate("/amdashboard");
         } else {
-          navigate("/sent"); // สำหรับ user ปกติ
+          navigate("/sent");
         }
       } else {
         setError(data.msg || "Login failed");
@@ -55,6 +54,11 @@ function Signin() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSignIn();
   };
 
   const handleSignUp = () => {
@@ -78,7 +82,7 @@ function Signin() {
           onClick={() => navigate("/")}
         />
         
-        <form className="w-full">
+        <form className="w-full" onSubmit={handleFormSubmit}>
           {error && (
             <div className="mb-4 text-red-500 text-sm text-center bg-red-50 p-2 rounded">
               {error}
@@ -125,8 +129,7 @@ function Signin() {
 
           <div className="flex flex-col items-center mb-6">
             <button
-              type="button"
-              onClick={handleSignIn}
+              type="submit"
               disabled={isLoading}
               className={`text-sm font-medium text-white py-2 px-6 rounded-full w-32 h-12 transition-colors ${
                 isLoading 
@@ -134,7 +137,7 @@ function Signin() {
                   : 'bg-black hover:bg-gray-800'
               }`}
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? '' : 'Sign In'}
             </button>
           </div>
         </form>

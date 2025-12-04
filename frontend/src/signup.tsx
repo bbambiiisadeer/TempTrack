@@ -3,12 +3,12 @@ import { PiEyeClosedBold } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import { type User } from "./types";
 import { FaEye } from "react-icons/fa";
-import { useAuth } from "./AuthContext"; // เพิ่มบรรทัดนี้
+import { useAuth } from "./AuthContext";
 
 function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // เพิ่มบรรทัดนี้
+  const { login } = useAuth();
   const [signup, setSignup] = useState<User>(() => {
     return {
       name: "",
@@ -24,7 +24,6 @@ function Signup() {
 
   const handleSignUp = async () => {
     try {
-      // สร้าง user ใหม่
       const res = await fetch("http://localhost:3000/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -35,7 +34,6 @@ function Signup() {
       if (res.ok) {
         console.log("User created:", data);
 
-        // Login อัตโนมัติหลังจาก signup สำเร็จ
         const loginRes = await fetch("http://localhost:3000/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -48,13 +46,9 @@ function Signup() {
 
         const loginData = await loginRes.json();
         if (loginRes.ok) {
-          // อัพเดท AuthContext (ลำดับคือ token, user)
           login(loginData.token, loginData.user);
-          
-          // Navigate ไปหน้า sent
           navigate("/sent");
         } else {
-          // ถ้า login ไม่สำเร็จ ให้ไปหน้า signin
           alert("Account created! Please sign in.");
           navigate("/signin");
         }
@@ -65,6 +59,11 @@ function Signup() {
       console.error(error);
       alert("An error occurred during signup");
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSignUp();
   };
 
   const handleSignIn = () => {
@@ -88,58 +87,60 @@ function Signup() {
           onClick={() => navigate("/")}
         />
 
-        <div className="flex flex-col mb-10 w-full">
-          <input
-            type="text"
-            name="name"
-            placeholder="Enter your name"
-            onChange={handleChange}
-            className="border-b border-black px-3 py-3 text-sm text-center resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black placeholder-gray-400"
-            required
-          />
-        </div>
+        <form className="w-full" onSubmit={handleFormSubmit}>
+          <div className="flex flex-col mb-10 w-full">
+            <input
+              type="text"
+              name="name"
+              placeholder="Enter your name"
+              onChange={handleChange}
+              className="border-b border-black px-3 py-3 text-sm text-center resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black placeholder-gray-400"
+              required
+            />
+          </div>
 
-        <div className="flex flex-col mb-10 w-full">
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter your e-mail"
-            onChange={handleChange}
-            className="border-b border-black px-3 py-3 text-sm text-center resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black placeholder-gray-400"
-            required
-          />
-        </div>
+          <div className="flex flex-col mb-10 w-full">
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your e-mail"
+              onChange={handleChange}
+              className="border-b border-black px-3 py-3 text-sm text-center resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black placeholder-gray-400"
+              required
+            />
+          </div>
 
-        <div className="flex flex-col mb-10 w-full relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className="border-b border-black px-3 py-3 text-sm text-center resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black placeholder-gray-400 pr-10"
-            required
-          />
-          <button
-            type="button"
-            onClick={togglePasswordVisibility}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-          >
-            {showPassword ? (
-              <FaEye className="w-5 h-5" />
-            ) : (
-              <PiEyeClosedBold className="w-5 h-5" />
-            )}
-          </button>
-        </div>
+          <div className="flex flex-col mb-10 w-full relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              onChange={handleChange}
+              className="border-b border-black px-3 py-3 text-sm text-center resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black placeholder-gray-400 pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              {showPassword ? (
+                <FaEye className="w-5 h-5" />
+              ) : (
+                <PiEyeClosedBold className="w-5 h-5" />
+              )}
+            </button>
+          </div>
 
-        <div className="flex flex-col items-center mb-6">
-          <button
-            onClick={handleSignUp}
-            className="bg-black text-sm font-medium hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
-          >
-            Sign Up
-          </button>
-        </div>
+          <div className="flex flex-col items-center mb-6">
+            <button
+              type="submit"
+              className="bg-black text-sm font-medium hover:bg-gray-800 text-white py-2 px-6 rounded-full w-32 h-12"
+            >
+              Sign Up
+            </button>
+          </div>
+        </form>
 
         <div className="text-center">
           <span className="text-sm text-gray-400 mr-2">Already a member?</span>
