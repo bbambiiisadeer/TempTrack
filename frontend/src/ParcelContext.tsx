@@ -48,16 +48,14 @@ const ParcelContext = createContext<ParcelContextType | undefined>(undefined);
 export function ParcelProvider({ children }: { children: ReactNode }) {
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  
+  // ตั้งค่าเริ่มต้นเป็น true เพื่อให้หมุนแค่ตอนเปิดเว็บครั้งแรกสุดเท่านั้น
   const [loading, setLoading] = useState(true);
   
   const initialLoadCompleted = useRef(false);
 
   const fetchData = useCallback(async () => {
-    const isInitialLoad = !initialLoadCompleted.current;
-    
-    if (isInitialLoad) {
-        setLoading(true);
-    }
+    // ลบ logic ที่สั่ง setLoading(true) ออก เพื่อไม่ให้เกิดอาการกระพริบตอนโหลดซ้ำ (Silent Refresh)
     
     try {
       const parcelRes = await fetch(`http://localhost:3000/parcel/all`, {
@@ -77,10 +75,9 @@ export function ParcelProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
-      if (isInitialLoad) {
-        setLoading(false);
-        initialLoadCompleted.current = true;
-      }
+      // เมื่อโหลดเสร็จ (ไม่ว่าจะสำเร็จหรือล้มเหลว) ให้ปิด Loading เสมอ
+      setLoading(false);
+      initialLoadCompleted.current = true;
     }
   }, []);
 

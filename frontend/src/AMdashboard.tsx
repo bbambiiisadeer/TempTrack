@@ -6,7 +6,7 @@ import { IoSearch } from "react-icons/io5";
 import { MdContentCopy } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
 import { RxCross2 } from "react-icons/rx";
-import { BsCheckLg } from "react-icons/bs"; // <--- 1. นำเข้าไอคอน BsCheckLg
+import { BsCheckLg } from "react-icons/bs";
 
 function AMdashboard() {
   const { user, logout, updateUser } = useAuth();
@@ -28,11 +28,15 @@ function AMdashboard() {
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); // <--- 2. เพิ่ม State
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   useEffect(() => {
     if (isEditingName && nameInputRef.current) {
@@ -83,7 +87,6 @@ function AMdashboard() {
     }
   };
 
-  // <--- 3. อัปเดตฟังก์ชัน handleCopyTracking
   const handleCopyTracking = async (trackingNo: string) => {
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
@@ -199,7 +202,6 @@ function AMdashboard() {
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: "#F1ECE6" }}
     >
-      {/* Header */}
       <div className="flex justify-between items-center px-8 py-5">
         <h2 className="text-2xl font-semibold text-black">Dashboard</h2>
         <div className="relative" ref={menuRef}>
@@ -280,7 +282,6 @@ function AMdashboard() {
         </div>
       </div>
 
-      {/* White boxes */}
       <div className="flex justify-start gap-6 px-8">
         <div className="bg-white w-96 h-36 flex flex-col p-6 rounded-lg shadow">
           <span className="text-black text-sm">Total pending</span>
@@ -374,7 +375,6 @@ function AMdashboard() {
               )}
             </div>
 
-            {/* Table Header */}
             <div
               className="grid border-b border-black font-medium py-6 text-base text-black mt-2"
               style={{
@@ -389,7 +389,6 @@ function AMdashboard() {
               <div className="pl-4">Shipped</div>
             </div>
 
-            {/* Table Rows */}
             <div className="flex-1 overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -420,7 +419,6 @@ function AMdashboard() {
                           onClick={() => handleCopyTracking(parcel.trackingNo)}
                           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
                         >
-                          {/* <-- 4. ใช้เงื่อนไขการสลับไอคอน */}
                           {copiedTrackingNo === parcel.trackingNo ? (
                             <BsCheckLg className="w-4 h-4 text-black" />
                           ) : (
