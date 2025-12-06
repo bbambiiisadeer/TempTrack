@@ -22,6 +22,9 @@ interface ParcelData {
   shippedAt?: string;
   signedAt?: string;
   signature?: string;
+  temperatureRangeMin?: number;
+  temperatureRangeMax?: number;
+  allowedDeviation?: number;
 }
 
 const formatThaiDateTime = (dateString: string | null | undefined): string => {
@@ -40,6 +43,66 @@ const formatThaiDateTime = (dateString: string | null | undefined): string => {
   const minutes = String(thaiDate.getMinutes()).padStart(2, "0");
 
   return `${day}-${month}-${year} ${hours}:${minutes}`;
+};
+
+const generateYAxisLabels = (
+  min: number,
+  max: number,
+  deviation: number | undefined
+): { labels: number[], absoluteMin: number, absoluteMax: number } => {
+  const range = max - min;
+  const step = range > 0 ? range / 4 : 1;
+  const finalLabels: number[] = [];
+  
+  const useDeviation = deviation !== undefined && deviation > 0;
+
+  if (useDeviation) {
+    // 1. Max + 1S
+    finalLabels.push(max + step * 1); 
+    // 2. Max + Deviation
+    finalLabels.push(max + deviation!);
+  } else {
+    // 1. Max + 2S
+    finalLabels.push(max + step * 2);
+    // 2. Max + 1S
+    finalLabels.push(max + step * 1);
+  }
+
+  // 3. Max
+  finalLabels.push(max);
+
+  // 4. Max - 1 * Step
+  finalLabels.push(max - step * 1);
+
+  // 5. Max - 2 * Step
+  finalLabels.push(max - step * 2);
+
+  // 6. Max - 3 * Step
+  finalLabels.push(max - step * 3);
+
+  // 7. Min
+  finalLabels.push(min);
+
+  if (useDeviation) {
+    // 8. Min - Deviation
+    finalLabels.push(min - deviation!);
+    // 9. Min - 1S
+    finalLabels.push(min - step * 1);
+  } else {
+    // 8. Min - 1S
+    finalLabels.push(min - step * 1);
+    // 9. Min - 2S
+    finalLabels.push(min - step * 2);
+  }
+  
+  const sortedLabels = finalLabels
+    .map(n => parseFloat(n.toFixed(1)))
+    .sort((a, b) => a - b);
+  
+  const absoluteMin = sortedLabels[0];
+  const absoluteMax = sortedLabels[sortedLabels.length - 1];
+
+  return { labels: sortedLabels, absoluteMin, absoluteMax };
 };
 
 function Overview() {
@@ -73,6 +136,20 @@ function Overview() {
       navigate(previousPath);
     }
   };
+
+  const hasTempData = parcelData?.temperatureRangeMin !== undefined && 
+                      parcelData?.temperatureRangeMax !== undefined;
+
+  const tempRangeData = hasTempData 
+    ? generateYAxisLabels(
+        parcelData.temperatureRangeMin!, 
+        parcelData.temperatureRangeMax!, 
+        parcelData.allowedDeviation 
+      ) 
+    : { labels: [], absoluteMin: 0, absoluteMax: 0 };
+
+  const { labels: yAxisLabels, absoluteMin, absoluteMax } = tempRangeData;
+  const totalTempRange = absoluteMax - absoluteMin;
 
   return (
     <div
@@ -121,7 +198,7 @@ function Overview() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex w-full">
               <div className="bg-white rounded-xl shadow-md p-6 w-full h-40">
                 <div className="flex justify-center items-center gap-4 h-full">
@@ -171,7 +248,7 @@ function Overview() {
               </div>
             </div>
 
-            <div className="flex gap-4 w-full h-50">
+            <div className="flex gap-8 w-full h-48">
               <div className="bg-white rounded-xl shadow-md p-6 flex-1">
                 <p className="font-medium text-black text-base">
                   Proof of Delivery
@@ -195,14 +272,14 @@ function Overview() {
 
                         <span className="border-l-[1.5px] border-gray-400 h-4"></span>
 
-                        <span className=" text-sm font-normal text-gray-400">
+                        <span className=" text-sm  text-gray-400">
                           {parcelData.recipientAddress.phoneNumber || "-"}
                         </span>
                       </p>
                     </div>
 
                     {parcelData.recipientAddress.company && (
-                      <p className=" text-sm  text-black">
+                      <p className=" text-sm font-medium text-black">
                         {parcelData.recipientAddress.company}
                       </p>
                     )}
@@ -229,10 +306,8 @@ function Overview() {
                 </p>
 
                 <div className="flex gap-3 mb-4 mt-2">
-                  {/* กล่อง A */}
                   <div className="font-semibold text-black text-xl">92 %</div>
 
-                  {/* กล่อง B */}
                   <div className=" text-black text-sm flex flex-col justify-end">
                     in the allowed temperature range
                   </div>
@@ -251,23 +326,107 @@ function Overview() {
 
             <div className="flex w-full">
               <div
-                className="bg-white rounded-xl shadow-md p-6 w-full"
-                style={{ height: "240px" }}
+                className="bg-white rounded-xl shadow-md p-6 w-full h-90 flex flex-col"
               >
-                <p className="text-gray-500">Row 3: Single Box (h-60)</p>
+                <p className="font-medium text-black text-base mb-3">
+                  Temperature During Transit
+                </p>
+                
+                {hasTempData && yAxisLabels.length === 9 && totalTempRange > 0 ? (
+                    <div className="flex flex-1 relative pt-2">
+                        {/* Y-Axis Labels (ซ้าย) */}
+                        <div className="w-12 h-full text-xs text-gray-400 relative">
+                            {yAxisLabels.slice().reverse().map((temp, index) => {
+                                const percentageFromBottom = (temp - absoluteMin) / totalTempRange;
+                                const topPosition = 100 - (percentageFromBottom * 100);
+
+                                return (
+                                    <div 
+                                        key={index} 
+                                        className="absolute right-4.5 w-full text-right leading-none"
+                                        style={{ top: `calc(${topPosition}% - 0.5em)` }}
+                                    >
+                                        {temp}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Graph Grid Area (ตรงกลาง) */}
+                        <div className="flex-1 h-full relative ">
+                            {yAxisLabels.map((temp, index) => {
+                                let lineColor = 'border-none';
+                                let isDashed = false;
+                                
+                                const hasDeviation = parcelData!.allowedDeviation !== undefined && parcelData!.allowedDeviation > 0;
+
+                                if (temp === parcelData!.temperatureRangeMin) {
+                                    lineColor = 'border-[#16A34A]';
+                                    isDashed = false;
+                                } else if (temp === parcelData!.temperatureRangeMax) {
+                                    lineColor = 'border-[#16A34A]';
+                                    isDashed = false;
+                                } 
+                                else if (hasDeviation && 
+                                         (temp === (parcelData!.temperatureRangeMin! - parcelData!.allowedDeviation!) || 
+                                          temp === (parcelData!.temperatureRangeMax! + parcelData!.allowedDeviation!))) {
+                                    lineColor = 'border-gray-300';
+                                    isDashed = true;
+                                }
+                                
+                                const percentageFromBottom = (temp - absoluteMin) / totalTempRange;
+                                const topPosition = 100 - (percentageFromBottom * 100);
+                                
+                                let finalLineColor = lineColor;
+                                if (isDashed && lineColor !== 'border-none') {
+                                     finalLineColor = `${lineColor} border-solid`;
+                                } else if (lineColor !== 'border-none') {
+                                     finalLineColor = `${lineColor} border-solid`;
+                                }
+
+                                return (
+                                    <div 
+                                        key={`grid-${index}`}
+                                        className={`absolute left-0 right-0 ${finalLineColor}`}
+                                        style={{ top: `${topPosition}%`, borderTopWidth: lineColor === 'border-none' ? '0' : '1px' }}
+                                    ></div>
+                                );
+                            })}
+                            
+                            <div className="relative h-full w-full">
+                                <div className="absolute inset-0 flex justify-center items-center text-gray-400 text-lg">
+                                    {/* [Data Line Chart Area] */}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex flex-1 justify-center items-center text-gray-500">
+                        Temperature range settings are missing.
+                    </div>
+                )}
+                
+                {/* X-Axis Labels (ด้านล่าง) */}
+                <div className="flex justify-between w-full h-4 mt-3  pl-12">
+                    {Array.from({ length: 13 }, (_, i) => String.fromCharCode(97 + i)).map((char) => (
+                        <div 
+                            key={char} 
+                            className="text-xs text-gray-400"
+                        >
+                            {char}
+                        </div>
+                    ))}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-1 flex-1 flex flex-col mt-4">
-            {" "}
+          <div className="space-y-1 flex-1 flex flex-col mt-6">
             <div
-              className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 p-6"
-              style={{ minHeight: "calc(100vh - 128px - 400px)" }}
+              className="bg-white rounded-t-2xl shadow-sm flex flex-col flex-1 p-6"
             >
-              <h3 className="text-xl font-semibold">
-                Large White Box (Main Content)
-              </h3>
+             
             </div>
           </div>
         </div>
