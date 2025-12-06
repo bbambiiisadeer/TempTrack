@@ -45,6 +45,30 @@ const formatThaiDateTime = (dateString: string | null | undefined): string => {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
+const formatTimeLabel = (dateString: string): string => {
+  const date = new Date(dateString);
+  const thaiDate = new Date(
+    date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+  );
+  const hours = String(thaiDate.getHours()).padStart(2, "0");
+  const minutes = String(thaiDate.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+
+const generateTimeLabels = (shippedAt: string, signedAt: string): string[] => {
+  const startTime = new Date(shippedAt).getTime();
+  const endTime = new Date(signedAt).getTime();
+  const timeInterval = (endTime - startTime) / 12; // แบ่งเป็น 13 จุด (12 ช่วง)
+  
+  const labels: string[] = [];
+  for (let i = 0; i < 13; i++) {
+    const time = new Date(startTime + (timeInterval * i));
+    labels.push(formatTimeLabel(time.toISOString()));
+  }
+  
+  return labels;
+};
+
 const generateYAxisLabels = (
   min: number,
   max: number,
@@ -150,6 +174,10 @@ function Overview() {
 
   const { labels: yAxisLabels, absoluteMin, absoluteMax } = tempRangeData;
   const totalTempRange = absoluteMax - absoluteMin;
+
+  const timeLabels = parcelData?.shippedAt && parcelData?.signedAt 
+    ? generateTimeLabels(parcelData.shippedAt, parcelData.signedAt) 
+    : [];
 
   return (
     <div
@@ -409,14 +437,25 @@ function Overview() {
                 
                 {/* X-Axis Labels (ด้านล่าง) */}
                 <div className="flex justify-between w-full h-4 mt-3  pl-12">
-                    {Array.from({ length: 13 }, (_, i) => String.fromCharCode(97 + i)).map((char) => (
-                        <div 
-                            key={char} 
-                            className="text-xs text-gray-400"
-                        >
-                            {char}
-                        </div>
-                    ))}
+                    {timeLabels.length === 13 ? (
+                        timeLabels.map((time, index) => (
+                            <div 
+                                key={index} 
+                                className="text-xs text-gray-400"
+                            >
+                                {time}
+                            </div>
+                        ))
+                    ) : (
+                        Array.from({ length: 13 }, (_, i) => String.fromCharCode(97 + i)).map((char) => (
+                            <div 
+                                key={char} 
+                                className="text-xs text-gray-400"
+                            >
+                                {char}
+                            </div>
+                        ))
+                    )}
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { dbClient } from "@db/client.js";
 import { users, address, parcel, driver, notification } from "@db/schema.js";
 import cors from "cors";
 import Debug from "debug";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type {
   ErrorRequestHandler,
   Request,
@@ -670,7 +670,6 @@ app.get(
         weight: result.weight,
         signature: result.signature,
         signedAt: result.signedAt,
-        // 🛑 เพิ่มฟิลด์อุณหภูมิ
         temperatureRangeMin: result.temperatureRangeMin,
         temperatureRangeMax: result.temperatureRangeMax,
         allowedDeviation: result.allowedDeviation,
@@ -683,8 +682,6 @@ app.get(
     }
   }
 );
-
-// ---
 
 // GET parcel (user)
 app.get(
@@ -700,26 +697,22 @@ app.get(
         orderBy: [desc(parcel.createdAt)],
       });
 
-      // Collect all address IDs
       const addressIds = new Set<string>();
       parcels.forEach((p) => {
         if (p.senderAddressId) addressIds.add(p.senderAddressId);
         if (p.recipientAddressId) addressIds.add(p.recipientAddressId);
       });
 
-      // Collect all driver IDs
       const driverIds = new Set<string>();
       parcels.forEach((p) => {
         if (p.driverId) driverIds.add(p.driverId);
       });
 
-      // Fetch addresses
       const addresses = await dbClient.query.address.findMany({
         where: (address, { inArray }) =>
           inArray(address.id, Array.from(addressIds)),
       });
 
-      // Fetch drivers
       const drivers = await dbClient.query.driver.findMany({
         where: (driver, { inArray }) =>
           inArray(driver.id, Array.from(driverIds)),
@@ -745,7 +738,6 @@ app.get(
         dimensionLength: p.dimensionLength,
         dimensionWidth: p.dimensionWidth,
         dimensionHeight: p.dimensionHeight,
-        // 🛑 ฟิลด์เหล่านี้มีอยู่แล้วในโค้ดของคุณ
         temperatureRangeMin: p.temperatureRangeMin,
         temperatureRangeMax: p.temperatureRangeMax,
         allowedDeviation: p.allowedDeviation,
@@ -790,8 +782,6 @@ app.get(
   }
 );
 
-// ---
-
 // GET all parcels (admin)
 app.get(
   "/parcel/all",
@@ -828,7 +818,6 @@ app.get(
         parcelName: p.parcelName,
         quantity: p.quantity,
         weight: p.weight,
-        // 🛑 เพิ่มฟิลด์อุณหภูมิ
         temperatureRangeMin: p.temperatureRangeMin,
         temperatureRangeMax: p.temperatureRangeMax,
         allowedDeviation: p.allowedDeviation,
@@ -954,7 +943,6 @@ app.post(
         return;
       }
 
-      // Check if parcel exists
       const exists = await dbClient.query.parcel.findFirst({
         where: eq(parcel.id, id),
       });
@@ -964,18 +952,16 @@ app.post(
         return;
       }
 
-      // Check if parcel is delivered
       if (!exists.isDelivered) {
         res.status(400).json({ msg: "Parcel must be delivered before signing" });
         return;
       }
 
-      // Update parcel with signature
       const result = await dbClient
         .update(parcel)
         .set({
           signature: signature,
-          signedAt: new Date(),
+          signedAt: sql`NOW()`,
         })
         .where(eq(parcel.id, id))
         .returning();
@@ -1039,33 +1025,27 @@ app.patch(
         }
       });
 
-      // จัดการ timestamp สำหรับ isShipped
       if (req.body.isShipped !== undefined) {
         if (req.body.isShipped === true) {
-          // Set shippedAt เฉพาะเมื่อยังไม่มีค่า
           if (!exists.shippedAt) {
-            updateData.shippedAt = new Date(); // ใช้ new Date() ตรงๆ
+            updateData.shippedAt = sql`NOW()`;
           }
         } else {
-          // Clear shippedAt เมื่อ unset
           updateData.shippedAt = null;
         }
       }
 
-      // จัดการ timestamp สำหรับ isDelivered
       if (req.body.isDelivered !== undefined) {
         if (req.body.isDelivered === true) {
-          // Set deliveredAt เฉพาะเมื่อยังไม่มีค่า
           if (!exists.deliveredAt) {
-            updateData.deliveredAt = new Date(); // ใช้ new Date() ตรงๆ
+            updateData.deliveredAt = sql`NOW()`;
           }
         } else {
-          // Clear deliveredAt เมื่อ unset
           updateData.deliveredAt = null;
         }
       }
 
-      console.log("Updating parcel with data:", updateData); // เพิ่ม log
+      console.log("Updating parcel with data:", updateData);
 
       const result = await dbClient
         .update(parcel)
@@ -1073,11 +1053,11 @@ app.patch(
         .where(eq(parcel.id, id))
         .returning();
 
-      console.log("Update result:", result[0]); // เพิ่ม log
+      console.log("Update result:", result[0]);
 
       res.json({ msg: "Parcel updated", data: result[0] });
     } catch (err: any) {
-      console.error("Error updating parcel:", err); // เพิ่ม log
+      console.error("Error updating parcel:", err);
       next(err);
     }
   }
@@ -1118,7 +1098,6 @@ app.get(
         return;
       }
 
-      // ตรวจสอบว่าเป็น user เดียวกัน
       if (req.user?.userId !== userId) {
         res.status(403).json({ msg: "Unauthorized" });
         return;
@@ -1157,35 +1136,29 @@ app.patch(
         return;
       }
 
-      // ตรวจสอบว่าเป็น user เดียวกัน
       if (req.user?.userId !== userId) {
         res.status(403).json({ msg: "Unauthorized" });
         return;
       }
 
-      // อัพเดท read status
       if (Array.isArray(read)) {
-        // ดึง notifications ทั้งหมดของ user นี้
         const allUserNotifications = await dbClient.query.notification.findMany({
           where: (n, { eq }) => eq(n.userId, userId),
         });
 
         const readSet = new Set(read);
 
-        // อัพเดทหรือสร้าง notifications
         for (const notificationId of read) {
           const existing = allUserNotifications.find(
             n => n.notificationId === notificationId
           );
 
           if (existing) {
-            // อัพเดท isRead = true
             await dbClient
               .update(notification)
-              .set({ isRead: true, updatedAt: new Date() })
+              .set({ isRead: true, updatedAt: sql`NOW()` })
               .where(eq(notification.id, existing.id));
           } else {
-            // สร้างใหม่
             await dbClient.insert(notification).values({
               userId,
               notificationId,
@@ -1195,18 +1168,16 @@ app.patch(
           }
         }
 
-        // อัพเดท notifications ที่ไม่อยู่ใน read array ให้เป็น unread
         for (const existing of allUserNotifications) {
           if (!readSet.has(existing.notificationId) && existing.isRead) {
             await dbClient
               .update(notification)
-              .set({ isRead: false, updatedAt: new Date() })
+              .set({ isRead: false, updatedAt: sql`NOW()` })
               .where(eq(notification.id, existing.id));
           }
         }
       }
 
-      // อัพเดท deleted status
       if (Array.isArray(deleted)) {
         for (const notificationId of deleted) {
           const existing = await dbClient.query.notification.findFirst({
@@ -1220,7 +1191,7 @@ app.patch(
           if (existing) {
             await dbClient
               .update(notification)
-              .set({ isDeleted: true, updatedAt: new Date() })
+              .set({ isDeleted: true, updatedAt: sql`NOW()` })
               .where(eq(notification.id, existing.id));
           } else {
             await dbClient.insert(notification).values({
