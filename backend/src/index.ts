@@ -668,8 +668,12 @@ app.get(
         parcelName: result.parcelName,
         quantity: result.quantity,
         weight: result.weight,
-        signature: result.signature,        // เพิ่มบรรทัดนี้
-        signedAt: result.signedAt,          // เพิ่มบรรทัดนี้
+        signature: result.signature,
+        signedAt: result.signedAt,
+        // 🛑 เพิ่มฟิลด์อุณหภูมิ
+        temperatureRangeMin: result.temperatureRangeMin,
+        temperatureRangeMax: result.temperatureRangeMax,
+        allowedDeviation: result.allowedDeviation,
         senderAddress,
         recipientAddress,
         driver: driverData,
@@ -679,6 +683,8 @@ app.get(
     }
   }
 );
+
+// ---
 
 // GET parcel (user)
 app.get(
@@ -729,8 +735,8 @@ app.get(
         isShipped: p.isShipped,
         driverId: p.driverId,
         createdAt: p.createdAt,
-        shippedAt: p.shippedAt, // เพิ่มบรรทัดนี้
-        deliveredAt: p.deliveredAt, // เพิ่มบรรทัดนี้
+        shippedAt: p.shippedAt,
+        deliveredAt: p.deliveredAt,
         signature: p.signature, 
         signedAt: p.signedAt,
         parcelName: p.parcelName,
@@ -739,6 +745,7 @@ app.get(
         dimensionLength: p.dimensionLength,
         dimensionWidth: p.dimensionWidth,
         dimensionHeight: p.dimensionHeight,
+        // 🛑 ฟิลด์เหล่านี้มีอยู่แล้วในโค้ดของคุณ
         temperatureRangeMin: p.temperatureRangeMin,
         temperatureRangeMax: p.temperatureRangeMax,
         allowedDeviation: p.allowedDeviation,
@@ -783,6 +790,8 @@ app.get(
   }
 );
 
+// ---
+
 // GET all parcels (admin)
 app.get(
   "/parcel/all",
@@ -819,6 +828,10 @@ app.get(
         parcelName: p.parcelName,
         quantity: p.quantity,
         weight: p.weight,
+        // 🛑 เพิ่มฟิลด์อุณหภูมิ
+        temperatureRangeMin: p.temperatureRangeMin,
+        temperatureRangeMax: p.temperatureRangeMax,
+        allowedDeviation: p.allowedDeviation,
         senderAddress: p.senderAddressId
           ? {
               id: addressMap.get(p.senderAddressId)?.id,

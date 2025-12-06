@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom"; 
+import { Link, useNavigate, useLocation } from "react-router-dom"; 
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
 import { useNotification } from "./NotificationContext";
@@ -9,6 +9,7 @@ import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BsCheckLg } from "react-icons/bs";
+import { type Address } from "./types";
 
 interface DriverData {
   id: string;
@@ -25,15 +26,12 @@ interface ParcelData {
   isShipped: boolean;
   createdAt: string;
   signedAt?: string;
-  senderAddress?: {
-    company?: string;
-    name: string;
-  };
-  recipientAddress?: {
-    company?: string;
-    name: string;
-  };
+  senderAddress?: Address;
+  recipientAddress?: Address;
   driver?: DriverData;
+  temperatureRangeMin?: number;
+  temperatureRangeMax?: number;
+  allowedDeviation?: number;
 }
 
 const STATUS_OPTIONS = [
@@ -49,6 +47,7 @@ function IncomingPage() {
   const { unreadCount } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate(); 
+  const location = useLocation();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -65,9 +64,17 @@ function IncomingPage() {
   const sortMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const statusParam = searchParams.get('status');
+
+    if (statusParam && STATUS_OPTIONS.some(opt => opt.value === statusParam)) {
+        setFilterStatus(statusParam);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
     const fetchParcels = async () => {
       if (trackingNumbers.length === 0) {
-        console.log("No tracking numbers, skipping fetch");
         setParcels([]);
         return;
       }
@@ -80,19 +87,15 @@ function IncomingPage() {
           const url = `http://localhost:3000/parcel/track/${encodeURIComponent(
             formattedTrackingNo
           )}`;
-          console.log("Fetching URL:", url);
 
           try {
             const res = await fetch(url, {
               credentials: "include",
             });
 
-            console.log(`Response status for ${trackingNo}:`, res.status);
-
             if (!res.ok) return null;
 
             const data = await res.json();
-            console.log(`API Response for ${trackingNo}:`, data);
 
             if (Array.isArray(data)) {
               return data;
@@ -101,7 +104,6 @@ function IncomingPage() {
             }
             return null;
           } catch (err) {
-            console.error(`Error fetching ${trackingNo}:`, err);
             return null;
           }
         });
@@ -114,10 +116,8 @@ function IncomingPage() {
 
         const reversedParcels = allParcels.reverse();
 
-        console.log("All parcels:", reversedParcels);
         setParcels(reversedParcels);
       } catch (err) {
-        console.error("Error fetching parcels:", err);
         setParcels([]);
       } finally {
       }
@@ -226,12 +226,17 @@ function IncomingPage() {
 
   const handleRowClick = (parcel: ParcelData) => {
     const statusKey = getStatusKey(parcel);
+    
+    const navigationState = { 
+      parcel, 
+      previousPath: '/incoming', 
+      previousStatus: filterStatus 
+    };
+
     if (statusKey === 'delivered') {
-      // ไปหน้า Overview สำหรับ Delivered
-      navigate(`/overview?trackingNo=${parcel.trackingNo}`, { state: { parcel } });
+      navigate(`/overview?trackingNo=${parcel.trackingNo}`, { state: navigationState });
     } else {
-      // ไปหน้า Report สำหรับสถานะอื่น ๆ
-      navigate("/report", { state: { parcel, previousStatus: filterStatus } });
+      navigate("/report", { state: navigationState });
     }
   };
 
@@ -363,7 +368,6 @@ function IncomingPage() {
               Incoming Parcels
             </h2>
             <div className="flex items-center gap-2 ml-auto">
-              {/* Dropdown Status */}
               <span className="text-sm text-black mr-2">Status</span>  
               
               <div className="relative inline-block w-34" ref={sortMenuRef}>
@@ -450,7 +454,7 @@ function IncomingPage() {
                     <div
                       key={parcel.id}
                       className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => handleRowClick(parcel)} // <-- เรียกใช้ handleRowClick
+                      onClick={() => handleRowClick(parcel)}
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}
