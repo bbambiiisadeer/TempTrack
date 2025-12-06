@@ -167,10 +167,10 @@ function SaveAddress() {
                 onClick={() => handleSelectAddress(addr)}
               >
                 <div className="flex justify-between items-center">
-                  <p className="font-medium text-md inter flex items-center gap-2">
+                  <p className="font-medium text-md  flex items-center gap-2">
                     {addr.name}
                     <span className="border-l-[1.5px] border-gray-400 h-4"></span>
-                    <span className="font-normal text-sm inter text-gray-400">
+                    <span className="font-normal text-sm  text-gray-400">
                       {addr.phoneNumber || "-"}
                     </span>
                   </p>
@@ -189,14 +189,14 @@ function SaveAddress() {
                 </div>
 
                 {addr.company && (
-                  <p className="font-normal text-sm inter">{addr.company}</p>
+                  <p className="font-normal text-sm ">{addr.company}</p>
                 )}
-                <p className="font-normal text-sm inter">
+                <p className="font-normal text-sm ">
                   {addr.address} {addr.subdistrict}, {addr.district},{" "}
                   {addr.province} {addr.postalCode}
                 </p>
                 {addr.email && (
-                  <p className="font-normal text-sm inter mb-1.5">
+                  <p className="font-normal text-sm  mb-1.5">
                     {addr.email}
                   </p>
                 )}

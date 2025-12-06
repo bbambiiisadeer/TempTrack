@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom"; // <-- เพิ่ม useSearchParams
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiPlus } from "react-icons/fi";
 import { useAuth } from "./AuthContext";
 import { useNotification } from "./NotificationContext";
@@ -24,7 +24,7 @@ interface ParcelData {
   isDelivered: boolean;
   isShipped: boolean;
   createdAt: string;
-  signedAt?: string; 
+  signedAt?: string;  
   senderAddress?: {
     company?: string;
     name: string;
@@ -48,32 +48,29 @@ function SentPage() {
   const { unreadCount } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
-  // 1.1. ใช้ useSearchParams
-  const [searchParams, setSearchParams] = useSearchParams(); 
+  const [searchParams, setSearchParams] = useSearchParams();  
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   
-  // 1.2. ตั้งค่า State จาก URL Search Params
   const initialFilterStatus = searchParams.get("status") || "all";
-  const [filterStatus, setFilterStatus] = useState(initialFilterStatus); 
+  const [filterStatus, setFilterStatus] = useState(initialFilterStatus);  
 
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
-  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false); 
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);  
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null)
 
-  // 1.3. Sync state กับ URL เมื่อ filterStatus เปลี่ยน
   useEffect(() => {
     if (filterStatus && filterStatus !== 'all') {
         setSearchParams({ status: filterStatus });
     } else {
-        setSearchParams({}); 
+        setSearchParams({});  
     }
   }, [filterStatus, setSearchParams]);
 
@@ -207,6 +204,17 @@ function SentPage() {
     }
   };
 
+  const handleRowClick = (parcel: ParcelData) => {
+    const statusKey = getStatusKey(parcel);
+    if (statusKey === 'delivered') {
+      // ไปหน้า Overview สำหรับ Delivered
+      navigate(`/overview?trackingNo=${parcel.trackingNo}`, { state: { parcel } });
+    } else {
+      // ไปหน้า Report สำหรับสถานะอื่น ๆ
+      navigate("/report", { state: { parcel, previousStatus: filterStatus } });
+    }
+  };
+
   return (
     <div
       className="relative min-h-screen overflow-x-hidden flex flex-col"
@@ -333,8 +341,7 @@ function SentPage() {
           <div className="flex justify-between items-center px-8 py-6">
             <h2 className="text-2xl font-semibold text-black">Sent Parcels</h2>
             <div className="flex items-center gap-2 ml-auto">
-              {/* เปลี่ยนจาก Sort by เป็น Status */}
-              <span className="text-sm text-black mr-2">Status</span> 
+              <span className="text-sm text-black mr-2">Status</span>  
               
               <div className="relative inline-block w-34" ref={sortMenuRef}>
                 <button
@@ -351,7 +358,7 @@ function SentPage() {
                       <button
                         key={option.value}
                         onClick={() => {
-                          setFilterStatus(option.value); // <-- อัปเดต filterStatus
+                          setFilterStatus(option.value); 
                           setIsStatusMenuOpen(false);
                         }}
                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
@@ -429,8 +436,7 @@ function SentPage() {
                     <div
                       key={parcel.id}
                       className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
-                      // 1.4. ส่งสถานะ filterStatus ไป Report
-                      onClick={() => navigate("/report", { state: { parcel, previousStatus: filterStatus } })}
+                      onClick={() => handleRowClick(parcel)} // <-- เรียกใช้ handleRowClick
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}

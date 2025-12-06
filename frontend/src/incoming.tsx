@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom"; 
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
 import { useNotification } from "./NotificationContext";
@@ -48,17 +48,16 @@ function IncomingPage() {
   const { trackingNumbers } = useTracking();
   const { unreadCount } = useNotification();
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
-  const navigate = useNavigate();
-  const location = useLocation(); 
+  const navigate = useNavigate(); 
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
-  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null); 
+  const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);  
 
-  const [filterStatus, setFilterStatus] = useState("all"); 
+  const [filterStatus, setFilterStatus] = useState("all");  
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   
   const menuRef = useRef<HTMLDivElement>(null);
@@ -113,9 +112,6 @@ function IncomingPage() {
           .filter((result): result is ParcelData[] => result !== null)
           .flat();
 
-        // 🚀 โค้ดที่แก้ไขล่าสุด: ใช้ .reverse() เพื่อกลับลำดับของอาร์เรย์ 
-        // (รายการที่ถูกเพิ่มล่าสุดจาก /trackstatus จะถูกดึงมาเป็นรายการสุดท้ายใน allParcels 
-        // เมื่อ reverse() จะถูกดันขึ้นมาอยู่บนสุด)
         const reversedParcels = allParcels.reverse();
 
         console.log("All parcels:", reversedParcels);
@@ -212,19 +208,30 @@ function IncomingPage() {
     }
   };
 
-  const handleCopyTracking = async (trackingNo: string) => { 
+  const handleCopyTracking = async (trackingNo: string) => {  
     try {
       const numberOnly = trackingNo.replace(/[^0-9]/g, "");
       await navigator.clipboard.writeText(numberOnly);
       
-      setCopiedTrackingNo(trackingNo); 
+      setCopiedTrackingNo(trackingNo);  
 
       setTimeout(() => {
-        setCopiedTrackingNo(null); 
+        setCopiedTrackingNo(null);  
       }, 800);
     } catch (err) {
       console.error("Failed to copy:", err);
-      setCopiedTrackingNo(null); 
+      setCopiedTrackingNo(null);  
+    }
+  };
+
+  const handleRowClick = (parcel: ParcelData) => {
+    const statusKey = getStatusKey(parcel);
+    if (statusKey === 'delivered') {
+      // ไปหน้า Overview สำหรับ Delivered
+      navigate(`/overview?trackingNo=${parcel.trackingNo}`, { state: { parcel } });
+    } else {
+      // ไปหน้า Report สำหรับสถานะอื่น ๆ
+      navigate("/report", { state: { parcel, previousStatus: filterStatus } });
     }
   };
 
@@ -357,7 +364,7 @@ function IncomingPage() {
             </h2>
             <div className="flex items-center gap-2 ml-auto">
               {/* Dropdown Status */}
-              <span className="text-sm text-black mr-2">Status</span> 
+              <span className="text-sm text-black mr-2">Status</span>  
               
               <div className="relative inline-block w-34" ref={sortMenuRef}>
                 <button
@@ -374,7 +381,7 @@ function IncomingPage() {
                       <button
                         key={option.value}
                         onClick={() => {
-                          setFilterStatus(option.value); 
+                          setFilterStatus(option.value);
                           setIsStatusMenuOpen(false);
                         }}
                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
@@ -387,8 +394,6 @@ function IncomingPage() {
                   </div>
                 )}
               </div>
-              
-              {/* Search Input */}
               <div className="relative w-58">
                 <input
                   type="text"
@@ -408,15 +413,6 @@ function IncomingPage() {
                   <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 )}
               </div>
-
-              {/* ปุ่ม Check Track Status ที่เพิ่มกลับมา */}
-              <button
-                className="ml-4 flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
-                onClick={() => navigate("/trackstatus")}
-              >
-                <span className="text-sm font-medium text-white">Check Track Status</span>
-              </button>
-
             </div>
           </div>
 
@@ -441,13 +437,11 @@ function IncomingPage() {
               </div>
 
               <div className="flex-1 overflow-auto">
-                {trackingNumbers.length === 0 ? (
-                  <div className="flex items-center justify-center py-12">
-                    <p className="text-gray-500 text-md">
-                      Please enter a tracking number to search
-                    </p>
-                  </div>
-                ) :  filteredParcels.length === 0 ? (
+                {parcels.length === 0 && trackingNumbers.length === 0 ? (
+                    <div className="flex items-center justify-center py-8">
+                        <p className="text-gray-500 text-md">No tracked parcels found. Please add a tracking number.</p>
+                    </div>
+                ) : filteredParcels.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <p className="text-gray-500 text-md">No parcels found</p>
                   </div>
@@ -455,13 +449,8 @@ function IncomingPage() {
                   filteredParcels.map((parcel) => (
                     <div
                       key={parcel.id}
-                      className="grid border-b border-gray-200 py-3 px-6 items-center hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate("/report", { 
-                        state: { 
-                          parcel, 
-                          previousPath: location.pathname 
-                        } 
-                      })}
+                      className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => handleRowClick(parcel)} // <-- เรียกใช้ handleRowClick
                       style={{
                         gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
                       }}
@@ -502,15 +491,15 @@ function IncomingPage() {
                           <FaRegCircle className="text-black w-4 h-4 mr-3" />
                           Pending
                         </div>
-                      ) : parcel.isShipped && !parcel.isDelivered ? (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
-                          In transit
-                        </div>
-                      ) : (
+                      ) : parcel.isDelivered && parcel.signedAt ? (
                         <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
                           <FaRegCheckCircle className="text-black w-4 h-4 mr-3" />
                           Delivered
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
+                          In transit
                         </div>
                       )}
                     </div>

@@ -29,6 +29,7 @@ import Report from "./report";
 import Notification from "./notification";
 import { NotificationProvider } from "./NotificationContext";
 import Suggestion from "./suggestion";
+import Overview from "./overview";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -61,6 +62,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/report" element={<Report />} />
               <Route path="/notification" element={<Notification />} />
               <Route path="/suggestion" element={<Suggestion />} />
+              <Route path="/overview" element={<Overview />} />
             </Routes>
           </BrowserRouter>
           </NotificationProvider>

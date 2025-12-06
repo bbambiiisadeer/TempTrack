@@ -17,6 +17,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import { desc } from "drizzle-orm";
+import e from "cors";
 
 const debug = Debug("pf-backend");
 const app = express();
@@ -630,6 +631,13 @@ app.get(
             id: recipient.id,
             name: recipient.name,
             company: recipient.company,
+            address: recipient.address,
+            province: recipient.province,
+            district: recipient.district,
+            subdistrict: recipient.subdistrict,
+            postalCode: recipient.postalCode,
+            email: recipient.email,
+            phoneNumber: recipient.phoneNumber,
           };
         }
       }
@@ -747,6 +755,14 @@ app.get(
               id: addressMap.get(p.recipientAddressId)?.id,
               name: addressMap.get(p.recipientAddressId)?.name,
               company: addressMap.get(p.recipientAddressId)?.company,
+              address: addressMap.get(p.recipientAddressId)?.address,
+              province: addressMap.get(p.recipientAddressId)?.province,
+              district: addressMap.get(p.recipientAddressId)?.district,
+              subdistrict: addressMap.get(p.recipientAddressId)?.subdistrict,
+              postalCode: addressMap.get(p.recipientAddressId)?.postalCode,
+              email: addressMap.get(p.recipientAddressId)?.email,
+              phoneNumber: addressMap.get(p.recipientAddressId)
+                ?.phoneNumber,
             }
           : null,
         driver: p.driverId
@@ -815,6 +831,14 @@ app.get(
               id: addressMap.get(p.recipientAddressId)?.id,
               name: addressMap.get(p.recipientAddressId)?.name,
               company: addressMap.get(p.recipientAddressId)?.company,
+              address: addressMap.get(p.recipientAddressId)?.address,
+              province: addressMap.get(p.recipientAddressId)?.province,
+              district: addressMap.get(p.recipientAddressId)?.district,
+              subdistrict: addressMap.get(p.recipientAddressId)?.subdistrict,
+              postalCode: addressMap.get(p.recipientAddressId)?.postalCode,
+              email: addressMap.get(p.recipientAddressId)?.email,
+              phoneNumber: addressMap.get(p.recipientAddressId)
+                ?.phoneNumber,
             }
           : null,
         
