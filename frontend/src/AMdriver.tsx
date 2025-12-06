@@ -291,12 +291,13 @@ function AMdriver() {
             <div
               className="grid border-b border-black font-medium py-6 text-base text-black mt-2"
               style={{
-                gridTemplateColumns: "8fr 6fr 10fr 8fr",
+                gridTemplateColumns: "3.5fr 3fr 3fr 2.5fr 3fr",
               }}
             >
               <div className="pl-10">Name</div>
               <div className="pl-4">Registration Number</div>
               <div className="pl-4">Phone Number</div>
+              <div className="pl-4">Assigned Parcels</div>
               <div></div>
             </div>
 
@@ -313,13 +314,14 @@ function AMdriver() {
                 filteredDrivers.map((driver) => {
                   const isExpanded = expandedDriverId === driver.id;
                   const driverParcels = getDriverParcels(driver.id);
+                  const activeParcels = driverParcels.filter(p => !p.isDelivered);
                   
                   return (
                     <div key={driver.id}>
                       <div
                         className="grid border-b border-gray-200 py-3 items-center h-15.5"
                         style={{
-                          gridTemplateColumns: "8fr 6fr 10fr 8fr",
+                          gridTemplateColumns: "3.5fr 3fr 3fr 2.5fr 3fr",
                         }}
                       >
                         <div className="pl-10">
@@ -342,7 +344,10 @@ function AMdriver() {
                         <div className="text-sm pl-4">
                           {driver.phoneNumber || "-"}
                         </div>
-                        <div className="pl-66">
+                        <div className="text-sm pl-4">
+                          {activeParcels.length}
+                        </div>
+                        <div className="flex px-10  justify-end">
                           <button 
                             onClick={() => setExpandedDriverId(isExpanded ? null : driver.id)}
                             className="p-2 rounded-full hover:bg-gray-200 transition-colors"
@@ -358,13 +363,13 @@ function AMdriver() {
                         <div className="bg-gray-100 px-10 py-4 border-b border-gray-200">
                           <div className="bg-white rounded-lg p-4 shadow-sm">
                             <h3 className="font-medium text-sm mb-3">
-                              Assigned Parcels ({driverParcels.length})
+                              Assigned Parcels ({activeParcels.length})
                             </h3>
-                            {driverParcels.length === 0 ? (
-                              <p className="text-sm text-gray-500">No parcels assigned to this driver</p>
+                            {activeParcels.length === 0 ? (
+                              <p className="text-sm text-gray-500">No active parcels assigned to this driver</p>
                             ) : (
                               <div className="space-y-2">
-                                {driverParcels.map((parcel) => (
+                                {activeParcels.map((parcel) => (
                                   <div 
                                     key={parcel.id} 
                                     className="flex items-center justify-between py-2 px-3 rounded"
@@ -388,13 +393,11 @@ function AMdriver() {
                                       </button>
                                     </div>
                                     <span className={`text-sm px-2 py-1 rounded ${
-                                      parcel.isDelivered 
-                                        ? 'bg-[#16A34A]/20 text-[#11833b]' 
-                                        : parcel.isShipped 
+                                      parcel.isShipped 
                                         ? 'bg-blue-100 text-blue-700' 
                                         : 'bg-yellow-100 text-yellow-700'
                                     }`}>
-                                      {parcel.isDelivered ? 'Delivered' : parcel.isShipped ? 'Shipped' : 'Pending'}
+                                      {parcel.isShipped ? 'Shipped' : 'Pending'}
                                     </span>
                                   </div>
                                 ))}
