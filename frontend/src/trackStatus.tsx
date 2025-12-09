@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useTracking } from "./TrackingContext";
-// 💡 เพิ่ม FaPaste
 import { FaPaste } from "react-icons/fa"; 
 import "./index.css";
 
@@ -12,61 +11,65 @@ function TrackStatus() {
   const { addTrackingNo } = useTracking();
   const [trackingNo, setTrackingNo] = useState("");
 
-  // 💡 ฟังก์ชันจัดการการวาง (Paste)
   const handlePaste = async () => {
     try {
-      // ดึงข้อความจากคลิปบอร์ด
       const text = await navigator.clipboard.readText();
-      // ลบช่องว่างหรือเครื่องหมายที่ไม่จำเป็นออกก่อนตั้งค่า
       setTrackingNo(text.trim().replace(/[^a-zA-Z0-9#]/g, '')); 
     } catch (err) {
       console.error("Failed to read clipboard contents:", err);
-      // alert("Unable to paste. Please ensure clipboard access is allowed.");
     }
   };
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!trackingNo.trim()) {
-    alert("Please enter a tracking number");
-    return;
-  }
-
-  try {
-    console.log("Adding tracking number:", trackingNo.trim());
-    
-    if (user) {
-      // ถ้า login แล้ว: เพิ่ม tracking number เข้า context แล้วไปหน้า incoming
-      addTrackingNo(trackingNo.trim());
-      navigate("/incoming");
-    } else {
-      // ถ้าไม่ได้ login: fetch ข้อมูล parcel แล้วไปหน้า report
-      const formattedTrackingNo = trackingNo.trim().startsWith("#")
-        ? trackingNo.trim()
-        : `#${trackingNo.trim()}`;
-      
-      const res = await fetch(
-        `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!res.ok) {
-        alert("Parcel not found");
-        return;
-      }
-
-      const parcel = await res.json();
-      navigate("/report", { state: { parcel } });
+    if (!trackingNo.trim()) {
+      alert("Please enter a tracking number");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error checking tracking status");
-  }
-};
+
+    try {
+      console.log("Adding tracking number:", trackingNo.trim());
+      
+      if (user) {
+        // ถ้า login แล้ว: เพิ่ม tracking number เข้า context แล้วไปหน้า incoming
+        addTrackingNo(trackingNo.trim());
+        navigate("/incoming");
+      } else {
+        // ถ้าไม่ได้ login: fetch ข้อมูล parcel
+        const formattedTrackingNo = trackingNo.trim().startsWith("#")
+          ? trackingNo.trim()
+          : `#${trackingNo.trim()}`;
+        
+        const res = await fetch(
+          `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!res.ok) {
+          alert("Parcel not found");
+          return;
+        }
+
+        const parcel = await res.json();
+
+        // 💡 แก้ไข logic ตรงนี้: เช็คสถานะ Delivered
+        // ถ้า delivered แล้ว (isDelivered เป็น true และมีเวลา signedAt) ให้ไปหน้า overview
+        if (parcel.isDelivered && parcel.signedAt) {
+          navigate(`/overview?trackingNo=${parcel.trackingNo}`, { state: { parcel } });
+        } else {
+          // ถ้ายังไม่ delivered ให้ไปหน้า report เหมือนเดิม
+          navigate("/report", { state: { parcel } });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error checking tracking status");
+    }
+  };
 
   return (
     <div
@@ -88,7 +91,6 @@ function TrackStatus() {
       >
         <div className="flex items-center justify-center mb-6 space-x-4">
           
-          {/* 💡 Container สำหรับ Input และ Paste Button */}
           <div className="relative flex-1 flex items-center"> 
             <input
               type="text"
@@ -96,12 +98,10 @@ function TrackStatus() {
               value={trackingNo}
               onChange={(e) => setTrackingNo(e.target.value)}
               placeholder="Enter your tracking number"
-              // ปรับ padding ด้านขวาให้มีที่ว่างสำหรับปุ่ม Paste
               className="border-b border-black pl-3 pr-10 py-3 text-sm focus:outline-none focus:ring-0 focus:border-black flex-1"
               required
             />
             
-            {/* 💡 ปุ่ม Paste */}
             <button
               type="button"
               onClick={handlePaste}
