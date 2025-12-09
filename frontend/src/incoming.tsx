@@ -417,6 +417,14 @@ function IncomingPage() {
                   <IoSearch className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 )}
               </div>
+              
+              <button
+                className="ml-4 flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white text-sm py-2 px-6 h-12 rounded-full"
+                onClick={() => navigate("/trackstatus")}
+              >
+                <span className="text-sm font-medium text-white">Check Track Status</span>
+              </button>
+
             </div>
           </div>
 
