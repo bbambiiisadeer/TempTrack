@@ -237,8 +237,8 @@ function Report() {
                 {filteredHistory.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 text-md">
                     {!parcelData?.shippedAt
-                      ? "Order not shipped yet."
-                      : "Waiting for sensor data..."}
+                      ? "Order not shipped yet"
+                      : "Waiting for sensor data"}
                   </div>
                 ) : (
                   filteredHistory.map((data, index) => {
