@@ -106,7 +106,7 @@ function Report() {
   useEffect(() => {
     const fetchSensorData = async () => {
       try {
-        const response = await fetch("http://13.214.130.107:3000/api/temp");
+        const response = await fetch("http://13.214.139.223:3000/api/temp"); //change ip address here
         if (response.ok) {
           const dataHistory: SensorData[] = await response.json();
           setSensorHistory(dataHistory);
@@ -151,10 +151,10 @@ function Report() {
     }
   };
 
-  const displayStatus = parcelData?.deliveredAt ? "Delivered At" : "Shipped At";
+  const displayStatus = parcelData?.deliveredAt ? "Shipped At" : "Shipped At";
 
   const displayTime = parcelData?.deliveredAt
-    ? formatThaiDateTime(parcelData.deliveredAt)
+    ? formatThaiDateTime(parcelData.shippedAt)
     : formatThaiDateTime(parcelData?.shippedAt);
 
   return (
@@ -227,7 +227,7 @@ function Report() {
               className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 overflow-hidden"
               style={{ minHeight: "calc(100vh - 128px)" }}
             >
-              <div className="border-b border-black flex items-center gap-44 px-10 py-6">
+              <div className="border-b border-black flex items-center gap-24 px-10 py-6">
                 <div className="w-30 text-base text-black font-medium">Time</div>
                 <div className="w-60 text-base text-black font-medium">Temperature</div>
                 <div className="w-36 text-base text-black font-medium ml-auto">Status</div>
@@ -250,7 +250,7 @@ function Report() {
                     return (
                       <div
                         key={index}
-                        className="h-14 border-b border-gray-100 flex items-center gap-44 px-10 hover:bg-gray-50 transition-colors"
+                        className="h-14 border-b border-gray-100 flex items-center gap-24 px-10 hover:bg-gray-50 transition-colors"
                       >
                         <div className="w-30 h-full flex items-center justify-start py-3 gap-10">
                           <span className="text-sm">
@@ -261,7 +261,7 @@ function Report() {
                         <div className="w-60 h-full flex items-center justify-start py-3 gap-10">
                           <span
                             className={`text-sm ${
-                              !isTempNormal ? "text-[#DC2626]" : "text-black"
+                              !isTempNormal ? "text-black" : "text-black"
                             }`}
                           >
                             {data.temp ? data.temp.toFixed(2) : "0.00"} °C
