@@ -21,7 +21,6 @@ export interface Parcel {
   dimensionHeight?: number;
   temperatureRangeMin?: number;
   temperatureRangeMax?: number;
-  allowedDeviation?: number;
   specialNotes?: string;
   signedAt?: string;
 }

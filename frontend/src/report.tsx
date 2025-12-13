@@ -24,26 +24,62 @@ interface ParcelData {
     name: string;
   };
   shippedAt?: string;
-  signedAt?: string; 
+  signedAt?: string;
+  deliveredAt?: string;
+  temperatureRangeMin?: number;
+  temperatureRangeMax?: number;
+}
+
+interface SensorData {
+  temp: number;
+  timestamp: string;
 }
 
 const formatThaiDateTime = (dateString: string | null | undefined): string => {
   if (!dateString) return "-";
+  const parts = dateString.split(" ");
+  if (parts.length < 2) {
+      if(dateString.includes("T")) {
+         const [d, t] = dateString.split("T");
+         const [y, m, day] = d.split("-");
+         const finalYear = parseInt(y) > 2500 ? parseInt(y) - 543 : y;
+         return `${day}-${m}-${finalYear} ${t.substring(0, 5)}`;
+      }
+      return dateString; 
+  }
+  const datePart = parts[0]; 
+  const timePart = parts[1]; 
+  const [beYear, month, day] = datePart.split("-");
+  const adYear = parseInt(beYear) - 543;
+  const time = timePart.substring(0, 5);
+  return `${day}-${month}-${adYear} ${time}`;
+};
 
+const formatSensorTime = (dateString: string): string => {
+  if (!dateString || dateString === "-") return "--:--";
   const date = new Date(dateString);
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Bangkok",
+  });
+};
 
-  // การตั้งค่า TimeZone ใน local machine/environment
-  const thaiDate = new Date(
-    date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
-  );
+const getComparisonTimestamp = (dateStr: string | undefined) => {
+    if (!dateStr) return 0;
+    const cleanStr = dateStr.replace("Z", "").replace("T", " ");
+    const match = cleanStr.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\sT](\d{1,2}):(\d{1,2}):(\d{1,2})/);
 
-  const day = String(thaiDate.getDate()).padStart(2, "0");
-  const month = String(thaiDate.getMonth() + 1).padStart(2, "0");
-  const year = thaiDate.getFullYear();
-  const hours = String(thaiDate.getHours()).padStart(2, "0");
-  const minutes = String(thaiDate.getMinutes()).padStart(2, "0");
-
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
+    if (match) {
+        let [_, y, m, d, h, min, s] = match;
+        let year = parseInt(y);
+        if (year > 2500) year -= 543;
+        return Date.UTC(year, parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), parseInt(s));
+    }
+    const fallbackDate = new Date(dateStr);
+    return fallbackDate.getTime();
 };
 
 function Report() {
@@ -51,63 +87,85 @@ function Report() {
   const location = useLocation();
   const { user } = useAuth();
   const [parcelData, setParcelData] = useState<ParcelData | null>(null);
-  
-  // 1. เก็บค่าสถานะตัวกรองเดิม (ใช้เฉพาะ SentPage)
-  const [previousFilterStatus, setPreviousFilterStatus] = useState("all"); 
-  
-  // 2. เก็บเส้นทางที่เรียกใช้เดิม (Pathname: /sent หรือ /incoming)
-  const [previousPath, setPreviousPath] = useState('/sent'); 
+  const [previousFilterStatus, setPreviousFilterStatus] = useState("all");
+  const [previousPath, setPreviousPath] = useState("/sent");
+  const [sensorHistory, setSensorHistory] = useState<SensorData[]>([]);
 
   useEffect(() => {
     if (location.state?.parcel) {
       setParcelData(location.state.parcel);
     }
-    
-    // 3. รับค่าสถานะตัวกรองเดิม (ถ้ามี)
     if (location.state?.previousStatus) {
-        setPreviousFilterStatus(location.state.previousStatus);
+      setPreviousFilterStatus(location.state.previousStatus);
     }
-    
-    // 4. รับค่า Pathname เดิมที่ส่งมา
     if (location.state?.previousPath) {
-        setPreviousPath(location.state.previousPath);
+      setPreviousPath(location.state.previousPath);
     }
   }, [location]);
 
-  // 5. ฟังก์ชันสำหรับกดปุ่ม Back ที่ Context-Aware
-  const handleBack = () => {
-      // ตรวจสอบว่าเป็น SentPage หรือไม่
-      if (previousPath === '/sent' && previousFilterStatus !== 'all') {
-          // ถ้ามาจาก SentPage และมีการกรองสถานะอยู่ ให้กลับไปพร้อม Query Parameter
-          navigate(`${previousPath}?status=${previousFilterStatus}`);
-      } else {
-          // ถ้ามาจาก IncomingPage หรือ SentPage (All Status) ให้กลับไปที่ Path เดิม
-          navigate(previousPath);
+  useEffect(() => {
+    const fetchSensorData = async () => {
+      try {
+        const response = await fetch("http://13.214.130.107:3000/api/temp");
+        if (response.ok) {
+          const dataHistory: SensorData[] = await response.json();
+          setSensorHistory(dataHistory);
+        }
+      } catch (error) {
+        console.error(error);
       }
+    };
+    fetchSensorData();
+    const interval = setInterval(fetchSensorData, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filteredHistory = sensorHistory.filter((data) => {
+    if (!parcelData?.shippedAt) return false;
+
+    const THAI_TIME_OFFSET = 7 * 60 * 60 * 1000;
+    let sensorTime = getComparisonTimestamp(data.timestamp);
+    
+    if (data.timestamp.includes("Z")) {
+        sensorTime += THAI_TIME_OFFSET;
+    }
+
+    const shippedTime = getComparisonTimestamp(parcelData.shippedAt);
+    const isAfterShipping = sensorTime >= shippedTime;
+
+    let isBeforeDelivery = true;
+    
+    if (parcelData.deliveredAt) {
+      const deliveredTime = getComparisonTimestamp(parcelData.deliveredAt);
+      isBeforeDelivery = sensorTime <= deliveredTime;
+    }
+
+    return isAfterShipping && isBeforeDelivery;
+  });
+
+  const handleBack = () => {
+    if (previousPath === "/sent" && previousFilterStatus !== "all") {
+      navigate(`${previousPath}?status=${previousFilterStatus}`);
+    } else {
+      navigate(previousPath);
+    }
   };
 
-  const displayStatus = parcelData?.signedAt
-    ? "Delivered At" 
-    : "Shipped At";  
+  const displayStatus = parcelData?.deliveredAt ? "Delivered At" : "Shipped At";
 
-  const displayTime = parcelData?.signedAt
-    ? formatThaiDateTime(parcelData.signedAt) 
-    : formatThaiDateTime(parcelData?.shippedAt); 
+  const displayTime = parcelData?.deliveredAt
+    ? formatThaiDateTime(parcelData.deliveredAt)
+    : formatThaiDateTime(parcelData?.shippedAt);
 
   return (
-    <div
-      className="relative min-h-screen overflow-x-hidden flex flex-col"
-      style={{ backgroundColor: "#F1ECE6" }}
-    >
+    <div className="relative min-h-screen overflow-x-hidden flex flex-col" style={{ backgroundColor: "#F1ECE6" }}>
       <div className="flex items-center justify-center pt-8">
         <div className="w-full max-w-400 px-8">
-          {/* Top Section - Two boxes */}
           <div className="flex gap-4 mb-4 h-20">
             {user && (
               <div
                 className="bg-white rounded-l-full  p-6 flex items-center justify-center w-20 hover:bg-gray-50 transition-colors"
-                // 6. เรียกใช้ handleBack
-                onClick={handleBack} 
+                onClick={handleBack}
               >
                 <button className="flex items-center justify-center w-12 h-12 rounded-full">
                   <IoArrowBackOutline className="w-6 h-6 text-black" />
@@ -115,9 +173,8 @@ function Report() {
               </div>
             )}
 
-            {/* Right Box - Reg Number */}
             <div
-              className={`bg-white grid items-center px-8 transition-all
+              className={`bg-white grid items-center px-8 
                 ${user ? "rounded-r-full flex-1" : "rounded-full w-full pl-12"} 
               `}
               style={{
@@ -136,17 +193,13 @@ function Report() {
                   {parcelData?.driver?.name || "-"}
                 </div>
               </div>
-              
-              {/* ส่วนที่แสดงสถานะและเวลา */}
+
               <div className="flex flex-col h-full py-3 justify-between">
-                <div className="text-sm text-gray-400">
-                  {displayStatus} 
-                </div>
+                <div className="text-sm text-gray-400">{displayStatus}</div>
                 <div className="text-lg text-black font-medium">
-                  {displayTime} 
+                  {displayTime}
                 </div>
               </div>
-              {/* สิ้นสุดส่วนที่แสดงสถานะและเวลา */}
 
               <div className="flex flex-col h-full py-3 justify-between">
                 <div className="text-sm text-gray-400">From</div>
@@ -168,12 +221,73 @@ function Report() {
               </div>
             </div>
           </div>
-          {/* Bottom Section - Large white box */}
+
           <div className="space-y-1 flex-1 flex flex-col">
             <div
-              className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 p-6"
+              className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 overflow-hidden"
               style={{ minHeight: "calc(100vh - 128px)" }}
-            ></div>
+            >
+              <div className="border-b border-black flex items-center gap-44 px-10 py-6">
+                <div className="w-30 text-base text-black font-medium">Time</div>
+                <div className="w-60 text-base text-black font-medium">Temperature</div>
+                <div className="w-36 text-base text-black font-medium ml-auto">Status</div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                {filteredHistory.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-md">
+                    {!parcelData?.shippedAt
+                      ? "Order not shipped yet."
+                      : "Waiting for sensor data..."}
+                  </div>
+                ) : (
+                  filteredHistory.map((data, index) => {
+                    const minTemp = parcelData?.temperatureRangeMin ?? 0; 
+                    const maxTemp = parcelData?.temperatureRangeMax ?? 35; 
+                    
+                    const isTempNormal = data.temp >= minTemp && data.temp <= maxTemp;
+
+                    return (
+                      <div
+                        key={index}
+                        className="h-14 border-b border-gray-100 flex items-center gap-44 px-10 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-30 h-full flex items-center justify-start py-3 gap-10">
+                          <span className="text-sm">
+                            {formatSensorTime(data.timestamp)}
+                          </span>
+                        </div>
+
+                        <div className="w-60 h-full flex items-center justify-start py-3 gap-10">
+                          <span
+                            className={`text-sm ${
+                              !isTempNormal ? "text-[#DC2626]" : "text-black"
+                            }`}
+                          >
+                            {data.temp ? data.temp.toFixed(2) : "0.00"} °C
+                          </span>
+                        </div>
+
+                        <div className="h-full w-36 flex items-center justify-start py-3 ml-auto gap-4">
+                          <div
+                            className={`w-3 h-3 rounded-full ${
+                              isTempNormal ? "bg-[#16A34A]" : "bg-[#DC2626]"
+                            }`}
+                          ></div>
+                          <span
+                            className={`text-sm ${
+                              isTempNormal ? "text-[#16A34A]" : "text-[#DC2626]"
+                            }`}
+                          >
+                            {isTempNormal ? "In Range" : "Out of Range"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

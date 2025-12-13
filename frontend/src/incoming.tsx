@@ -31,7 +31,7 @@ interface ParcelData {
   driver?: DriverData;
   temperatureRangeMin?: number;
   temperatureRangeMax?: number;
-  allowedDeviation?: number;
+  
 }
 
 const STATUS_OPTIONS = [

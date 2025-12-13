@@ -31,7 +31,7 @@ function ParcelDetail() {
         dimensionHeight: undefined,
         temperatureRangeMin: undefined,
         temperatureRangeMax: undefined,
-        allowedDeviation: undefined,
+        
         specialNotes: "",
       }
     );
@@ -124,7 +124,7 @@ function ParcelDetail() {
         dimensionHeight: undefined,
         temperatureRangeMin: undefined,
         temperatureRangeMax: undefined,
-        allowedDeviation: undefined,
+        
         specialNotes: "",
       };
 
@@ -320,27 +320,9 @@ function ParcelDetail() {
 
           <div className="flex flex-col mb-7">
             <label className="mb-2 font-normal text-sm inter">
-              Allowed Deviation
+             Special Notes
             </label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">±</span>
-              <input
-                type="number"
-                name="allowedDeviation"
-                value={parcel.allowedDeviation ?? ""}
-                onChange={handleChange}
-                className="border-b border-black px-3 py-2 text-sm w-full focus:outline-none focus:ring-0 focus:border-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <span className="ml-1 text-sm">°C</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col mb-7">
-          <label className="mb-2 font-normal text-sm inter">
-            Special Notes
-          </label>
-          <textarea
+           <textarea
             ref={textareaRef}
             name="specialNotes"
             value={parcel.specialNotes}
@@ -349,6 +331,7 @@ function ParcelDetail() {
             rows={1}
             className="border-b border-black px-3 py-2 text-sm resize-none overflow-hidden focus:outline-none focus:ring-0 focus:border-black"
           />
+          </div>
         </div>
 
         <div className="flex items-center justify-end mt-4">

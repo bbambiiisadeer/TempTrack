@@ -672,7 +672,6 @@ app.get(
         signedAt: result.signedAt,
         temperatureRangeMin: result.temperatureRangeMin,
         temperatureRangeMax: result.temperatureRangeMax,
-        allowedDeviation: result.allowedDeviation,
         senderAddress,
         recipientAddress,
         driver: driverData,
@@ -740,7 +739,6 @@ app.get(
         dimensionHeight: p.dimensionHeight,
         temperatureRangeMin: p.temperatureRangeMin,
         temperatureRangeMax: p.temperatureRangeMax,
-        allowedDeviation: p.allowedDeviation,
         specialNotes: p.specialNotes,
         senderAddress: p.senderAddressId
           ? {
@@ -820,7 +818,7 @@ app.get(
         weight: p.weight,
         temperatureRangeMin: p.temperatureRangeMin,
         temperatureRangeMax: p.temperatureRangeMax,
-        allowedDeviation: p.allowedDeviation,
+       
         senderAddress: p.senderAddressId
           ? {
               id: addressMap.get(p.senderAddressId)?.id,
@@ -871,7 +869,7 @@ app.post(
         dimensionHeight,
         temperatureRangeMin,
         temperatureRangeMax,
-        allowedDeviation,
+     
         specialNotes,
       } = req.body;
 
@@ -910,7 +908,7 @@ app.post(
           temperatureRangeMax: temperatureRangeMax
             ? Number(temperatureRangeMax)
             : null,
-          allowedDeviation: allowedDeviation ? Number(allowedDeviation) : null,
+          
           specialNotes: specialNotes || null,
           isDelivered: false,
           isShipped: false,
@@ -1010,7 +1008,7 @@ app.patch(
         "dimensionHeight",
         "temperatureRangeMin",
         "temperatureRangeMax",
-        "allowedDeviation",
+       
         "specialNotes",
         "isDelivered",
         "isShipped",

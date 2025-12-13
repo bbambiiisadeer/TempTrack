@@ -67,7 +67,6 @@ export const parcel = pgTable("parcel", {
   temperatureRangeMin: real("temperature_range_min"),
   temperatureRangeMax: real("temperature_range_max"),
 
-  allowedDeviation: real("allowed_deviation"),
   specialNotes: text("special_notes"),
 
   trackingNo: varchar("tracking_no", { length: 20 }).unique().notNull(),
