@@ -25,13 +25,19 @@ interface ParcelData {
   isDelivered: boolean;
   isShipped: boolean;
   createdAt: string;
+  shippedAt?: string;
+  deliveredAt?: string;
   signedAt?: string;
   senderAddress?: Address;
   recipientAddress?: Address;
   driver?: DriverData;
   temperatureRangeMin?: number;
   temperatureRangeMax?: number;
-  
+}
+
+interface SensorData {
+  temp: number;
+  timestamp: string;
 }
 
 const STATUS_OPTIONS = [
@@ -62,6 +68,10 @@ function IncomingPage() {
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
+  const [sensorHistory, setSensorHistory] = useState<SensorData[]>([]);
+  const [temperatureData, setTemperatureData] = useState<Record<string, number>>({});
+
+  const THAI_TIME_OFFSET = 7 * 60 * 60 * 1000;
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -71,6 +81,23 @@ function IncomingPage() {
         setFilterStatus(statusParam);
     }
   }, [location.search]);
+
+  useEffect(() => {
+    const fetchSensorData = async () => {
+      try {
+        const response = await fetch("http://13.214.139.175:3000/api/temp");
+        if (response.ok) {
+          const dataHistory: SensorData[] = await response.json();
+          setSensorHistory(dataHistory);
+        }
+      } catch (error) {
+        console.error("Error fetching sensor data:", error);
+      }
+    };
+    fetchSensorData();
+    const interval = setInterval(fetchSensorData, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchParcels = async () => {
@@ -126,12 +153,81 @@ function IncomingPage() {
     fetchParcels();
   }, [trackingNumbers]);
 
+  const getComparisonTimestamp = (dateStr: string | undefined): number => {
+    if (!dateStr) return 0;
+    const cleanStr = dateStr.replace("Z", "").replace("T", " ");
+    const match = cleanStr.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\sT](\d{1,2}):(\d{1,2}):(\d{1,2})/);
+    
+    if (match) {
+      let [_, y, m, d, h, min, s] = match;
+      let year = parseInt(y);
+      if (year > 2500) year -= 543;
+      return Date.UTC(year, parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), parseInt(s));
+    }
+    const fallbackDate = new Date(dateStr);
+    return fallbackDate.getTime();
+  };
+
+  useEffect(() => {
+    if (parcels.length === 0 || sensorHistory.length === 0) return;
+
+    const calculateTemperatures = () => {
+      const tempMap: Record<string, number> = {};
+
+      parcels.forEach((parcel) => {
+        if (parcel.isDelivered && parcel.signedAt && parcel.shippedAt && parcel.deliveredAt) {
+          const filteredHistory = sensorHistory.filter((data) => {
+            let sensorTime = getComparisonTimestamp(data.timestamp);
+            if (data.timestamp.includes("Z")) {
+              sensorTime += THAI_TIME_OFFSET;
+            }
+            const shippedTime = getComparisonTimestamp(parcel.shippedAt);
+            const deliveredTime = getComparisonTimestamp(parcel.deliveredAt);
+            return sensorTime >= shippedTime && sensorTime <= deliveredTime;
+          });
+
+          if (filteredHistory.length > 0) {
+            const avg = filteredHistory.reduce((sum, d) => sum + d.temp, 0) / filteredHistory.length;
+            tempMap[parcel.id] = Math.round(avg * 10) / 10;
+          }
+        }
+      });
+
+      setTemperatureData(tempMap);
+    };
+
+    calculateTemperatures();
+  }, [parcels, sensorHistory, THAI_TIME_OFFSET]);
+
   const getStatusKey = (parcel: ParcelData): string => {
     if (parcel.isDelivered && parcel.signedAt) return "delivered";
     if (parcel.isShipped && !parcel.isDelivered) return "in_transit";
     if (!parcel.isShipped && !parcel.isDelivered) return "pending";
     if (parcel.isDelivered && !parcel.signedAt) return "in_transit";
     return "unknown";
+  };
+
+  const calculateDuration = (shippedAt?: string, deliveredAt?: string): string => {
+    if (!shippedAt || !deliveredAt) return "-";
+
+    const start = new Date(shippedAt).getTime();
+    const end = new Date(deliveredAt).getTime();
+    const diffMs = end - start;
+
+    if (diffMs < 0) return "-";
+
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const days = Math.floor(diffMinutes / (60 * 24));
+    const hours = Math.floor((diffMinutes % (60 * 24)) / 60);
+    const minutes = diffMinutes % 60;
+
+    if (days > 0) {
+      return `${days}d ${hours}hr ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}hr ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
   };
 
   const filteredParcels = parcels.filter((p) => {
@@ -462,64 +558,75 @@ function IncomingPage() {
                     <p className="text-gray-500 text-md">No parcels found</p>
                   </div>
                 ) : (
-                  filteredParcels.map((parcel) => (
-                    <div
-                      key={parcel.id}
-                      className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => handleRowClick(parcel)}
-                      style={{
-                        gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
-                      }}
-                    >
-                      <div className="text-sm relative flex items-center gap-2 pl-4">
-                        <span>{parcel.trackingNo}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyTracking(parcel.trackingNo);
-                          }}
-                          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
-                        >
-                          {copiedTrackingNo === parcel.trackingNo ? (
-                            <BsCheckLg className="w-4 h-4 text-black" />
-                          ) : (
-                            <MdContentCopy className="w-4 h-4 text-black" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="text-sm pl-4">
-                        {formatDate(parcel.createdAt)}
-                      </div>
-                      <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
-                        {parcel.senderAddress?.company ||
-                          parcel.senderAddress?.name ||
-                          "-"}
-                      </div>
-                      <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
-                        {parcel.recipientAddress?.company ||
-                          parcel.recipientAddress?.name ||
-                          "-"}
-                      </div>
-                      <div className="pl-4">-</div>
-                      <div className="pl-4">-</div>
-                      {!parcel.isShipped && !parcel.isDelivered ? (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaRegCircle className="text-black w-4 h-4 mr-3" />
-                          Pending
+                  filteredParcels.map((parcel) => {
+                    const statusKey = getStatusKey(parcel);
+                    const isDelivered = statusKey === 'delivered';
+                    
+                    return (
+                      <div
+                        key={parcel.id}
+                        className="grid border-b border-gray-200 py-3 px-6 items-center cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => handleRowClick(parcel)}
+                        style={{
+                          gridTemplateColumns: "2.5fr 2fr 3fr 3fr 2fr 3fr 2fr",
+                        }}
+                      >
+                        <div className="text-sm relative flex items-center gap-2 pl-4">
+                          <span>{parcel.trackingNo}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyTracking(parcel.trackingNo);
+                            }}
+                            className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                          >
+                            {copiedTrackingNo === parcel.trackingNo ? (
+                              <BsCheckLg className="w-4 h-4 text-black" />
+                            ) : (
+                              <MdContentCopy className="w-4 h-4 text-black" />
+                            )}
+                          </button>
                         </div>
-                      ) : parcel.isDelivered && parcel.signedAt ? (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaRegCheckCircle className="text-black w-4 h-4 mr-3" />
-                          Delivered
+                        <div className="text-sm pl-4">
+                          {formatDate(parcel.createdAt)}
                         </div>
-                      ) : (
-                        <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
-                          <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
-                          In transit
+                        <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
+                          {parcel.senderAddress?.company ||
+                            parcel.senderAddress?.name ||
+                            "-"}
                         </div>
-                      )}
-                    </div>
-                  ))
+                        <div className="text-sm pl-4 overflow-hidden whitespace-nowrap truncate">
+                          {parcel.recipientAddress?.company ||
+                            parcel.recipientAddress?.name ||
+                            "-"}
+                        </div>
+                        <div className="text-sm pl-4">
+                          {isDelivered ? calculateDuration(parcel.shippedAt, parcel.deliveredAt) : "-"}
+                        </div>
+                        <div className="text-sm pl-4">
+                          {isDelivered && temperatureData[parcel.id] 
+                            ? temperatureData[parcel.id].toFixed(1)
+                            : "-"}
+                        </div>
+                        {!parcel.isShipped && !parcel.isDelivered ? (
+                          <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                            <FaRegCircle className="text-black w-4 h-4 mr-3" />
+                            Pending
+                          </div>
+                        ) : parcel.isDelivered && parcel.signedAt ? (
+                          <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                            <FaRegCheckCircle className="text-black w-4 h-4 mr-3" />
+                            Delivered
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-sm bg-gray-200 px-3 py-2 w-30 rounded-md ml-4">
+                            <FaRegDotCircle className="text-black w-4 h-4 mr-3" />
+                            In transit
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
