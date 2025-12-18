@@ -106,7 +106,7 @@ function Report() {
   useEffect(() => {
     const fetchSensorData = async () => {
       try {
-        const response = await fetch("http://13.214.139.223:3000/api/temp"); //change ip address here
+        const response = await fetch("http://13.214.139.175:3000/api/temp"); //change ip address here
         if (response.ok) {
           const dataHistory: SensorData[] = await response.json();
           setSensorHistory(dataHistory);
@@ -229,8 +229,8 @@ function Report() {
             >
               <div className="border-b border-black flex items-center gap-24 px-10 py-6">
                 <div className="w-30 text-base text-black font-medium">Time</div>
-                <div className="w-60 text-base text-black font-medium">Temperature</div>
-                <div className="w-36 text-base text-black font-medium ml-auto">Status</div>
+                <div className="w-60 text-base text-black font-medium">Temperature <span className="text-xs font-semibold">(°C)</span></div>
+                <div className="w-36 text-base text-black font-medium ">Status</div>
               </div>
 
               <div className="flex-1 overflow-y-auto">
@@ -264,11 +264,11 @@ function Report() {
                               !isTempNormal ? "text-black" : "text-black"
                             }`}
                           >
-                            {data.temp ? data.temp.toFixed(2) : "0.00"} °C
+                            {data.temp ? data.temp.toFixed(2) : "-"} 
                           </span>
                         </div>
 
-                        <div className="h-full w-36 flex items-center justify-start py-3 ml-auto gap-4">
+                        <div className="h-full w-36 flex items-center justify-start py-3  gap-4">
                           <div
                             className={`w-3 h-3 rounded-full ${
                               isTempNormal ? "bg-[#16A34A]" : "bg-[#DC2626]"

@@ -96,7 +96,7 @@ const BOX_DATA: BoxItem[] = [
           <div className="flex items-center space-x-2 w-1/4">
             <FaCircle className="w-2.5 h-2.5 text-[#16A34A]" />
             <span className="text-sm font-medium text-[#16A34A] whitespace-nowrap">
-              Within Temp
+              In Range
             </span>
           </div>
 
