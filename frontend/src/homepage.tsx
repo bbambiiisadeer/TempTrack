@@ -21,7 +21,7 @@ function Homepage() {
         {isAuthenticated ? (
           <>
             <Link to="/suggestion" className="hover:underline">
-              Suggestion
+              User guide
             </Link>
             <button onClick={handleLogout} className="hover:underline">
               Logout
