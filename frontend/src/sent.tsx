@@ -1,14 +1,16 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiPlus } from "react-icons/fi";
 import { useAuth } from "./AuthContext";
 import { useNotification } from "./NotificationContext";
+import { useParcel } from "./ParcelContext";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
 import { FaRegCircle, FaRegDotCircle, FaRegCheckCircle } from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { BsCheckLg } from "react-icons/bs";
+import { filterSensorHistory } from './utils/sensorUtils';
 
 interface DriverData {
   id: string;
@@ -26,7 +28,7 @@ interface ParcelData {
   createdAt: string;
   shippedAt?: string;
   deliveredAt?: string;
-  signedAt?: string;  
+  signedAt?: string;
   senderAddress?: {
     company?: string;
     name: string;
@@ -38,11 +40,6 @@ interface ParcelData {
   driver?: DriverData;
 }
 
-interface SensorData {
-  temp: number;
-  timestamp: string;
-}
-
 const STATUS_OPTIONS = [
   { label: "All Status", value: "all" },
   { label: "Pending", value: "pending" },
@@ -50,73 +47,42 @@ const STATUS_OPTIONS = [
   { label: "Delivered", value: "delivered" },
 ];
 
-const getComparisonTimestamp = (dateStr: string | undefined): number => {
-  if (!dateStr) return 0;
-  const cleanStr = dateStr.replace("Z", "").replace("T", " ");
-  const match = cleanStr.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\sT](\d{1,2}):(\d{1,2}):(\d{1,2})/);
-  
-  if (match) {
-    let [_, y, m, d, h, min, s] = match;
-    let year = parseInt(y);
-    if (year > 2500) year -= 543;
-    return Date.UTC(year, parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), parseInt(s));
-  }
-  const fallbackDate = new Date(dateStr);
-  return fallbackDate.getTime();
-};
-
 function SentPage() {
   const { user, logout, updateUser } = useAuth();
   const { unreadCount } = useNotification();
+  const { sensorHistory, lastUpdateTime } = useParcel(); // ✅ ใช้ lastUpdateTime
+  
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "?";
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();  
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
-  
+
   const initialFilterStatus = searchParams.get("status") || "all";
-  const [filterStatus, setFilterStatus] = useState(initialFilterStatus);  
+  const [filterStatus, setFilterStatus] = useState(initialFilterStatus);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [parcels, setParcels] = useState<ParcelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedTrackingNo, setCopiedTrackingNo] = useState<string | null>(null);
-  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);  
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [temperatureData, setTemperatureData] = useState<Record<string, number>>({});
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
-  const [sensorHistory, setSensorHistory] = useState<SensorData[]>([]);
-  const [temperatureData, setTemperatureData] = useState<Record<string, number>>({});
-
-  const THAI_TIME_OFFSET = 7 * 60 * 60 * 1000;
 
   useEffect(() => {
-    if (filterStatus && filterStatus !== 'all') {
-        setSearchParams({ status: filterStatus });
+    if (filterStatus && filterStatus !== "all") {
+      setSearchParams({ status: filterStatus });
     } else {
-        setSearchParams({});  
+      setSearchParams({});
     }
   }, [filterStatus, setSearchParams]);
 
-  useEffect(() => {
-    const fetchSensorData = async () => {
-      try {
-        const response = await fetch("http://13.214.139.175:3000/api/temp");
-        if (response.ok) {
-          const dataHistory: SensorData[] = await response.json();
-          setSensorHistory(dataHistory);
-        }
-      } catch (error) {
-        console.error("Error fetching sensor data:", error);
-      }
-    };
-    fetchSensorData();
-    const interval = setInterval(fetchSensorData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
+  // ✅ Fetch parcels ทุก 3 วินาที
   useEffect(() => {
     const fetchParcels = async () => {
       if (!user?.id) return;
@@ -124,9 +90,7 @@ function SentPage() {
       try {
         const res = await fetch(
           `http://localhost:3000/parcel?userId=${user.id}`,
-          {
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
 
         if (!res.ok) throw new Error("Failed to fetch parcels");
@@ -141,28 +105,31 @@ function SentPage() {
     };
 
     fetchParcels();
+    const interval = setInterval(fetchParcels, 3000); // ✅ Polling ทุก 3 วินาที
+    return () => clearInterval(interval);
   }, [user?.id]);
 
+  // ✅ คำนวณ temperature เมื่อมีการเปลี่ยนแปลง
   useEffect(() => {
-    if (parcels.length === 0 || sensorHistory.length === 0) return;
+    if (parcels.length === 0) return;
 
     const calculateTemperatures = () => {
       const tempMap: Record<string, number> = {};
 
       parcels.forEach((parcel) => {
-        if (parcel.isDelivered && parcel.signedAt && parcel.shippedAt && parcel.deliveredAt) {
-          const filteredHistory = sensorHistory.filter((data) => {
-            let sensorTime = getComparisonTimestamp(data.timestamp);
-            if (data.timestamp.includes("Z")) {
-              sensorTime += THAI_TIME_OFFSET;
-            }
-            const shippedTime = getComparisonTimestamp(parcel.shippedAt);
-            const deliveredTime = getComparisonTimestamp(parcel.deliveredAt);
-            return sensorTime >= shippedTime && sensorTime <= deliveredTime;
-          });
+        if (
+          parcel.isDelivered &&
+          parcel.signedAt &&
+          parcel.shippedAt &&
+          parcel.deliveredAt
+        ) {
+          const history = sensorHistory[parcel.trackingNo] || [];
+          const filtered = filterSensorHistory(history, parcel);
 
-          if (filteredHistory.length > 0) {
-            const avg = filteredHistory.reduce((sum, d) => sum + d.temp, 0) / filteredHistory.length;
+          if (filtered.length > 0) {
+            const avg =
+              filtered.reduce((sum, d) => sum + d.temp, 0) /
+              filtered.length;
             tempMap[parcel.id] = Math.round(avg * 10) / 10;
           }
         }
@@ -172,7 +139,7 @@ function SentPage() {
     };
 
     calculateTemperatures();
-  }, [parcels, sensorHistory, THAI_TIME_OFFSET]);
+  }, [parcels, sensorHistory, lastUpdateTime]); // ✅ dependency ที่สำคัญ
 
   const getStatusKey = (parcel: ParcelData): string => {
     if (parcel.isDelivered && parcel.signedAt) return "delivered";
@@ -182,7 +149,10 @@ function SentPage() {
     return "unknown";
   };
 
-  const calculateDuration = (shippedAt?: string, deliveredAt?: string): string => {
+  const calculateDuration = (
+    shippedAt?: string,
+    deliveredAt?: string
+  ): string => {
     if (!shippedAt || !deliveredAt) return "-";
 
     const start = new Date(shippedAt).getTime();
@@ -205,41 +175,41 @@ function SentPage() {
     }
   };
 
-  const filteredParcels = parcels
-    .filter((p) => {
-      const statusKey = getStatusKey(p);
-      
-      if (filterStatus !== 'all' && statusKey !== filterStatus) {
+  const filteredParcels = useMemo(() => {
+    return parcels
+      .filter((p) => {
+        const statusKey = getStatusKey(p);
+
+        if (filterStatus !== "all" && statusKey !== filterStatus) {
           return false;
-      }
-      
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
-      const statusStr = statusKey.replace('_', ' ');
-      
-      return (
-        p.trackingNo.toLowerCase().includes(query) ||
-        p.senderAddress?.company?.toLowerCase().includes(query) ||
-        p.senderAddress?.name.toLowerCase().includes(query) ||
-        p.recipientAddress?.company?.toLowerCase().includes(query) ||
-        p.recipientAddress?.name.toLowerCase().includes(query) ||
-        dateStr.includes(query) ||
-        statusStr.includes(query)
-      );
-    })
-    .sort((a, b) => {
-      return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    });
+        }
+
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        const dateStr = new Date(p.createdAt).toISOString().slice(0, 10);
+        const statusStr = statusKey.replace("_", " ");
+
+        return (
+          p.trackingNo.toLowerCase().includes(query) ||
+          p.senderAddress?.company?.toLowerCase().includes(query) ||
+          p.senderAddress?.name.toLowerCase().includes(query) ||
+          p.recipientAddress?.company?.toLowerCase().includes(query) ||
+          p.recipientAddress?.name.toLowerCase().includes(query) ||
+          dateStr.includes(query) ||
+          statusStr.includes(query)
+        );
+      })
+      .sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  }, [parcels, filterStatus, searchQuery]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-    
+
     return `${day}-${month}-${year}`;
   };
 
@@ -249,7 +219,10 @@ function SentPage() {
         setIsMenuOpen(false);
         setIsEditingName(false);
       }
-      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+      if (
+        sortMenuRef.current &&
+        !sortMenuRef.current.contains(e.target as Node)
+      ) {
         setIsStatusMenuOpen(false);
       }
     }
@@ -307,10 +280,22 @@ function SentPage() {
 
   const handleRowClick = (parcel: ParcelData) => {
     const statusKey = getStatusKey(parcel);
-    if (statusKey === 'delivered') {
-      navigate(`/overview?trackingNo=${parcel.trackingNo}`, { state: { parcel } });
+    if (statusKey === "delivered") {
+      navigate(`/overview?trackingNo=${parcel.trackingNo}`, {
+        state: {
+          parcel,
+          previousPath: "/sent",
+          previousStatus: filterStatus,
+        },
+      });
     } else {
-      navigate("/report", { state: { parcel, previousStatus: filterStatus } });
+      navigate("/report", {
+        state: {
+          parcel,
+          previousPath: "/sent",
+          previousStatus: filterStatus,
+        },
+      });
     }
   };
 
@@ -440,24 +425,29 @@ function SentPage() {
           <div className="flex justify-between items-center px-8 py-6">
             <h2 className="text-2xl font-semibold text-black">Sent Parcels</h2>
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm text-black mr-2">Status</span>  
-              
+              <span className="text-sm text-black mr-2">Status</span>
+
               <div className="relative inline-block w-34" ref={sortMenuRef}>
                 <button
                   onClick={() => setIsStatusMenuOpen((prev) => !prev)}
                   className="appearance-none w-full bg-white border h-12 border-black text-black text-sm rounded-l-full px-4 pr-2.5 focus:outline-none flex items-center justify-between"
                 >
-                  {STATUS_OPTIONS.find(opt => opt.value === filterStatus)?.label || "All Status"}
-                  <IoIosArrowDown className={`text-black w-4 h-4 ${isStatusMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+                  {STATUS_OPTIONS.find((opt) => opt.value === filterStatus)
+                    ?.label || "All Status"}
+                  <IoIosArrowDown
+                    className={`text-black w-4 h-4 ${
+                      isStatusMenuOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
                 </button>
-                
+
                 {isStatusMenuOpen && (
                   <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                     {STATUS_OPTIONS.map((option) => (
                       <button
                         key={option.value}
                         onClick={() => {
-                          setFilterStatus(option.value); 
+                          setFilterStatus(option.value);
                           setIsStatusMenuOpen(false);
                         }}
                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
@@ -496,7 +486,9 @@ function SentPage() {
                 onClick={() => navigate("/senderinfo")}
               >
                 <FiPlus className="text-lg font-black -ml-1" />
-                <span className="text-sm font-medium text-white ml-0.5">Add New Shipment</span>
+                <span className="text-sm font-medium text-white ml-0.5">
+                  Add New Shipment
+                </span>
               </button>
             </div>
           </div>
@@ -533,8 +525,8 @@ function SentPage() {
                 ) : (
                   filteredParcels.map((parcel) => {
                     const statusKey = getStatusKey(parcel);
-                    const isDelivered = statusKey === 'delivered';
-                    
+                    const isDelivered = statusKey === "delivered";
+
                     return (
                       <div
                         key={parcel.id}
@@ -574,10 +566,15 @@ function SentPage() {
                             "-"}
                         </div>
                         <div className="text-sm pl-4">
-                          {isDelivered ? calculateDuration(parcel.shippedAt, parcel.deliveredAt) : "-"}
+                          {isDelivered
+                            ? calculateDuration(
+                                parcel.shippedAt,
+                                parcel.deliveredAt
+                              )
+                            : "-"}
                         </div>
                         <div className="text-sm pl-4">
-                          {isDelivered && temperatureData[parcel.id] 
+                          {isDelivered && temperatureData[parcel.id]
                             ? temperatureData[parcel.id].toFixed(1)
                             : "-"}
                         </div>

@@ -1,1 +1,0 @@
-ALTER TABLE "parcel" DROP COLUMN "allowed_deviation";

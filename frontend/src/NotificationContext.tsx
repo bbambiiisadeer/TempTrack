@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 
@@ -10,22 +10,95 @@ interface NotificationContextType {
   markAsDeleted: (ids: string[]) => Promise<void>;
   unreadCount: number;
   setUnreadCount: (count: number) => void;
+  refreshUnreadCount: () => Promise<void>; // ✅ เพิ่ม function refresh
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
-);
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [readNotifications, setReadNotifications] = useState<Set<string>>(
-    new Set()
-  );
-  const [deletedNotifications, setDeletedNotifications] = useState<Set<string>>(
-    new Set()
-  );
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
+  const [deletedNotifications, setDeletedNotifications] = useState<Set<string>>(new Set());
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // ✅ แยก function calculateUnreadCount ออกมาเพื่อเรียกใช้ได้
+  const calculateUnreadCount = useCallback(async () => {
+    if (!user?.id) {
+      setUnreadCount(0);
+      return;
+    }
+
+    try {
+      const sentRes = await fetch(
+        `http://localhost:3000/parcel?userId=${user.id}`,
+        { credentials: "include" }
+      );
+      if (!sentRes.ok) return;
+      const sentParcels = await sentRes.json();
+
+      const allNotifications: any[] = [];
+
+      sentParcels.forEach((p: any) => {
+        if (p.isDelivered && p.deliveredAt && p.signedAt) {
+          allNotifications.push({ id: `${p.id}-delivered` });
+        }
+        if (p.isShipped && p.shippedAt) {
+          allNotifications.push({ id: `${p.id}-shipped` });
+        }
+      });
+
+      const trackingNumbers = JSON.parse(
+        sessionStorage.getItem(`trackingNumbers_${user.id}`) ||
+          sessionStorage.getItem("trackingNumbers_guest") ||
+          "[]"
+      );
+
+      if (trackingNumbers.length > 0) {
+        const promises = trackingNumbers.map(async (trackingNo: string) => {
+          const formattedTrackingNo = trackingNo.startsWith("#")
+            ? trackingNo
+            : `#${trackingNo}`;
+          try {
+            const res = await fetch(
+              `http://localhost:3000/parcel/track/${encodeURIComponent(formattedTrackingNo)}`,
+              { credentials: "include" }
+            );
+
+            if (!res.ok) return null;
+            const data = await res.json();
+            return Array.isArray(data) ? data : [data];
+          } catch {
+            return null;
+          }
+        });
+
+        const results = await Promise.all(promises);
+        const incomingParcels = results
+          .filter((result): result is any[] => result !== null)
+          .flat();
+
+        incomingParcels.forEach((p: any) => {
+          if (p.isDelivered && p.deliveredAt) {
+            allNotifications.push({ id: `${p.id}-delivered-incoming` });
+          }
+          if (p.isShipped && p.shippedAt) {
+            allNotifications.push({ id: `${p.id}-shipped-incoming` });
+          }
+        });
+      }
+
+      const activeNotifications = allNotifications.filter(
+        (n) => !deletedNotifications.has(n.id)
+      );
+      const unread = activeNotifications.filter(
+        (n) => !readNotifications.has(n.id)
+      ).length;
+      setUnreadCount(unread);
+    } catch (err) {
+      console.error("Error calculating unread count:", err);
+    }
+  }, [user?.id, readNotifications, deletedNotifications]);
 
   // โหลดสถานะจาก backend เมื่อ user login
   useEffect(() => {
@@ -41,9 +114,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       try {
         const res = await fetch(
           `http://localhost:3000/users/${user.id}/notification-status`,
-          {
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
 
         if (res.ok) {
@@ -61,105 +132,22 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     loadNotificationStatus();
   }, [user?.id]);
 
-  // คำนวณ unreadCount จากการเปลี่ยนแปลงของ readNotifications และ deletedNotifications
+  // ✅ เช็คการอัปเดต unreadCount ทุก 3 วินาที
   useEffect(() => {
-    const calculateUnreadCount = async () => {
-      if (!user?.id) {
-        setUnreadCount(0);
-        return;
-      }
-
-      try {
-        // Fetch sent parcels
-        const sentRes = await fetch(
-          `http://localhost:3000/parcel?userId=${user.id}`,
-          { credentials: "include" }
-        );
-        if (!sentRes.ok) return;
-        const sentParcels = await sentRes.json();
-
-        const allNotifications: any[] = [];
-
-        sentParcels.forEach((p: any) => {
-          if (p.isDelivered && p.deliveredAt && p.signedAt) {
-            allNotifications.push({ id: `${p.id}-delivered` });
-          }
-          if (p.isShipped && p.shippedAt) {
-            allNotifications.push({ id: `${p.id}-shipped` });
-          }
-        });
-
-        // Fetch incoming parcels from TrackingContext
-        const trackingNumbers = JSON.parse(
-          sessionStorage.getItem(`trackingNumbers_${user.id}`) ||
-            sessionStorage.getItem("trackingNumbers_guest") ||
-            "[]"
-        );
-
-        if (trackingNumbers.length > 0) {
-          const promises = trackingNumbers.map(async (trackingNo: string) => {
-            const formattedTrackingNo = trackingNo.startsWith("#")
-              ? trackingNo
-              : `#${trackingNo}`;
-            try {
-              const res = await fetch(
-                `http://localhost:3000/parcel/track/${encodeURIComponent(
-                  formattedTrackingNo
-                )}`,
-                { credentials: "include" }
-              );
-
-              if (!res.ok) return null;
-              const data = await res.json();
-              return Array.isArray(data) ? data : [data];
-            } catch {
-              return null;
-            }
-          });
-
-          const results = await Promise.all(promises);
-          const incomingParcels = results
-            .filter((result): result is any[] => result !== null)
-            .flat();
-
-          // Process incoming parcels
-          incomingParcels.forEach((p: any) => {
-            if (p.isDelivered && p.deliveredAt) {
-              allNotifications.push({ id: `${p.id}-delivered-incoming` });
-            }
-            if (p.isShipped && p.shippedAt) {
-              allNotifications.push({ id: `${p.id}-shipped-incoming` });
-            }
-          });
-        }
-
-        // Filter out deleted and count unread
-        const activeNotifications = allNotifications.filter(
-          (n) => !deletedNotifications.has(n.id)
-        );
-        const unread = activeNotifications.filter(
-          (n) => !readNotifications.has(n.id)
-        ).length;
-        setUnreadCount(unread);
-      } catch (err) {
-        console.error("Error calculating unread count:", err);
-      }
-    };
+    if (!user?.id) return;
 
     calculateUnreadCount();
-  }, [user?.id, readNotifications, deletedNotifications]);
+    const interval = setInterval(calculateUnreadCount, 3000);
+    return () => clearInterval(interval);
+  }, [calculateUnreadCount, user?.id]);
 
   const markAsRead = async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
 
-    // อัพเดท local state ทันที (Optimistic Update)
     const newReadSet = new Set([...readNotifications, ...ids]);
     setReadNotifications(newReadSet);
-
-    // อัพเดท unreadCount ทันที
     setUnreadCount((prev) => Math.max(0, prev - ids.length));
 
-    // บันทึกไปยัง backend
     try {
       const res = await fetch(
         `http://localhost:3000/users/${user.id}/notification-status`,
@@ -171,12 +159,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to save read status");
-      }
+      if (!res.ok) throw new Error("Failed to save read status");
+      
+      // ✅ Refresh ทันทีหลังจาก mark
+      await calculateUnreadCount();
     } catch (err) {
       console.error("Failed to save read status:", err);
-      // Rollback ถ้าเกิด error
       setReadNotifications(readNotifications);
       setUnreadCount((prev) => prev + ids.length);
     }
@@ -188,7 +176,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const newReadSet = new Set(readNotifications);
     ids.forEach((id) => newReadSet.delete(id));
     setReadNotifications(newReadSet);
-
     setUnreadCount((prev) => prev + ids.length);
 
     try {
@@ -202,12 +189,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to save unread status");
-      }
+      if (!res.ok) throw new Error("Failed to save unread status");
+      
+      // ✅ Refresh ทันทีหลังจาก mark
+      await calculateUnreadCount();
     } catch (err) {
       console.error("Failed to save unread status:", err);
-      // Rollback ถ้าเกิด error
       setReadNotifications(readNotifications);
       setUnreadCount((prev) => prev - ids.length);
     }
@@ -216,19 +203,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const markAsDeleted = async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
 
-    // นับจำนวน unread ที่จะถูกลบ
     const unreadBeingDeleted = ids.filter(
       (id) => !readNotifications.has(id)
     ).length;
 
-    // อัพเดท local state ทันที (Optimistic Update)
     const newDeletedSet = new Set([...deletedNotifications, ...ids]);
     setDeletedNotifications(newDeletedSet);
-
-    // อัพเดท unreadCount ทันที
     setUnreadCount((prev) => Math.max(0, prev - unreadBeingDeleted));
 
-    // บันทึกไปยัง backend
     try {
       const res = await fetch(
         `http://localhost:3000/users/${user.id}/notification-status`,
@@ -240,12 +222,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to save deleted status");
-      }
+      if (!res.ok) throw new Error("Failed to save deleted status");
+      
+      // ✅ Refresh ทันทีหลังจาก delete
+      await calculateUnreadCount();
     } catch (err) {
       console.error("Failed to save deleted status:", err);
-      // Rollback ถ้าเกิด error
       setDeletedNotifications(deletedNotifications);
       setUnreadCount((prev) => prev + unreadBeingDeleted);
     }
@@ -254,9 +236,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const isRead = (id: string) => readNotifications.has(id);
   const isDeleted = (id: string) => deletedNotifications.has(id);
 
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
   return (
     <NotificationContext.Provider
@@ -268,6 +248,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         markAsDeleted,
         unreadCount,
         setUnreadCount,
+        refreshUnreadCount: calculateUnreadCount, // ✅ ส่ง function ออกไป
       }}
     >
       {children}

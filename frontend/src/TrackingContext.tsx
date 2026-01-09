@@ -14,33 +14,37 @@ const TrackingContext = createContext<TrackingContextType | undefined>(undefined
 export function TrackingProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   
-  // สร้าง key ตาม userId (ถ้าไม่ login ใช้ "guest")
+  // Create key based on userId (if not logged in, use "guest")
   const storageKey = user?.id ? `trackingNumbers_${user.id}` : "trackingNumbers_guest";
 
-  // อ่านค่าจาก sessionStorage ตอนเริ่มต้น
+  // 1. Read from localStorage on initialization
   const [trackingNumbers, setTrackingNumbers] = useState<string[]>(() => {
-    const stored = sessionStorage.getItem(storageKey);
-    return stored ? JSON.parse(stored) : [];
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
   });
 
-  // เมื่อ user เปลี่ยน ให้โหลดข้อมูลของ user คนนั้น
+  // 2. When storageKey changes (e.g., user logs in/out), load that specific user's data
   useEffect(() => {
-    const stored = sessionStorage.getItem(storageKey);
+    const stored = localStorage.getItem(storageKey);
     setTrackingNumbers(stored ? JSON.parse(stored) : []);
   }, [storageKey]);
 
-  // เมื่อ trackingNumbers เปลี่ยน ให้เก็บลง sessionStorage
+  // 3. When trackingNumbers changes, save to localStorage
   useEffect(() => {
     if (trackingNumbers.length > 0) {
-      sessionStorage.setItem(storageKey, JSON.stringify(trackingNumbers));
+      localStorage.setItem(storageKey, JSON.stringify(trackingNumbers));
     } else {
-      sessionStorage.removeItem(storageKey);
+      // If the array is empty, we remove the key to keep storage clean
+      localStorage.removeItem(storageKey);
     }
   }, [trackingNumbers, storageKey]);
 
   const addTrackingNo = (value: string) => {
     setTrackingNumbers((prev) => {
-      // ไม่ให้ซ้ำ
+      // Prevent duplicates
       if (prev.includes(value)) return prev;
       return [...prev, value];
     });
@@ -52,7 +56,7 @@ export function TrackingProvider({ children }: { children: ReactNode }) {
 
   const clearTracking = () => {
     setTrackingNumbers([]);
-    sessionStorage.removeItem(storageKey);
+    localStorage.removeItem(storageKey);
   };
 
   return (

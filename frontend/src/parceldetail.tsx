@@ -153,7 +153,7 @@ function ParcelDetail() {
       </h2>
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] space-y-4"
+        className="bg-white p-8 rounded-tl-2xl rounded-tr-2xl shadow-md w-full max-w-[860px] space-y-4 h-152.5"
       >
         <div className="flex items-center justify-between w-full max-w-[500px] mx-auto mb-8">
           <div
@@ -334,7 +334,7 @@ function ParcelDetail() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end mt-4">
+        <div className="flex items-center justify-end mt-24">
           <button
             type="submit"
             className="bg-black font-medium hover:bg-gray-800 text-sm text-white py-2 px-6 rounded-full w-32 h-12"

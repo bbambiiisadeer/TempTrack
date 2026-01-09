@@ -1,1 +1,0 @@
-ALTER TABLE "parcel" ALTER COLUMN "tracking_no" SET DATA TYPE varchar(20);

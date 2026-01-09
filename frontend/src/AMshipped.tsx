@@ -282,7 +282,7 @@ function AMshipped() {
           <div className="bg-white rounded-t-2xl shadow-md flex flex-col flex-1 mt-8">
             <div className="flex gap-8 mt-2 px-6">
               <div
-                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-black hover:font-medium transition cursor-pointer"
                 onClick={() => navigate("/amdashboard")}
               >
                 Pending
@@ -296,14 +296,14 @@ function AMshipped() {
               </div>
 
               <div
-                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-black hover:font-medium transition cursor-pointer"
                 onClick={() => navigate("/amdelivered")}
               >
                 Delivered
               </div>
 
               <div
-                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-gray-400 hover:font-medium transition cursor-pointer"
+                className="py-3.5 px-2 border border-transparent flex items-center justify-center text-sm text-black hover:font-medium transition cursor-pointer"
                 onClick={() => navigate("/amdriver")}
               >
                 Driver

@@ -1,1 +1,0 @@
-ALTER TABLE "driver" ALTER COLUMN "image_url" SET DATA TYPE text;

@@ -1,1 +1,0 @@
-ALTER TABLE "address" ALTER COLUMN "type" DROP NOT NULL;

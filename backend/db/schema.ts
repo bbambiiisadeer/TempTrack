@@ -103,3 +103,12 @@ export const notification = pgTable("notification", {
     .$onUpdate(() => new Date())
     .notNull(),
 });
+
+export const parcelSensorData = pgTable("sensorData", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  parcelId: uuid("parcel_id").references(() => parcel.id, { onDelete: "cascade" }),
+  trackingNo: varchar("tracking_no", { length: 20 }).notNull(),
+  temperature: real("temperature").notNull(),
+  sensorId: varchar("sensor_id", { length: 50 }).notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});

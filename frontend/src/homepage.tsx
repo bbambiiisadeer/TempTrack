@@ -51,16 +51,16 @@ function Homepage() {
         className="
       absolute top-20 
        font-poppins font-semibold
-      text-[15rem] leading-[1] whitespace-nowrap 
+      text-[14.8rem] leading-[1] whitespace-nowrap 
        transform skew-x-[-23deg] tracking-[0.34rem]
       text-black 
-        left-1/2 -translate-x-1/2 -ml-[1.3rem]
+        left-1/2 -translate-x-1/2 -ml-[1.2rem]
     "
       >
         TEMPTRACK
       </h1>
       <div className="absolute bottom-12 left-12 max-w-xl">
-        <p className="mb-6 text-black text-sm font-medium leading-relaxed ">
+        <p className="mb-6 text-black text-sm  leading-relaxed ">
           Monitor the temperature in real-time during transportation <br />
           and receive instant alerts when the temperature <br />
           goes outside the specified range

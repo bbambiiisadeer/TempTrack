@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { dbClient } from "@db/client.js";
-import { users, address, parcel, driver, notification } from "@db/schema.js";
+import { users, address, parcel, driver, notification, parcelSensorData } from "@db/schema.js";
 import cors from "cors";
 import Debug from "debug";
 import { eq, sql } from "drizzle-orm";
@@ -18,6 +18,8 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import { desc } from "drizzle-orm";
 import e from "cors";
+import fs from 'fs/promises';
+import path from "path";
 
 const debug = Debug("pf-backend");
 const app = express();
@@ -1208,6 +1210,122 @@ app.patch(
     }
   }
 );
+
+app.post(
+  "/parcel/save-sensor-data",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { trackingNo, sensorDataList } = req.body;
+
+      if (!trackingNo || !Array.isArray(sensorDataList) || sensorDataList.length === 0) {
+        res.status(400).json({ error: "Invalid request data" });
+        return;
+      }
+
+      const parcelData = await dbClient.query.parcel.findFirst({
+        where: eq(parcel.trackingNo, trackingNo),
+      });
+
+      if (!parcelData) {
+        res.status(404).json({ error: "Parcel not found" });
+        return;
+      }
+
+      if (!parcelData.deliveredAt) {
+        res.status(400).json({ error: "Parcel not delivered yet" });
+        return;
+      }
+
+      // สร้าง directory สำหรับเก็บไฟล์เซ็นเซอร์ (ถ้ายังไม่มี)
+      const sensorDataDir = path.join(process.cwd(), 'sensor-data');
+      await fs.mkdir(sensorDataDir, { recursive: true });
+
+      // ใช้ tracking number เป็นชื่อไฟล์
+      const filePath = path.join(sensorDataDir, `${trackingNo}.json`);
+
+      // ตรวจสอบว่าไฟล์มีอยู่แล้วหรือไม่
+      try {
+        await fs.access(filePath);
+        res.json({
+          success: true,
+          alreadySaved: true,
+          message: "Sensor data file already exists for this parcel",
+          filePath: filePath,
+        });
+        return;
+      } catch {
+        // ไฟล์ยังไม่มี ให้ดำเนินการต่อ
+      }
+
+      // จัดรูปแบบข้อมูลที่จะบันทึก
+      const sensorDataToSave = {
+        trackingNo,
+        parcelId: parcelData.id,
+        savedAt: new Date().toISOString(),
+        totalRecords: sensorDataList.length,
+        data: sensorDataList.map((item: any) => ({
+          temperature: item.temp,
+          sensorId: item.sensorId || "unknown",
+          timestamp: item.timestamp,
+        })),
+      };
+
+      // บันทึกลงไฟล์
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(sensorDataToSave, null, 2),
+        'utf8'
+      );
+
+      console.log(`Saved ${sensorDataList.length} sensor records to file: ${filePath}`);
+
+      res.json({
+        success: true,
+        alreadySaved: false,
+        savedCount: sensorDataList.length,
+        filePath: filePath,
+      });
+    } catch (error: any) {
+      console.error("Error saving sensor data:", error);
+      next(error);
+    }
+  }
+);
+
+// Endpoint เพิ่มเติม: อ่านข้อมูลเซ็นเซอร์จากไฟล์
+app.get(
+  "/parcel/sensor-data/:trackingNo",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { trackingNo } = req.params;
+
+      const sensorDataDir = path.join(process.cwd(), 'sensor-data');
+      const filePath = path.join(sensorDataDir, `${trackingNo}.json`);
+
+      try {
+        const fileContent = await fs.readFile(filePath, 'utf8');
+        const sensorData = JSON.parse(fileContent);
+        
+        res.json({
+          success: true,
+          data: sensorData,
+        });
+      } catch (error) {
+        res.status(404).json({ 
+          success: false,
+          error: "Sensor data file not found" 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error reading sensor data:", error);
+      next(error);
+    }
+  }
+);
+
+
 
 const jsonErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   debug(err.message);
